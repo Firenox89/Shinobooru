@@ -70,15 +70,6 @@ class Thumbnails : Activity(), KodeinInjected {
         updatePostPerRow(sharedPrefs.getString("post_per_row_list", "5").toInt())
 
         recyclerView.layoutManager = recyclerLayout
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val lastVisble = recyclerLayout.findLastCompletelyVisibleItemPositions(null).last()
-                if (recyclerLayout.itemCount - lastVisble < recyclerLayout.spanCount + 1) {
-                    //TODO: reduce the amount of fired events while scrolling
-                    PostLoader.requestNextPosts()
-                }
-            }
-        })
 
         val swipeRefresh = findViewById(R.id.swipe_refresh_layout) as SwipeRefreshLayout
         swipeRefresh.setOnRefreshListener {

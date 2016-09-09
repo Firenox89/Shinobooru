@@ -1,5 +1,6 @@
 package com.github.firenox89.shinobooru.ui
 
+import android.graphics.*
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
@@ -17,6 +18,17 @@ class PostRecyclerAdapter() : RecyclerView.Adapter<PostRecyclerAdapter.PostViewH
     private val onClickSubject = PublishSubject<Int>()
     var usePreview = true
 
+    val loadingBitmap: Bitmap by lazy {
+        val rect = Rect(0, 0, 250, 400)
+        val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(image)
+        val color = Color.argb(255, 80, 80, 80)
+        val paint = Paint()
+        paint.color = color
+        canvas.drawRect(rect, paint)
+        image
+    }
+
     init {
         PostLoader.getRangeChangeEventStream().subscribe {
             //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
@@ -31,16 +43,17 @@ class PostRecyclerAdapter() : RecyclerView.Adapter<PostRecyclerAdapter.PostViewH
 
     override fun onBindViewHolder(holder: PostViewHolder?, position: Int) {
         val post = PostLoader.getPostAt(position)
+        if (PostLoader.getCount() - position > 5) PostLoader.requestNextPosts()
 
+        holder?.image?.setImageBitmap(loadingBitmap)
         //if the recyclerView is set to one image per row use the sample image for quality reasons
         if (usePreview)
             post?.loadPreview { holder?.image?.setImageBitmap(it) }
         else
             post?.loadSample { holder?.image?.setImageBitmap(it) }
 
-//        holder?.downloadedIcon?.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
-//        holder?.viewedIcon?.visibility = if (post?.wasViewd() ?: false) View.VISIBLE else View.INVISIBLE
-
+        holder?.downloadedIcon?.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
+        holder?.viewedIcon?.visibility = if (post?.wasViewd() ?: false) View.VISIBLE else View.INVISIBLE
         holder?.itemView?.setOnClickListener { onClickSubject.onNext(position) }
     }
 
@@ -61,7 +74,7 @@ class PostRecyclerAdapter() : RecyclerView.Adapter<PostRecyclerAdapter.PostViewH
         //TODO: show already download
         //TODO: mark view posts
         val image: ImageView by bindView(R.id.postImage)
-//        val downloadedIcon by bindView<ImageView>(R.id.downLoaded)
-//        val viewedIcon by bindView<ImageView>(R.id.viewedIcon)
+        val downloadedIcon by bindView<ImageView>(R.id.downLoaded)
+        val viewedIcon by bindView<ImageView>(R.id.viewedIcon)
     }
 }

@@ -110,6 +110,7 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         override fun getItem(position: Int): Fragment? {
 
             val post = PostLoader.getPostAt(position)
+            if (PostLoader.getCount() - position > 5) PostLoader.requestNextPosts()
 
             //set activity result to current post for scrolling in thumbnail view
             val intent = Intent()

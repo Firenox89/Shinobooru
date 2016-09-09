@@ -1,6 +1,5 @@
 package com.github.firenox89.shinobooru.model
 
-import android.util.Log
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import rx.Observable
 import rx.lang.kotlin.PublishSubject
@@ -22,14 +21,8 @@ object PostLoader {
     }
 
     fun requestNextPosts(quantity: Int = 20) {
-
-        if (fileMode) {
-            val postList = FileManager.getPosts()
-            if (postList != null) {
-                posts.addAll(postList)
-                rangeChangeEventStream.onNext(Pair(0, postList.size))
-            }
-        } else {
+        //nothing to request in file mode
+        if (!fileMode) {
             ApiWrapper.request {
                 //TODO: order results before adding
                 val currentSize = posts.size
@@ -81,7 +74,12 @@ object PostLoader {
 
     fun setFileMode() {
         fileMode = true
-        onRefresh()
+        val postList = FileManager.getPosts()
+        if (postList != null) {
+            posts.clear()
+            posts.addAll(postList)
+            rangeChangeEventStream.onNext(Pair(0, postList.size))
+        }
     }
 
     fun addPostIdToViewedList(id: Long) {
