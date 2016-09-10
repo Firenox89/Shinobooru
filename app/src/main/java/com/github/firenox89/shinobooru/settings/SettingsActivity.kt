@@ -16,7 +16,7 @@ import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.PostLoader
 import com.github.firenox89.shinobooru.service.WallpaperService
-import com.github.firenox89.shinobooru.ui.Thumbnails
+import com.github.firenox89.shinobooru.ui.ThumbnailActivity
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
@@ -82,7 +82,7 @@ class SettingsActivity : PreferenceActivity() {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_rating)
 
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.onRefresh(); true }
+            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.instance.onRefresh(); true }
             findPreference("rating_safe").onPreferenceChangeListener = changeListener
             findPreference("rating_questionable").onPreferenceChangeListener = changeListener
             findPreference("rating_explicit").onPreferenceChangeListener = changeListener

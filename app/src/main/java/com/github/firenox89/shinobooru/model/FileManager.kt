@@ -75,7 +75,7 @@ object FileManager {
 
     fun getImageSource(): String {
         //TODO: parse that from url
-        return PostLoader.getCurrentURL().replace(Regex("http[s]?://"), "")
+        return PostLoader.instance.getCurrentURL().replace(Regex("http[s]?://"), "")
     }
 
     fun getPosts(): List<Post>? {

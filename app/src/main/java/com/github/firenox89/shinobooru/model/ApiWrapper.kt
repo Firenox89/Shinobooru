@@ -9,7 +9,7 @@ import rx.schedulers.Schedulers
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-object ApiWrapper {
+class ApiWrapper(val tags: String = "") {
 
     var url: String = SettingsActivity.currentBoardURL
     val json: Boolean = true
@@ -25,7 +25,7 @@ object ApiWrapper {
                 subscribe {
                     //if we set baseURL beforehand, simply use relativePath
                     val params = "?limit=${it.limit}${if (it.page > 1) "&page=${it.page}" else ""}" +
-                            "${if (it.tags != "") "&tags=$it.tags" else ""}"
+                            "${if (tags != "") "&tags=$tags" else ""}"
                     var requestString = "$url/post${if (json) ".json" else ".xml"}$params"
 
                     currentPage++
@@ -55,12 +55,11 @@ object ApiWrapper {
     }
 
     //TODO: request limits
-    fun request(limit: Int = 20, page: Int = currentPage, tags: String = "", handler: (Array<Post>?) -> Unit) {
-        requestQueue.onNext(Request(limit, page, tags, handler))
+    fun request(limit: Int = 20, page: Int = currentPage, handler: (Array<Post>?) -> Unit) {
+        requestQueue.onNext(Request(limit, page, handler))
     }
 
     data class Request(val limit: Int,
                        val page: Int,
-                       val tags: String,
                        val handler: (Array<Post>?) -> Unit)
 }

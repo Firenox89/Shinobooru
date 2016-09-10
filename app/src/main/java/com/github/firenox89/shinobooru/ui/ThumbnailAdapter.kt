@@ -13,7 +13,7 @@ import rx.Observable
 import rx.lang.kotlin.PublishSubject
 import kotterknife.bindView
 
-class PostRecyclerAdapter() : RecyclerView.Adapter<PostRecyclerAdapter.PostViewHolder>() {
+class ThumbnailAdapter(val postLoader: PostLoader) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
     private val onClickSubject = PublishSubject<Int>()
     var usePreview = true
@@ -30,7 +30,7 @@ class PostRecyclerAdapter() : RecyclerView.Adapter<PostRecyclerAdapter.PostViewH
     }
 
     init {
-        PostLoader.getRangeChangeEventStream().subscribe {
+        postLoader.getRangeChangeEventStream().subscribe {
             //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
             if (it.first != 0) {
                 val (posi, count) = it
@@ -42,8 +42,8 @@ class PostRecyclerAdapter() : RecyclerView.Adapter<PostRecyclerAdapter.PostViewH
     }
 
     override fun onBindViewHolder(holder: PostViewHolder?, position: Int) {
-        val post = PostLoader.getPostAt(position)
-        if (PostLoader.getCount() - position > 5) PostLoader.requestNextPosts()
+        val post = postLoader.getPostAt(position)
+        if (postLoader.getCount() - position > 5) postLoader.requestNextPosts()
 
         holder?.image?.setImageBitmap(loadingBitmap)
         //if the recyclerView is set to one image per row use the sample image for quality reasons
@@ -62,7 +62,7 @@ class PostRecyclerAdapter() : RecyclerView.Adapter<PostRecyclerAdapter.PostViewH
     }
 
     override fun getItemCount(): Int {
-        return PostLoader.getCount()
+        return postLoader.getCount()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): PostViewHolder {

@@ -4,13 +4,28 @@ import com.github.firenox89.shinobooru.settings.SettingsActivity
 import rx.Observable
 import rx.lang.kotlin.PublishSubject
 
-object PostLoader {
+class PostLoader(tags: String = "") {
 
+    companion object {
+        val instance = PostLoader()
+        val loaderList = mutableMapOf<String, PostLoader>().apply {
+            put("", instance)
+        }
+        fun loaderForTags(tags: String): PostLoader {
+            var loader = loaderList[tags]
+            if (loader == null) {
+                loader = PostLoader(tags)
+                loaderList.put(tags, loader)
+            }
+            return loader
+        }
+    }
     private val initLoadSize = 40
     private val posts = mutableListOf<Post>()
     private val rangeChangeEventStream = PublishSubject<Pair<Int, Int>>()
     private var fileMode = false
     private val viewedList = FileManager.loadViewedList() ?: mutableListOf<Long>()
+    private var apiWrapper: ApiWrapper = ApiWrapper(tags)
 
     init {
         requestNextPosts(initLoadSize)
@@ -23,7 +38,7 @@ object PostLoader {
     fun requestNextPosts(quantity: Int = 20) {
         //nothing to request in file mode
         if (!fileMode) {
-            ApiWrapper.request {
+            apiWrapper.request {
                 //TODO: order results before adding
                 val currentSize = posts.size
                 val tmpList = mutableListOf<Post>()
@@ -58,18 +73,18 @@ object PostLoader {
         //TODO: insert new images on top instead of reload everything
         val currentcount = getCount()
         posts.clear()
-        ApiWrapper.onRefresh()
+        apiWrapper.onRefresh()
         requestNextPosts(if (quantity < 0) currentcount else quantity)
     }
 
     fun setBaseURL(url: String) {
         fileMode = false
-        ApiWrapper.setBaseURL(url)
+        apiWrapper.setBaseURL(url)
         onRefresh(initLoadSize)
     }
 
     fun getCurrentURL(): String {
-        return ApiWrapper.url
+        return apiWrapper.url
     }
 
     fun setFileMode() {

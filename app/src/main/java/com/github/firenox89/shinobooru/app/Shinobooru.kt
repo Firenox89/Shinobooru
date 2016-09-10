@@ -9,7 +9,7 @@ import android.preference.PreferenceManager
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.view.Display
 import com.github.firenox89.shinobooru.service.WallpaperService
-import com.github.firenox89.shinobooru.ui.PostRecyclerAdapter
+import com.github.firenox89.shinobooru.ui.ThumbnailAdapter
 import com.github.salomonbrys.kodein.*
 import org.jetbrains.anko.windowManager
 import rx.lang.kotlin.PublishSubject
@@ -20,8 +20,6 @@ class Shinobooru : Application(), KodeinAware {
     override val kodein by Kodein.lazy {
         bind<SharedPreferences>() with instance(PreferenceManager.getDefaultSharedPreferences(appContext))
 
-        bind<StaggeredGridLayoutManager>() with singleton { StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL) }
-        bind<PostRecyclerAdapter>() with singleton { PostRecyclerAdapter() }
         bind<PublishSubject<Int>>("thumbnailUpdates") with singleton { PublishSubject<Int>() }
 
         val display = windowManager.defaultDisplay

@@ -23,14 +23,16 @@ import kotterknife.bindView
 import org.jetbrains.anko.startActivity
 import rx.subjects.PublishSubject
 
-class Thumbnails : Activity(), KodeinInjected {
+class ThumbnailActivity : Activity(), KodeinInjected {
 
     override val injector = KodeinInjector()
 
     private val sharedPrefs: SharedPreferences by instance()
-    private val recyclerLayout: StaggeredGridLayoutManager by instance()
-    private val recyclerAdapter: PostRecyclerAdapter by instance()
 
+    lateinit private var recyclerLayout: StaggeredGridLayoutManager
+    lateinit private var recyclerAdapter: ThumbnailAdapter
+    lateinit private var postLoader: PostLoader
+    lateinit private var tags: String
     private val recyclerView: RecyclerView by bindView(R.id.recycleView)
     private val mDrawerLayout: DrawerLayout by bindView(R.id.drawer_layout)
 
@@ -39,6 +41,10 @@ class Thumbnails : Activity(), KodeinInjected {
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: save and reload position
         super.onCreate(savedInstanceState)
+        tags = intent.getStringExtra("tags") ?: ""
+        postLoader = PostLoader.loaderForTags(tags)
+        recyclerAdapter = ThumbnailAdapter(postLoader)
+        recyclerLayout = StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL)
 
         inject(appKodein())
 
@@ -60,8 +66,9 @@ class Thumbnails : Activity(), KodeinInjected {
         }
 
         recyclerAdapter.getPositionClicks().subscribe {
-            val post = PostLoader.getPostAt(it)
+            val post = postLoader.getPostAt(it)
             val intent = Intent(this, PostPagerActivity::class.java)
+            intent.putExtra("tags", tags)
             intent.putExtra(resources.getString(R.string.post_class), post)
             startActivityForResult(intent, 1)
         }
@@ -73,7 +80,7 @@ class Thumbnails : Activity(), KodeinInjected {
 
         val swipeRefresh = findViewById(R.id.swipe_refresh_layout) as SwipeRefreshLayout
         swipeRefresh.setOnRefreshListener {
-            PostLoader.onRefresh()
+            postLoader.onRefresh()
             swipeRefresh.isRefreshing = false
         }
 
@@ -87,7 +94,7 @@ class Thumbnails : Activity(), KodeinInjected {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val post = data?.getSerializableExtra(resources.getString(R.string.post_class)) as Post
-        recyclerView.scrollToPosition(PostLoader.getPositionFor(post))
+        recyclerView.scrollToPosition(postLoader.getPositionFor(post))
     }
 
     fun updatePostPerRow(value: Int) {
@@ -96,18 +103,18 @@ class Thumbnails : Activity(), KodeinInjected {
     }
 
     private fun setKonachan() {
-        PostLoader.setBaseURL(SettingsActivity.konachanURL)
+        postLoader.setBaseURL(SettingsActivity.konachanURL)
         mDrawerLayout.closeDrawers()
     }
 
     private fun setYandere() {
-        PostLoader.setBaseURL(SettingsActivity.yandereURL)
+        postLoader.setBaseURL(SettingsActivity.yandereURL)
         mDrawerLayout.closeDrawers()
     }
 
     private fun openFileView() {
         //TODO: loading animation
-        PostLoader.setFileMode()
+        postLoader.setFileMode()
         mDrawerLayout.closeDrawers()
     }
 
