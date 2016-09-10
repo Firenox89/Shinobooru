@@ -24,14 +24,6 @@
             android:id="@+id/fileDimension"
             android:layout_gravity="center_vertical" />
 
-        <!--<TextView-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:textAppearance="?android:attr/textAppearanceSmall"-->
-            <!--android:text="File URL = "-->
-            <!--android:id="@+id/fileURL"-->
-            <!--android:layout_gravity="center_vertical" />-->
-
         <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -60,14 +52,6 @@
             android:text="Jpeg dimensions = "
             android:id="@+id/jpegDimension"
             android:layout_gravity="center_vertical" />
-
-        <!--<TextView-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:textAppearance="?android:attr/textAppearanceSmall"-->
-            <!--android:text="Jpeg URL = "-->
-            <!--android:id="@+id/jpegURL"-->
-            <!--android:layout_gravity="center_vertical" />-->
 
         <ImageButton
             android:layout_width="wrap_content"
@@ -98,14 +82,6 @@
             android:id="@+id/sampleDimension"
             android:layout_gravity="center_vertical" />
 
-        <!--<TextView-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:textAppearance="?android:attr/textAppearanceSmall"-->
-            <!--android:text="Sample URL = "-->
-            <!--android:id="@+id/sampleURL"-->
-            <!--android:layout_gravity="center_vertical" />-->
-
         <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -113,5 +89,11 @@
             android:layout_gravity="left|center_horizontal"
             android:src="@drawable/cloud_download_2_32x32"/>
     </LinearLayout>
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tagListView"
+        android:layout_gravity="center_horizontal" />
 
 </LinearLayout>

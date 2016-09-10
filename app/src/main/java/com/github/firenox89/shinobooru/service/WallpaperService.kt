@@ -3,6 +3,8 @@ package com.github.firenox89.shinobooru.service
 import android.app.Service
 import android.app.WallpaperManager
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Point
@@ -13,17 +15,30 @@ import android.view.Surface
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.FileManager
 import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.receiver.ScreenEventReceiver
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
+import rx.Subscription
+import rx.subjects.PublishSubject
 
 class WallpaperService : Service(), KodeinInjected {
 
+    companion object {
+        lateinit var instance: WallpaperService
+            private set
+    }
     override val injector = KodeinInjector()
+    val pref: SharedPreferences by instance()
     val display: Display by instance()
+    val screenEventStream = PublishSubject.create<Intent>()
+    val wallpaperManager = WallpaperManager.getInstance(Shinobooru.appContext)
 
     val list = mutableListOf<Post>()
+
+    var displaySize = Point()
+    var subscription: Subscription? = null
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -31,48 +46,75 @@ class WallpaperService : Service(), KodeinInjected {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         inject(appKodein())
+        instance = this
 
-        val wallpaperManager = WallpaperManager.getInstance(Shinobooru.appContext)
+        val intentfilter = IntentFilter()
+        intentfilter.addAction(Intent.ACTION_CONFIGURATION_CHANGED)
+        intentfilter.addAction(Intent.ACTION_SCREEN_ON)
+
+        registerReceiver(ScreenEventReceiver(screenEventStream), intentfilter)
+
+        val size = Point()
+        display.getSize(size)
         FileManager.boards.forEach { list.addAll(it.value) }
+        enableWallpaperService(pref.getBoolean("enable_wallpaper", true))
 
-        Thread {
-            while (true) {
-                Thread.sleep(15 * 60 * 1000)
-                wallpaperManager.setWallpaperOffsetSteps(1F, 1F)
-                var bitmap: Bitmap
-                if (display.rotation == Surface.ROTATION_0 ||
-                        display.rotation == Surface.ROTATION_180)
-                    bitmap = pickWideImage()
-                else
-                    bitmap = pickHighImage()
-                wallpaperManager.setBitmap(bitmap)
-            }
-        }.start()
         return super.onStartCommand(intent, flags, startId)
     }
 
-    fun pickHighImage(): Bitmap {
-        val i = (Math.random() * list.size).toInt()
-        val post = list[i]
-        var bitmap = BitmapFactory.decodeFile(post.file?.absolutePath)
-        if (bitmap.width > bitmap.height) {
-            bitmap = null
-            bitmap = pickHighImage()
-        } else {
-            resize(bitmap)
+    fun subscribeToScreenEvents() {
+        subscription = screenEventStream.subscribe {
+            if (!it.action.equals("android.intent.action.CONFIGURATION_CHANGED") || hasOrientationChanged()) {
+                if (display.rotation == Surface.ROTATION_0 ||
+                        display.rotation == Surface.ROTATION_180)
+                    wallpaperManager.setBitmap(pickWideImage())
+                else
+                    wallpaperManager.setBitmap(pickHighImage())
+            }
         }
+    }
 
-        return bitmap
+    fun unsubscribeToScreenEvents() {
+        subscription?.unsubscribe()
+        subscription = null
+    }
+
+    fun enableWallpaperService(enable: Boolean) {
+        if (enable && subscription == null) {
+            subscribeToScreenEvents()
+        } else {
+            unsubscribeToScreenEvents()
+        }
+    }
+
+    fun hasOrientationChanged(): Boolean {
+        val size = Point()
+        display.getSize(size)
+        val result = displaySize.equals(size)
+        displaySize = size
+        return result
+    }
+
+    fun pickHighImage(): Bitmap {
+        var bitmap = pickImage()
+        while (bitmap.width > bitmap.height) {
+            bitmap = pickImage()
+        }
+        return resize(bitmap)
     }
 
     fun pickWideImage(): Bitmap {
-        val i = (Math.random() * list.size).toInt()
-        val post = list[i]
-        var bitmap = BitmapFactory.decodeFile(post.file?.absolutePath)
-        if (bitmap.width < bitmap.height) {
-            bitmap = pickWideImage()
+        var bitmap = pickImage()
+        while (bitmap.width < bitmap.height) {
+            bitmap = pickImage()
         }
         return resize(bitmap)
+    }
+
+    fun pickImage(): Bitmap {
+        var i = (Math.random() * list.size).toInt()
+        var post = list[i]
+        return BitmapFactory.decodeFile(post.file?.absolutePath)
     }
 
     private fun resize(image: Bitmap): Bitmap {
@@ -86,7 +128,6 @@ class WallpaperService : Service(), KodeinInjected {
         val height = image.height
         val ratioBitmap = width.toFloat() / height.toFloat()
         val ratioMax = displayWidth.toFloat() / displayHeight.toFloat()
-        Log.e("Wallp", "ratiobit $ratioBitmap ratimax $ratioMax display $displayWidth x $displayHeight")
 
         var finalWidth = displayWidth
         var finalHeight = displayHeight
@@ -95,12 +136,10 @@ class WallpaperService : Service(), KodeinInjected {
         } else {
             finalHeight = (displayWidth.toFloat() / ratioBitmap).toInt()
         }
-        Log.e("Wallp", "$finalWidth $finalHeight")
         return addPading(Bitmap.createScaledBitmap(image, finalWidth, finalHeight, true))
     }
 
     fun addPading(wallpaper: Bitmap): Bitmap {
-        val wallpaperManager = WallpaperManager.getInstance(this)
 
         if (wallpaperManager.desiredMinimumWidth > wallpaper.width &&
                 wallpaperManager.desiredMinimumHeight > wallpaper.height) {

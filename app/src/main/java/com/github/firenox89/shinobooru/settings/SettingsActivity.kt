@@ -15,6 +15,7 @@ import android.view.MenuItem
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.PostLoader
+import com.github.firenox89.shinobooru.service.WallpaperService
 import com.github.firenox89.shinobooru.ui.Thumbnails
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
@@ -72,6 +73,7 @@ class SettingsActivity : PreferenceActivity() {
         return PreferenceFragment::class.java.name == fragmentName
                 || UIPreferenceFragment::class.java.name == fragmentName
                 || RatingPreferenceFragment::class.java.name == fragmentName
+                || WallpaperPreferenceFragment::class.java.name == fragmentName
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -107,6 +109,18 @@ class SettingsActivity : PreferenceActivity() {
                 updateThumbnail.onNext(any.toString().toInt()); true
             }
             findPreference("post_per_row_list").onPreferenceChangeListener = changeListener
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    class WallpaperPreferenceFragment : PreferenceFragment() {
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            addPreferencesFromResource(R.xml.pref_wallpaper)
+
+            val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
+                WallpaperService.instance.enableWallpaperService(any.toString().toBoolean()); true }
+            findPreference("enable_wallpaper").onPreferenceChangeListener = changeListener
         }
     }
 
