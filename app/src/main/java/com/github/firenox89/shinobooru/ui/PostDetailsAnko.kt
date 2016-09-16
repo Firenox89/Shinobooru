@@ -3,15 +3,18 @@ package com.github.firenox89.shinobooru.ui
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.text.Html
+import android.text.method.LinkMovementMethod
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.Post
 import org.jetbrains.anko.*
-
 
 class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
     override fun createView(ui: AnkoContext<T>): View = with(ui) {
@@ -19,15 +22,12 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
         verticalLayout {
             verticalLayout {
                 textView {
-                    padding = dip(10)
                     text = "Size ${humanizeSize(post.file_size)}"
                 }
                 textView {
-                    padding = dip(10)
                     text = "Dimension ${post.width}x${post.height}"
                 }
                 imageButton {
-                    padding = dip(10)
                     imageBitmap = downloadIcon
                     onClick {
                         post.downloadFile()
@@ -38,15 +38,12 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
             if (post.jpeg_file_size != 0) {
                 verticalLayout {
                     textView {
-                        padding = dip(10)
                         text = "Jpeg Size ${humanizeSize(post.jpeg_file_size)}"
                     }
                     textView {
-                        padding = dip(10)
                         text = "Jpeg Dimension ${post.jpeg_width}x${post.jpeg_height}"
                     }
                     imageButton {
-                        padding = dip(10)
                         imageBitmap = downloadIcon
                         onClick {
                             post.downloadFile()
@@ -55,11 +52,45 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                     }
                 }
             }
-
-            listView {
-                adapter = ArrayAdapter<String>(ctx, R.layout.listitem_tag, post.tags.split(" "))
-                onItemClick {
-                    adapterView, view, i, l -> searchForTag(ctx, (view as TextView).text.toString())
+            textView {
+                text = "Author ${post.author}"
+            }
+            if (post.source.isNotEmpty()) {
+                linearLayout {
+                    gravity = Gravity.CENTER
+                    textView {
+                        text = "Source"
+                    }
+                    textView {
+                        text = Html.fromHtml("<a href=\"${post.source}\">${post.source}</a>")
+                        movementMethod = LinkMovementMethod.getInstance()
+                    }
+                }
+            }
+            verticalLayout {
+                gravity = Gravity.CENTER
+                linearLayout {
+                    textView {
+                        text = "Tags"
+                    }
+                    listView {
+                        adapter = ArrayAdapter<String>(ctx, R.layout.listitem_tag, post.tags.split(" "))
+                        onItemClick {
+                            adapterView, view, i, l ->
+                            searchForTag(ctx, (view as TextView).text.toString())
+                        }
+                    }
+                }
+            }
+        }.applyRecursively { view ->
+            when (view) {
+                is TextView -> {
+                    view.padding = dip(10)
+                    view.gravity = Gravity.CENTER
+                    view.textSize = 24.toFloat()
+                }
+                is ImageButton -> {
+                    view.padding = dip(10)
                 }
             }
         }
