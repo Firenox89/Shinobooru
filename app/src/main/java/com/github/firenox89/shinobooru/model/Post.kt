@@ -137,6 +137,6 @@ data class Post(
     }
 
     fun wasViewd(): Boolean {
-        return PostLoader.instance.postViewed(id)
+        return PostLoader.postViewed(id)
     }
 }

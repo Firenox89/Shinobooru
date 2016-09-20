@@ -12,11 +12,13 @@ import com.github.firenox89.shinobooru.model.PostLoader
 import rx.Observable
 import rx.lang.kotlin.PublishSubject
 import kotterknife.bindView
+import rx.Subscription
 
-class ThumbnailAdapter(val postLoader: PostLoader) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
+class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
     private val onClickSubject = PublishSubject<Int>()
     var usePreview = true
+    lateinit var subscription: Subscription
 
     val loadingBitmap: Bitmap by lazy {
         val rect = Rect(0, 0, 250, 400)
@@ -30,7 +32,11 @@ class ThumbnailAdapter(val postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
     }
 
     init {
-        postLoader.getRangeChangeEventStream().subscribe {
+        subscribeLoader()
+    }
+
+    fun subscribeLoader() {
+        subscription = postLoader.getRangeChangeEventStream().subscribe {
             //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
             if (it.first != 0) {
                 val (posi, count) = it
@@ -39,6 +45,13 @@ class ThumbnailAdapter(val postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
                 notifyDataSetChanged()
             }
         }
+    }
+
+    fun resetPostLoader(postLoader: PostLoader) {
+        subscription.unsubscribe()
+        this.postLoader = postLoader
+        subscribeLoader()
+        notifyDataSetChanged()
     }
 
     override fun onBindViewHolder(holder: PostViewHolder?, position: Int) {
@@ -73,7 +86,7 @@ class ThumbnailAdapter(val postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
     class PostViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         //TODO: show already download
         //TODO: mark view posts
-        val image: ImageView by bindView(R.id.postImage)
+        val image by bindView<ImageView>(R.id.postImage)
         val downloadedIcon by bindView<ImageView>(R.id.downLoaded)
         val viewedIcon by bindView<ImageView>(R.id.viewedIcon)
     }

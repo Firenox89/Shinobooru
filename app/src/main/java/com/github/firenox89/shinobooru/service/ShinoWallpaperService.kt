@@ -42,14 +42,12 @@ class ShinoWallpaperService : WallpaperService() {
         private var displayWidth: Int = 0
         private var displayHeight: Int = 0
 
-        val list = mutableListOf<Post>()
+        val postList = FileManager.getAllPosts()
 
         private val clickEventStream = PublishSubject<MotionEvent>()
 
         init {
             inject(appKodein())
-
-            FileManager.boards.forEach { list.addAll(it.value) }
 
             clickEventStream.buffer(800, TimeUnit.MILLISECONDS).forEach {
                 when (it.size) {
@@ -83,15 +81,19 @@ class ShinoWallpaperService : WallpaperService() {
                 try {
                     val image = pickImage()
                     val transformationInfo = calcTransformation(image)
-                    val paint = Paint()
-                    paint.color = 0x000000
-                    paint.alpha = 255
-                    //TODO: check if a previous job is still holing the lock
+                    val black = Paint()
+                    black.color = 0x000000
+                    black.alpha = 255
+                    val filter = Paint()
+                    filter.isAntiAlias = true
+                    filter.isFilterBitmap = true
+                    filter.isDither = true
+                    //TODO: check if a previous job is still holding the lock
                     canvas = holder.lockCanvas()
-                    canvas.drawPaint(paint)
+                    canvas.drawPaint(black)
                     canvas.translate(transformationInfo.second.x.toFloat() / 2,
                             transformationInfo.second.y.toFloat() / 2)
-                    canvas.drawBitmap(image, transformationInfo.first, null)
+                    canvas.drawBitmap(image, transformationInfo.first, filter)
                 } finally {
                     if (canvas != null)
                         holder.unlockCanvasAndPost(canvas)
@@ -141,8 +143,8 @@ class ShinoWallpaperService : WallpaperService() {
         }
 
         private fun pickRandomPost(): Post {
-            var i = (Math.random() * list.size).toInt()
-            return list[i]
+            var i = (Math.random() * postList.size).toInt()
+            return postList[i]
         }
 
         private fun getBounds(path: String): Pair<Int, Int> {

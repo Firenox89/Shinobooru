@@ -82,7 +82,7 @@ class SettingsActivity : PreferenceActivity() {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_rating)
 
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.instance.onRefresh(); true }
+            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.ratingChanged(); true }
             findPreference("rating_safe").onPreferenceChangeListener = changeListener
             findPreference("rating_questionable").onPreferenceChangeListener = changeListener
             findPreference("rating_explicit").onPreferenceChangeListener = changeListener
@@ -130,6 +130,8 @@ class SettingsActivity : PreferenceActivity() {
         var konachanURL = "http://konachan.com"
 
         var currentBoardURL = yandereURL
+
+        val imageBoards = mutableListOf(yandereURL, konachanURL)
 
         val pref = PreferenceManager.getDefaultSharedPreferences(Shinobooru.appContext)
 

@@ -46,7 +46,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                     imageButton {
                         imageBitmap = downloadIcon
                         onClick {
-                            post.downloadFile()
+                            post.downloadJpeg()
                             showToast(ctx, post.file_url)
                         }
                     }

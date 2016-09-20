@@ -11,6 +11,7 @@ import java.io.File
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import java.util.regex.Pattern
 
 object FileManager {
 
@@ -49,10 +50,15 @@ object FileManager {
 
     fun downloadFileToStorage(url: String, post: Post) {
         checkExternalStorage()
+        val pattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
+        val matcher = pattern.matcher(url)
+        matcher.find()
+        val board = matcher.group(1)
+
         url.httpDownload().destination { res, realUrl ->
-            val boardSubDirName = getImageSource()
+            val boardSubDirName = board
             val dataType = url.split(".").last()
-            val fileName = "${getImageSource()} ${post.id} ${post.tags}.$dataType"
+            val fileName = "$board ${post.id} ${post.tags}.$dataType"
             val boardSubDir = File(shinobooruImageDir, boardSubDirName)
 
             boardSubDir.mkdirs()
@@ -73,17 +79,18 @@ object FileManager {
         }
     }
 
-    fun getImageSource(): String {
-        //TODO: parse that from url
-        return PostLoader.instance.getCurrentURL().replace(Regex("http[s]?://"), "")
+    fun getPosts(board: String): List<Post>? {
+        return boards[board]
     }
 
-    fun getPosts(): List<Post>? {
-        return boards[getImageSource()]
+    fun getAllPosts(): List<Post> {
+        val list = mutableListOf<Post>()
+        boards.forEach { list.addAll(it.value) }
+        return list
     }
 
-    fun fileById(id: Long): File? {
-        return boards[getImageSource()]?.filter { it.id == id }?.first()?.file
+    fun fileById(board: String, id: Long): File? {
+        return boards[board]?.filter { it.id == id }?.first()?.file
     }
 
     fun previewBitmapFromCache(id: Long): Bitmap? {

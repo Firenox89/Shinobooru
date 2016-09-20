@@ -1,21 +1,15 @@
 package com.github.firenox89.shinobooru.ui
 
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Point
 import android.os.Bundle
 import android.support.v4.app.*
 import android.support.v4.view.ViewPager
-import android.support.v7.app.NotificationCompat
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.PostLoader
@@ -24,9 +18,9 @@ import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
 import com.ortiz.touch.TouchImageView
+import org.jetbrains.anko.AnkoContext
 import rx.lang.kotlin.PublishSubject
 import java.util.concurrent.TimeUnit
-import org.jetbrains.anko.*
 
 class PostPagerActivity : FragmentActivity(), KodeinInjected {
 
@@ -46,15 +40,14 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
     private val onPostSwitch = PublishSubject<Int>()
     private val clickEventStream = PublishSubject<MotionEvent>()
 
-    lateinit private var tags: String
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         inject(appKodein())
 
-        tags = intent.getStringExtra("tags") ?: ""
-        postLoader = PostLoader.loaderForTags(tags)
+        val board = intent.getStringExtra("board") ?: ""
+        val tags = intent.getStringExtra("tags") ?: ""
+        postLoader = PostLoader.getLoader(board, tags)
 
         val post = intent.getSerializableExtra(resources.getString(R.string.post_class)) as Post
 
@@ -64,7 +57,6 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         verticalPager.adapter = PostPagerAdapter(supportFragmentManager)
         verticalPager.currentItem = postLoader.getPositionFor(post)
 
-        //TODO: record time intervals and suggest "slideshow mode"
         onPostSwitch.subscribe { runOnUiThread { verticalPager.currentItem += it } }
 
         clickEventStream.buffer(100, TimeUnit.MILLISECONDS).forEach {
@@ -155,7 +147,7 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
     class PostDetailsPagerAdapter(fm: FragmentManager, val post: Post, val context: Context) : FragmentPagerAdapter(fm) {
 
         init {
-            PostLoader.instance.addPostIdToViewedList(post.id)
+            PostLoader.addPostIdToViewedList(post.id)
         }
         //TODO: intercept click events
         override fun getItem(position: Int): Fragment? {

@@ -4,41 +4,52 @@ import com.github.firenox89.shinobooru.settings.SettingsActivity
 import rx.Observable
 import rx.lang.kotlin.PublishSubject
 
-class PostLoader(tags: String = "") {
+open class PostLoader(val board: String, val tags: String = "") {
 
     companion object {
-        val instance = PostLoader()
-        val loaderList = mutableMapOf<String, PostLoader>().apply {
-            put("", instance)
-        }
-        fun loaderForTags(tags: String): PostLoader {
-            var loader = loaderList[tags]
+        val loaderList = mutableListOf<PostLoader>().apply { add(FileLoader()) }
+
+        fun getLoader(board: String, tags: String = ""): PostLoader {
+            var loader = loaderList.find { it.board.equals(board) && it.tags.equals(tags) }
             if (loader == null) {
-                loader = PostLoader(tags)
-                loaderList.put(tags, loader)
+                loader = PostLoader(board, tags)
+                loaderList.add(loader)
             }
             return loader
         }
+        private val viewedList = FileManager.loadViewedList() ?: mutableListOf<Long>()
+
+        fun addPostIdToViewedList(id: Long) {
+            viewedList.add(id)
+            //TODO: hook this to app closing event
+            FileManager.saveViewedList(viewedList)
+        }
+
+        fun postViewed(id: Long): Boolean {
+            return id in viewedList
+        }
+
+        fun ratingChanged() {
+            loaderList.forEach { it.onRefresh() }
+        }
     }
+
     private val initLoadSize = 40
     private val posts = mutableListOf<Post>()
     private val rangeChangeEventStream = PublishSubject<Pair<Int, Int>>()
-    private var fileMode = false
-    private val viewedList = FileManager.loadViewedList() ?: mutableListOf<Long>()
-    private var apiWrapper: ApiWrapper = ApiWrapper(tags)
+
+    private var currentPage = 1
 
     init {
         requestNextPosts(initLoadSize)
     }
 
-    fun getPostAt(position: Int): Post? {
+    open fun getPostAt(position: Int): Post? {
         return posts[position]
     }
 
-    fun requestNextPosts(quantity: Int = 20) {
-        //nothing to request in file mode
-        if (!fileMode) {
-            apiWrapper.request {
+    open fun requestNextPosts(quantity: Int = 20) {
+            ApiWrapper.request(board, currentPage++, tags) {
                 //TODO: order results before adding
                 val currentSize = posts.size
                 val tmpList = mutableListOf<Post>()
@@ -54,14 +65,13 @@ class PostLoader(tags: String = "") {
                 if (count < quantity)
                     requestNextPosts(quantity - count)
             }
-        }
     }
 
-    fun getCount(): Int {
+    open fun getCount(): Int {
         return posts.size
     }
 
-    fun getPositionFor(post: Post): Int {
+    open fun getPositionFor(post: Post): Int {
         return posts.indexOf(post)
     }
 
@@ -69,41 +79,11 @@ class PostLoader(tags: String = "") {
         return rangeChangeEventStream.asObservable()
     }
 
-    fun onRefresh(quantity: Int = -1) {
+    open fun onRefresh(quantity: Int = -1) {
         //TODO: insert new images on top instead of reload everything
         val currentcount = getCount()
         posts.clear()
-        apiWrapper.onRefresh()
+        currentPage = 1
         requestNextPosts(if (quantity < 0) currentcount else quantity)
-    }
-
-    fun setBaseURL(url: String) {
-        fileMode = false
-        apiWrapper.setBaseURL(url)
-        onRefresh(initLoadSize)
-    }
-
-    fun getCurrentURL(): String {
-        return apiWrapper.url
-    }
-
-    fun setFileMode() {
-        fileMode = true
-        val postList = FileManager.getPosts()
-        if (postList != null) {
-            posts.clear()
-            posts.addAll(postList)
-            rangeChangeEventStream.onNext(Pair(0, postList.size))
-        }
-    }
-
-    fun addPostIdToViewedList(id: Long) {
-        viewedList.add(id)
-        //TODO: hook this to app closing event
-        FileManager.saveViewedList(viewedList)
-    }
-
-    fun postViewed(id: Long): Boolean {
-        return id in viewedList
     }
 }

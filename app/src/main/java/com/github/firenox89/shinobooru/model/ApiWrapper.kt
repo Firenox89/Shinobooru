@@ -9,11 +9,7 @@ import rx.schedulers.Schedulers
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-class ApiWrapper(val tags: String = "") {
-
-    var url: String = SettingsActivity.currentBoardURL
-    val json: Boolean = true
-    var currentPage = 1
+object ApiWrapper {
     private val requestScheduler = Schedulers.from(Executors.newCachedThreadPool())
     private val requestQueue = PublishSubject<Request>()
     private var throttle = 10L
@@ -23,13 +19,8 @@ class ApiWrapper(val tags: String = "") {
         FuelManager.instance.baseHeaders = mapOf("User-Agent" to "Java/1.8.0_92")
         requestQueue.throttleFirst(throttle, TimeUnit.MILLISECONDS, requestScheduler).
                 subscribe {
-                    //if we set baseURL beforehand, simply use relativePath
-                    val params = "?limit=${it.limit}${if (it.page > 1) "&page=${it.page}" else ""}" +
-                            "${if (tags != "") "&tags=$tags" else ""}"
-                    var requestString = "$url/post${if (json) ".json" else ".xml"}$params"
 
-                    currentPage++
-                    val getR = requestString.httpGet()
+                    val getR = it.request.httpGet()
                     getR.responseObject(Post.Deserializer()) { req, res, result ->
                         //result is of type Result<User, Exception>
                         val (post, err) = result
@@ -42,24 +33,18 @@ class ApiWrapper(val tags: String = "") {
                 }
     }
 
-    fun setBaseURL(url: String) {
-        this.url = url
-        when (url) {
-            SettingsActivity.yandereURL -> throttle = 10
-            SettingsActivity.konachanURL -> throttle = 300
-        }
-    }
-
-    fun onRefresh() {
-        currentPage = 1
-    }
-
     //TODO: request limits
-    fun request(limit: Int = 20, page: Int = currentPage, handler: (Array<Post>?) -> Unit) {
-        requestQueue.onNext(Request(limit, page, handler))
+    fun request(board: String,
+                page: Int,
+                tags: String = "",
+                limit: Int = 20,
+                handler: (Array<Post>?) -> Unit) {
+        val params = "?limit=$limit${if (page > 1) "&page=$page" else ""}" +
+                "${if (tags != "") "&tags=$tags" else ""}"
+        var request = "$board/post.json$params"
+
+        requestQueue.onNext(Request(request, handler))
     }
 
-    data class Request(val limit: Int,
-                       val page: Int,
-                       val handler: (Array<Post>?) -> Unit)
+    data class Request(val request: String, val handler: (Array<Post>?) -> Unit)
 }
