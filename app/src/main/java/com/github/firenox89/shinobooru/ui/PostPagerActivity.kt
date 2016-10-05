@@ -190,7 +190,7 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
 
-            return PostDetailsAnko<Fragment>(post).createView(AnkoContext.Companion.create(context, this))
+            return PostDetailsAnko<Fragment>(post).createView(AnkoContext.create(context, this))
         }
 
     }

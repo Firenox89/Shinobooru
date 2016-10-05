@@ -21,13 +21,15 @@ object FileManager {
     //TODO: use sparseArray, maybe
     val boards = mutableMapOf<String, List<Post>>()
     val cachedFiles = mutableListOf<String>()
+    val cachedTags = mutableListOf<String>()
 
     init {
         checkExternalStorage()
         shinobooruImageDir.mkdirs()
         shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadPostListFromFile(it)) }
 
-        cachedFiles.addAll(Shinobooru.appContext.fileList())
+        cachedFiles.addAll(Shinobooru.appContext.fileList().filter { !it.endsWith(".tag") })
+        cachedTags.addAll(Shinobooru.appContext.fileList().filter { it.endsWith(".tag") })
     }
 
     private fun loadPostListFromFile(dir: File): List<Post> {
@@ -105,6 +107,23 @@ object FileManager {
         it?.compress(Bitmap.CompressFormat.PNG, 85, fos)
         fos.close()
         cachedFiles.add("$id")
+    }
+
+    fun tagFromCache(name: String): Tag? {
+        val fileName = "$name.tag"
+        if (cachedTags.contains(fileName)) {
+            return ObjectInputStream(Shinobooru.appContext.openFileInput(fileName)).
+                    let { val tag = it.readObject() as Tag; it.close(); tag }
+        } else {
+            return null
+        }
+    }
+
+    fun tagToCache(tag: Tag) {
+        val fileName = "${tag.name}.tag"
+        ObjectOutputStream(Shinobooru.appContext.openFileOutput(fileName, Context.MODE_PRIVATE)).
+                apply { writeObject(tag) }.close()
+        cachedTags.add(fileName)
     }
 
     fun syncPosts() {

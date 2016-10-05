@@ -17,13 +17,11 @@ import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
 import org.jetbrains.anko.doAsync
 import rx.lang.kotlin.PublishSubject
+import rx.schedulers.Schedulers
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class ShinoWallpaperService : WallpaperService() {
-    override fun onCreateEngine(): Engine {
-        return ShinoWallpaperEngine()
-    }
-
     companion object {
         fun setWallpaperService(context: Context) {
             val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
@@ -32,6 +30,10 @@ class ShinoWallpaperService : WallpaperService() {
                     ComponentName(context, ShinoWallpaperService::class.java))
             context.startActivity(intent)
         }
+    }
+
+    override fun onCreateEngine(): Engine {
+        return ShinoWallpaperEngine()
     }
 
     inner class ShinoWallpaperEngine() : Engine(), KodeinInjected {
@@ -45,6 +47,8 @@ class ShinoWallpaperService : WallpaperService() {
         val postList = FileManager.getAllPosts()
 
         private val clickEventStream = PublishSubject<MotionEvent>()
+        private val drawRequestQueue = PublishSubject<() -> Unit>()
+        private val drawScheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 
         init {
             inject(appKodein())
@@ -54,6 +58,8 @@ class ShinoWallpaperService : WallpaperService() {
                     2 -> draw()
                 }
             }
+
+            drawRequestQueue.debounce(1000, TimeUnit.MILLISECONDS, drawScheduler).subscribe { it.invoke() }
         }
 
         override fun onVisibilityChanged(visible: Boolean) {
@@ -75,7 +81,7 @@ class ShinoWallpaperService : WallpaperService() {
         }
 
         private fun draw() {
-            doAsync {
+            drawRequestQueue.onNext {
                 val holder = surfaceHolder
                 var canvas: Canvas? = null
                 try {

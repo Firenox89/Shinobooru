@@ -8,12 +8,11 @@ import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.view.ViewGroup
+import android.widget.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.model.Tag
 import org.jetbrains.anko.*
 
 class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
@@ -74,7 +73,8 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                         text = "Tags"
                     }
                     listView {
-                        adapter = ArrayAdapter<String>(ctx, R.layout.listitem_tag, post.tags.split(" "))
+                        adapter = TagListAdapter(post)
+
                         onItemClick {
                             adapterView, view, i, l ->
                             searchForTag(ctx, (view as TextView).text.toString())
@@ -120,4 +120,62 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
     }
 
     fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
+
+    class TagListAdapter(val post: Post) : BaseAdapter(), ListAdapter {
+        var tagList = mutableListOf<Pair<Tag, Tag?>>()
+
+        init {
+            doAsync {
+                val tags = post.getTagList()
+                for (i in 0..tags.size - 1 step 2) {
+                    if (i + 1 < tags.size)
+                        tagList.add(Pair(tags[i], tags[i + 1]))
+                    else
+                        tagList.add(Pair(tags[i], null))
+                }
+                uiThread {
+                    notifyDataSetChanged()
+                }
+            }
+        }
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+            val layout = GridLayout(parent?.context)
+            val parentWithd = parent?.width ?: 400
+
+            val firstTag = tagList[position].first
+            val textView1 = TextView(parent?.context)
+            textView1.textSize = 24.toFloat()
+            textView1.gravity = Gravity.CENTER
+            textView1.padding = 5
+            textView1.text = firstTag.name
+            textView1.textColor = firstTag.textColor
+            layout.addView(textView1, parentWithd / 2, -1)
+
+            val secondTag = tagList[position].second
+            if (secondTag != null) {
+                val textView2 = TextView(parent?.context)
+                textView2.textSize = 24.toFloat()
+                textView2.gravity = Gravity.CENTER
+                textView2.padding = 5
+                textView2.text = secondTag.name
+                textView2.textColor = secondTag.textColor
+                layout.addView(textView2, parentWithd / 2, -1)
+            }
+
+            return layout
+        }
+
+        override fun getItem(position: Int): Any {
+            return tagList[position]
+        }
+
+        override fun getItemId(position: Int): Long {
+            return position.toLong()
+        }
+
+        override fun getCount(): Int {
+            return tagList.size
+        }
+    }
 }

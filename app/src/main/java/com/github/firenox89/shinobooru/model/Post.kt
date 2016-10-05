@@ -10,6 +10,7 @@ import com.google.gson.Gson
 import java.io.File
 import java.io.InputStream
 import java.io.Serializable
+import java.util.regex.Pattern
 
 data class Post(
         var id: Long = 0,
@@ -61,6 +62,14 @@ data class Post(
     //Bitmap Deserializer
     class BitmapDeserializer : ResponseDeserializable<Bitmap> {
         override fun deserialize(inputStream: InputStream) = BitmapFactory.decodeStream(inputStream)
+    }
+
+    /**
+     * Returns a list view detailed tags.
+     * Must be call asynchronously
+     */
+    fun getTagList(): List<Tag> {
+        return tags.split(" ").map { Tag(name = it, board = getBoard()) }
     }
 
     fun loadPostFromID() {
@@ -138,5 +147,12 @@ data class Post(
 
     fun wasViewd(): Boolean {
         return PostLoader.postViewed(id)
+    }
+
+    fun getBoard(): String {
+        val pattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
+        val matcher = pattern.matcher(file_url)
+        matcher.find()
+        return matcher.group(1)
     }
 }

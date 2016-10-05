@@ -8,6 +8,7 @@ import android.support.v4.widget.DrawerLayout
 import android.support.v4.widget.SwipeRefreshLayout
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
+import android.util.Log
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
@@ -102,13 +103,13 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
     private fun setKonachan() {
         mDrawerLayout.closeDrawers()
-        recyclerView.scrollToPosition(1)
+        recyclerView.scrollTo(0, 0)
         recyclerAdapter.resetPostLoader(PostLoader.getLoader(SettingsActivity.konachanURL))
     }
 
     private fun setYandere() {
         mDrawerLayout.closeDrawers()
-        recyclerView.scrollToPosition(1)
+        recyclerView.scrollTo(0, 0)
         recyclerAdapter.resetPostLoader(PostLoader.getLoader(SettingsActivity.yandereURL))
     }
 
