@@ -15,7 +15,6 @@ import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
-import org.jetbrains.anko.doAsync
 import rx.lang.kotlin.PublishSubject
 import rx.schedulers.Schedulers
 import java.util.concurrent.Executors
@@ -83,26 +82,23 @@ class ShinoWallpaperService : WallpaperService() {
         private fun draw() {
             drawRequestQueue.onNext {
                 val holder = surfaceHolder
-                var canvas: Canvas? = null
-                try {
-                    val image = pickImage()
-                    val transformationInfo = calcTransformation(image)
-                    val black = Paint()
-                    black.color = 0x000000
-                    black.alpha = 255
-                    val filter = Paint()
-                    filter.isAntiAlias = true
-                    filter.isFilterBitmap = true
-                    filter.isDither = true
-                    //TODO: check if a previous job is still holding the lock
-                    canvas = holder.lockCanvas()
+                var canvas: Canvas?
+                val image = pickImage()
+                val transformationInfo = calcTransformation(image)
+                val black = Paint()
+                black.color = 0x000000
+                black.alpha = 255
+                val filter = Paint()
+                filter.isAntiAlias = true
+                filter.isFilterBitmap = true
+                filter.isDither = true
+                canvas = holder.lockCanvas()
+                if (canvas != null) {
                     canvas.drawPaint(black)
                     canvas.translate(transformationInfo.second.x.toFloat() / 2,
                             transformationInfo.second.y.toFloat() / 2)
                     canvas.drawBitmap(image, transformationInfo.first, filter)
-                } finally {
-                    if (canvas != null)
-                        holder.unlockCanvasAndPost(canvas)
+                    holder.unlockCanvasAndPost(canvas)
                 }
             }
         }
