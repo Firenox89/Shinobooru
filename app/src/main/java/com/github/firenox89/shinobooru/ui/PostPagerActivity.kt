@@ -71,9 +71,9 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
 
     fun singleClick() {
         if (y2 < height / 10)
-            onPostSwitch.onNext(1)
-        else if (y2 > height - height / 10)
             onPostSwitch.onNext(-1)
+        else if (y2 > height - height / 10)
+            onPostSwitch.onNext(1)
         else if (x2 < width / 10)
             finish()
     }
@@ -97,8 +97,8 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
                 }
             }
         }
-        super.dispatchTouchEvent(event)
-        return false
+
+        return super.dispatchTouchEvent(event)
     }
 
     inner class PostPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
