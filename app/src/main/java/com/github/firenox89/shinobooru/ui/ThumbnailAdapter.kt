@@ -2,17 +2,16 @@ package com.github.firenox89.shinobooru.ui
 
 import android.graphics.*
 import android.support.v7.widget.RecyclerView
-import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.RelativeLayout
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.PostLoader
+import org.jetbrains.anko.*
 import rx.Observable
-import rx.lang.kotlin.PublishSubject
-import kotterknife.bindView
 import rx.Subscription
+import rx.lang.kotlin.PublishSubject
 
 class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
@@ -54,20 +53,20 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         notifyDataSetChanged()
     }
 
-    override fun onBindViewHolder(holder: PostViewHolder?, position: Int) {
+    override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = postLoader.getPostAt(position)
         if (postLoader.getCount() - position > 5) postLoader.requestNextPosts()
 
-        holder?.image?.setImageBitmap(loadingBitmap)
+        holder.postImage.setImageBitmap(loadingBitmap)
         //if the recyclerView is set to one image per row use the sample image for quality reasons
         if (usePreview)
-            post?.loadPreview { holder?.image?.setImageBitmap(it) }
+            post?.loadPreview { holder.postImage.setImageBitmap(it) }
         else
-            post?.loadSample { holder?.image?.setImageBitmap(it) }
+            post?.loadSample { holder.postImage.setImageBitmap(it) }
 
-        holder?.downloadedIcon?.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
-        holder?.viewedIcon?.visibility = if (post?.wasViewd() ?: false) View.VISIBLE else View.INVISIBLE
-        holder?.itemView?.setOnClickListener { onClickSubject.onNext(position) }
+        holder.downloadedIcon.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
+        holder.viewedIcon.visibility = if (post?.wasViewd() ?: false) View.VISIBLE else View.INVISIBLE
+        holder.itemView?.setOnClickListener { onClickSubject.onNext(position) }
     }
 
     fun getPositionClicks(): Observable<Int> {
@@ -78,16 +77,48 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         return postLoader.getCount()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): PostViewHolder {
-        val v = LayoutInflater.from(parent?.context).inflate(R.layout.view_holder_image, parent, false)
-        return PostViewHolder(v)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
+        return PostViewHolder(RelativeLayout(parent.context))
     }
 
-    class PostViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        //TODO: show already download
-        //TODO: mark view posts
-        val image by bindView<ImageView>(R.id.postImage)
-        val downloadedIcon by bindView<ImageView>(R.id.downLoaded)
-        val viewedIcon by bindView<ImageView>(R.id.viewedIcon)
+    class PostViewHolder(parent: ViewGroup) : RecyclerView.ViewHolder(parent) {
+        lateinit var postImage: ImageView
+        lateinit var downloadedIcon: ImageView
+        lateinit var viewedIcon: ImageView
+
+        init {
+            parent.addView(with(AnkoContext.create(parent.context, parent)) {
+                relativeLayout {
+                    lparams(width = matchParent, height = wrapContent)
+                    imageView {
+                        postImage = this
+                        padding = 5
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                        adjustViewBounds = true
+                        lparams(width = matchParent, height = wrapContent)
+                    }
+                    linearLayout {
+                        layoutParams =
+                                RelativeLayout.LayoutParams(
+                                        RelativeLayout.LayoutParams.MATCH_PARENT,
+                                        RelativeLayout.LayoutParams.MATCH_PARENT)
+                                        .apply {
+                                            addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+                                            addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+                                        }
+                        imageView {
+                            downloadedIcon = this
+                            imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.view_32x32)
+                            padding = 10
+                        }
+                        imageView {
+                            viewedIcon = this
+                            imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.cloud_download_2_32x32)
+                            padding = 10
+                        }
+                    }
+                }
+            })
+        }
     }
 }

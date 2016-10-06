@@ -26,7 +26,6 @@ class VerticalViewPager(context: Context) : ViewPager(context) {
     private class VerticalPageTransformer : ViewPager.PageTransformer {
 
         override fun transformPage(view: View, position: Float) {
-            Log.e("VVP", "$position")
 
             if (position < -1) { // [-Infinity,-1)
                 // This page is way off-screen to the left.
@@ -58,8 +57,6 @@ class VerticalViewPager(context: Context) : ViewPager(context) {
 
         val newX = ev.y / height * width
         val newY = ev.x / width * height
-
-//        Log.e("VVP", "w $width h $height y ${ev.y} x ${ev.x} ny $newY nx $newX")
 
         ev.setLocation(newX, newY)
 

@@ -135,12 +135,13 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
 
-            val rootView: View? = inflater?.inflate(R.layout.fragment_post, container, false)
+//            val rootView: View? = inflater?.inflate(R.layout.fragment_post, container, false)
 
-            val viewPager = rootView?.findViewById(R.id.post_details_pager) as ViewPager
+            val viewPager = ViewPager(context)
+            viewPager.id = 987654321
             viewPager.adapter = PostDetailsPagerAdapter(childFragmentManager, post, this.context)
 
-            return rootView
+            return viewPager
         }
     }
 
@@ -176,12 +177,9 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
 
-            val rootView: View? = inflater?.inflate(R.layout.fragment_post_image, container, false)
-
-            val imageview = rootView?.findViewById(R.id.postImage) as TouchImageView
-            //TODO: check sizes
+            val imageview = TouchImageView(context)
             post.loadSample { imageview.setImageBitmap(it) }
-            return rootView
+            return imageview
         }
     }
 

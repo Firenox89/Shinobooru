@@ -3,15 +3,17 @@ package com.github.firenox89.shinobooru.ui
 import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
-import android.support.v4.widget.SwipeRefreshLayout
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
-import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.ListView
+import android.widget.BaseAdapter
+import android.widget.TextView
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.PostLoader
@@ -20,8 +22,10 @@ import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
-import kotterknife.bindView
-import org.jetbrains.anko.startActivity
+import org.jetbrains.anko.*
+import org.jetbrains.anko.recyclerview.v7.recyclerView
+import org.jetbrains.anko.support.v4.drawerLayout
+import org.jetbrains.anko.support.v4.swipeRefreshLayout
 import rx.subjects.PublishSubject
 
 class ThumbnailActivity : Activity(), KodeinInjected {
@@ -32,8 +36,8 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
     private val recyclerLayout = StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL)
     lateinit private var recyclerAdapter: ThumbnailAdapter
-    private val recyclerView: RecyclerView by bindView(R.id.recycleView)
-    private val mDrawerLayout: DrawerLayout by bindView(R.id.drawer_layout)
+    lateinit private var recyclerView: RecyclerView
+    lateinit private var mDrawerLayout: DrawerLayout
 
     private val updateThumbnail: PublishSubject<Int> by instance("thumbnailUpdates")
 
@@ -46,20 +50,37 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
         inject(appKodein())
 
-        setContentView(R.layout.activity_thumbnails)
+        drawerLayout {
+            mDrawerLayout = this
+            fitsSystemWindows = true
+            swipeRefreshLayout {
+                setOnRefreshListener {
+                    recyclerAdapter.postLoader.onRefresh()
+                    isRefreshing = false
+                }
+                recyclerView {
+                    recyclerView = this
+                    adapter = recyclerAdapter
+                    layoutManager = recyclerLayout
+                }
+            }
+            listView {
+                //TODO: add header
+                adapter = MenuDrawerAdapter()
+                lparams(width = 500, height = matchParent, gravity = Gravity.START)
+                descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                backgroundColor = Color.parseColor("#111111")
+                dividerHeight = 0
+                divider.alpha = 0
 
-        //TODO: add header
-        val mDrawerList = findViewById(R.id.left_drawer) as ListView
-
-        val items: Array<String> = arrayOf("Settings", "FileView", "yande.re", "konachan.com")
-        mDrawerList.adapter = ArrayAdapter(this, R.layout.drawer_list_item, items)
-
-        mDrawerList.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
-            when (position) {
-                0 -> openSettings()
-                1 -> openFileView()
-                2 -> setYandere()
-                3 -> setKonachan()
+                onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
+                    when (position) {
+                        0 -> openSettings()
+                        1 -> openFileView()
+                        2 -> setYandere()
+                        3 -> setKonachan()
+                    }
+                }
             }
         }
 
@@ -72,16 +93,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
             startActivityForResult(intent, 1)
         }
 
-        recyclerView.adapter = recyclerAdapter
         updatePostPerRow(sharedPrefs.getString("post_per_row_list", "5").toInt())
-
-        recyclerView.layoutManager = recyclerLayout
-
-        val swipeRefresh = findViewById(R.id.swipe_refresh_layout) as SwipeRefreshLayout
-        swipeRefresh.setOnRefreshListener {
-            recyclerAdapter.postLoader.onRefresh()
-            swipeRefresh.isRefreshing = false
-        }
 
         updateThumbnail.subscribe { updatePostPerRow(it) }
     }
@@ -122,6 +134,32 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
     private fun openSettings() {
         startActivity<SettingsActivity>()
+    }
+
+    class MenuDrawerAdapter: BaseAdapter() {
+        val items: Array<String> = arrayOf("Settings", "FileView", "yande.re", "konachan.com")
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+            val textView = TextView(parent?.context)
+            textView.textSize = 24F
+            textView.gravity = Gravity.CENTER
+            textView.padding = 10
+            textView.text = items[position]
+            return textView
+        }
+
+        override fun getItem(position: Int): Any {
+            return items[position]
+        }
+
+        override fun getItemId(position: Int): Long {
+            return position.toLong()
+        }
+
+        override fun getCount(): Int {
+            return items.size
+        }
+
     }
 }
 
