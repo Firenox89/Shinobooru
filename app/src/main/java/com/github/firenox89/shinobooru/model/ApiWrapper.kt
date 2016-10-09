@@ -53,8 +53,10 @@ object ApiWrapper {
     }
 
     fun requestTag(board: String, name: String): String {
+        Log.i("AW", "Tag from board $board with name $name")
         var jsonRespone = "Fail"
-        val requestString = "https://$board/tag.json?name=$name"
+        //add protocol if it is missing
+        val requestString = "${if (board.startsWith("http")) "" else "https://"}$board/tag.json?name=$name&limit=0"
         val (request, response, result) = requestString.httpGet()
                 .header(mapOf("User-Agent" to "Java/1.8.0_92")).responseString()
         val (tag, err) = result

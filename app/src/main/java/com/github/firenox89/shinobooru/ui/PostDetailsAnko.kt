@@ -74,11 +74,6 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                     }
                     listView {
                         adapter = TagListAdapter(post)
-
-                        onItemClick {
-                            adapterView, view, i, l ->
-                            searchForTag(ctx, (view as TextView).text.toString())
-                        }
                     }
                 }
             }
@@ -96,12 +91,6 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
         }
     }
 
-    fun searchForTag(ctx: Context, tag: String) {
-        Log.e("PDA", "tags $tag")
-        val intent = Intent(ctx, ThumbnailActivity::class.java)
-        intent.putExtra("tags", tag)
-        ctx.startActivity(intent)
-    }
 
     fun showToast(context: Context, url: String) {
         val text = "Download $url"
@@ -139,27 +128,35 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
             }
         }
 
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            val layout = GridLayout(parent?.context)
-            val parentWithd = parent?.width ?: 400
+        fun searchForTag(ctx: Context, tag: String) {
+            val intent = Intent(ctx, ThumbnailActivity::class.java)
+            intent.putExtra("tags", tag)
+            ctx.startActivity(intent)
+        }
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val layout = GridLayout(parent.context)
+            val parentWithd = parent.width
 
             val firstTag = tagList[position].first
-            val textView1 = TextView(parent?.context)
+            val textView1 = TextView(parent.context)
             textView1.textSize = 24.toFloat()
             textView1.gravity = Gravity.CENTER
             textView1.padding = 5
             textView1.text = firstTag.name
-            textView1.textColor = firstTag.textColor
+            textView1.textColor = firstTag.getTextColor()
+            textView1.onClick { searchForTag(parent.context, firstTag.name) }
             layout.addView(textView1, parentWithd / 2, -1)
 
             val secondTag = tagList[position].second
             if (secondTag != null) {
-                val textView2 = TextView(parent?.context)
+                val textView2 = TextView(parent.context)
                 textView2.textSize = 24.toFloat()
                 textView2.gravity = Gravity.CENTER
                 textView2.padding = 5
                 textView2.text = secondTag.name
-                textView2.textColor = secondTag.textColor
+                textView2.textColor = secondTag.getTextColor()
+                textView2.onClick { searchForTag(parent.context, secondTag.name) }
                 layout.addView(textView2, parentWithd / 2, -1)
             }
 

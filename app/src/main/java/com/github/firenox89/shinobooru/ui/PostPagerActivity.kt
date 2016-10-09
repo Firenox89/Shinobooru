@@ -135,8 +135,6 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
 
-//            val rootView: View? = inflater?.inflate(R.layout.fragment_post, container, false)
-
             val viewPager = ViewPager(context)
             viewPager.id = 987654321
             viewPager.adapter = PostDetailsPagerAdapter(childFragmentManager, post, this.context)
