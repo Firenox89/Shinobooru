@@ -65,7 +65,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
             post?.loadSample { holder.postImage.setImageBitmap(it) }
 
         holder.downloadedIcon.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
-        holder.viewedIcon.visibility = if (post?.wasViewd() ?: false) View.VISIBLE else View.INVISIBLE
+        holder.viewedIcon.visibility = if (post?.wasViewed() ?: false) View.VISIBLE else View.INVISIBLE
         holder.itemView?.setOnClickListener { onClickSubject.onNext(position) }
     }
 

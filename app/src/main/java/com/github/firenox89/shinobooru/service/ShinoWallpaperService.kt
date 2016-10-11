@@ -81,24 +81,22 @@ class ShinoWallpaperService : WallpaperService() {
 
         private fun draw() {
             drawRequestQueue.onNext {
-                val holder = surfaceHolder
-                var canvas: Canvas?
-                val image = pickImage()
-                val transformationInfo = calcTransformation(image)
-                val black = Paint()
-                black.color = 0x000000
-                black.alpha = 255
-                val filter = Paint()
-                filter.isAntiAlias = true
-                filter.isFilterBitmap = true
-                filter.isDither = true
-                canvas = holder.lockCanvas()
-                if (canvas != null) {
+                if (surfaceHolder.surface.isValid) {
+                    val image = pickImage()
+                    val transformationInfo = calcTransformation(image)
+                    val black = Paint()
+                    black.color = 0x000000
+                    black.alpha = 255
+                    val filter = Paint()
+                    filter.isAntiAlias = true
+                    filter.isFilterBitmap = true
+                    filter.isDither = true
+                    val canvas = surfaceHolder.lockCanvas()
                     canvas.drawPaint(black)
                     canvas.translate(transformationInfo.second.x.toFloat() / 2,
                             transformationInfo.second.y.toFloat() / 2)
                     canvas.drawBitmap(image, transformationInfo.first, filter)
-                    holder.unlockCanvasAndPost(canvas)
+                    surfaceHolder.unlockCanvasAndPost(canvas)
                 }
             }
         }

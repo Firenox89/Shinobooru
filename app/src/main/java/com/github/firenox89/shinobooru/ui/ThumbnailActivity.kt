@@ -14,10 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.model.ApiWrapper
-import com.github.firenox89.shinobooru.model.Post
-import com.github.firenox89.shinobooru.model.PostLoader
-import com.github.firenox89.shinobooru.model.Tag
+import com.github.firenox89.shinobooru.model.*
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
@@ -136,7 +133,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val post = data?.getSerializableExtra(resources.getString(R.string.post_class)) as Post
-        recyclerView.scrollToPosition(recyclerAdapter.postLoader.getPositionFor(post))
+        recyclerView.scrollToPosition(recyclerAdapter.postLoader.getIndexOf(post))
     }
 
     fun updatePostPerRow(value: Int) {
@@ -212,12 +209,13 @@ class ThumbnailActivity : Activity(), KodeinInjected {
             return object : Filter() {
                 override fun performFiltering(constraint: CharSequence?): FilterResults {
                     val results = FilterResults()
+                    val board = recyclerAdapter.postLoader.board
 
-                    //constraint can be null
-                    if (!constraint.isNullOrBlank()) {
+                    //constraint can be null, FileLoader does not support tag search yet
+                    if (!constraint.isNullOrBlank() && recyclerAdapter.postLoader !is FileLoader) {
                         //tags are always lower case
                         val name = constraint.toString().toLowerCase().trim()
-                        val jsonResponse = ApiWrapper.requestTag(recyclerAdapter.postLoader.board, name)
+                        val jsonResponse = ApiWrapper.requestTag(board, name)
                         val tags = Gson().fromJson<Array<Tag>>(jsonResponse, Array<Tag>::class.java)
 
                         //TODO: could be settable
@@ -278,4 +276,3 @@ class ThumbnailActivity : Activity(), KodeinInjected {
         }
     }
 }
-

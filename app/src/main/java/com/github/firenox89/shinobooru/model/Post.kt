@@ -12,6 +12,10 @@ import java.io.InputStream
 import java.io.Serializable
 import java.util.regex.Pattern
 
+/**
+ * Data class to store the meta information of a post.
+ * Contains some utility functions.
+ */
 data class Post(
         var id: Long = 0,
         var tags: String = "",
@@ -54,24 +58,33 @@ data class Post(
         val fileSource: String = "",
         val file: File? = null /*FileManager.fileById(id)*/) : Serializable {
 
-    //Post Deserializer
-    class Deserializer : ResponseDeserializable<Array<Post>> {
+    /**
+     * Class to turn a JSON array into an array of posts using [Gson].
+     */
+    class PostDeserializer : ResponseDeserializable<Array<Post>> {
         override fun deserialize(content: String) = Gson().fromJson(content, Array<Post>::class.java)
     }
 
-    //Bitmap Deserializer
+    /**
+     * Class to turn an [InputStream] into a [Bitmap].
+     */
     class BitmapDeserializer : ResponseDeserializable<Bitmap> {
         override fun deserialize(inputStream: InputStream) = BitmapFactory.decodeStream(inputStream)
     }
 
     /**
-     * Returns a list view detailed tags.
-     * Must be call asynchronously
+     * Returns a list detailed tags.
+     * Must not be call from the ui thread since it loads the tag details via the [ApiWrapper].
+     *
+     * @return a list of [Tag]
      */
     fun getTagList(): List<Tag> {
         return tags.split(" ").map { Tag(name = it, board = getBoard()) }
     }
 
+    /**
+     * Not yet implemented.
+     */
     fun loadPostFromID() {
 //        val wrapper = ApiWrapper("http://$fileSource")
 //        wrapper.request(limit = 1) {
@@ -84,8 +97,14 @@ data class Post(
 //        }
     }
 
+    /**
+     * Tries to load the preview image from the cache, if not found load it from the board and cache it.
+     * If the preview image width is larger then 250px the image will be resized to this value.
+     *
+     * @param handler will be called after the image was loaded.
+     */
     fun loadPreview(handler: (Bitmap?) -> Unit): Unit {
-        var bitmap = FileManager.previewBitmapFromCache(id)
+        var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(id))
         if (bitmap == null || SettingsActivity.disableCaching) {
             loadBitmap(preview_url) {
                 if (it != null && it.width > 250) {
@@ -103,10 +122,24 @@ data class Post(
         }
     }
 
+   /**
+    * Loads the sample image.
+    *
+    * @param handler will be called after the image was loaded.
+    */
     fun loadSample(handler: (Bitmap?) -> Unit): Unit {
         loadBitmap(url = sample_url, handler = handler)
     }
 
+    /**
+     * Loads an image from the given url,
+     * if the post was downloaded to storage it will be loaded from there.
+     * On an error while downloading the method tries again as many times as retries specified.
+     *
+     * @param url the url to load from
+     * @param retries the number of retries in case of errors, default value is 2
+     * @param handler will be called after the image was loaded.
+     */
     private fun loadBitmap(url: String, retries: Int = 2, handler: (Bitmap?) -> Unit): Unit {
         if (file != null) {
             //TODO: handle OOMs
@@ -129,26 +162,50 @@ data class Post(
         }
     }
 
+    /**
+     * Downloads the original file to the storage using [FileManager.downloadFileToStorage]
+     */
     fun downloadFile() {
         FileManager.downloadFileToStorage(file_url, this)
     }
 
+    /**
+     * Downloads the jpeg image to the storage using [FileManager.downloadFileToStorage]
+     */
     fun downloadJpeg() {
         FileManager.downloadFileToStorage(jpeg_url, this)
     }
 
+    /**
+     * Downloads the sample image to the storage using [FileManager.downloadFileToStorage]
+     */
     fun downloadSample() {
         FileManager.downloadFileToStorage(sample_url, this)
     }
 
+    /**
+     * Returns if that post was downloaded
+     *
+     * @return true if the post exists in storage, false otherwise.
+     */
     fun hasFile(): Boolean {
         return file != null
     }
 
-    fun wasViewd(): Boolean {
+    /**
+     * Returns if that post was viewed.
+     *
+     * @return if viewed true, false otherwise
+     */
+    fun wasViewed(): Boolean {
         return PostLoader.postViewed(id)
     }
 
+    /**
+     * Parse and return the board name from the file url.
+     *
+     * @return the board name this post belongs to.
+     */
     fun getBoard(): String {
         val pattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
         val matcher = pattern.matcher(file_url)

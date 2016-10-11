@@ -1,11 +1,16 @@
 package com.github.firenox89.shinobooru.model
 
 import android.graphics.Color
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.Serializable
 
+/**
+ * Data class to store the meta information of a tag.
+ * Contains some utility functions.
+ */
 data class Tag(
         val name: String,
         val board: String,
@@ -14,9 +19,11 @@ data class Tag(
         var type: Int = -1,
         var ambiguous: Boolean = false) : Serializable {
 
-    //TODO: cache on filesystem
+    /**
+     * If object was created only by board and name load tag info.
+     * Do nothing otherwise.
+     */
     init {
-        //load tag info if object was created only by board and name
         if (id == 0L) {
             var tagList: MutableMap<String, Tag>
             var tag: Tag
@@ -36,9 +43,12 @@ data class Tag(
                 try {
                     val jsonArray = JSONArray(ApiWrapper.requestTag(board, name))
                     var jsonRespone: JSONObject? = null
+
+                    //if only one tag was return that has to be the right one
                     if (jsonArray.length() == 1) {
                         jsonRespone = jsonArray.getJSONObject(0)
                     } else {
+                        //on multiple matches take the one with the exact name
                         for (i: Int in 0..jsonArray.length()-1) {
                             jsonRespone = jsonArray.getJSONObject(i)
                             if (jsonRespone.getString("name").equals(name))
@@ -46,6 +56,7 @@ data class Tag(
                         }
                     }
 
+                    //parse info from json and store in list
                     if (jsonRespone != null) {
                         id = jsonRespone.getLong("id")
                         count = jsonRespone.getInt("count")
@@ -54,12 +65,18 @@ data class Tag(
                         tagList.put(name, this)
                     }
                 } catch (e: JSONException) {
-                    e.printStackTrace()
+                    //catch parsing errors just in case...
+                    Log.e("Tag", e.message, e)
                 }
             }
         }
     }
 
+    /**
+     * Returns a [Color] value as an Int, depending on the tag type.
+     *
+     * @return an Int value representing the color.
+     */
     fun getTextColor(): Int {
         var textColor: Int = Color.parseColor("#EE8887")
         when (type) {

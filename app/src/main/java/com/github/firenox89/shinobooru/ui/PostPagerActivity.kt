@@ -55,7 +55,7 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         //TODO: use proper id
         verticalPager.id = 0x12345678
         verticalPager.adapter = PostPagerAdapter(supportFragmentManager)
-        verticalPager.currentItem = postLoader.getPositionFor(post)
+        verticalPager.currentItem = postLoader.getIndexOf(post)
 
         onPostSwitch.subscribe { runOnUiThread { verticalPager.currentItem += it } }
 

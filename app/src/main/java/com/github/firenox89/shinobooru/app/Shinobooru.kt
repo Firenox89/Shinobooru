@@ -11,6 +11,9 @@ import org.jetbrains.anko.windowManager
 import rx.lang.kotlin.PublishSubject
 import rx.subjects.PublishSubject
 
+/**
+ * Application class, provide the [appContext] for convenience, initialize [Kodein].
+ */
 class Shinobooru : Application(), KodeinAware {
 
     override val kodein by Kodein.lazy {
@@ -32,6 +35,9 @@ class Shinobooru : Application(), KodeinAware {
     }
 
     companion object {
+        /**
+         * The application context.
+         */
         lateinit var appContext: Context
             private set
     }
