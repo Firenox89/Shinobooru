@@ -15,7 +15,7 @@ import android.view.MenuItem
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.PostLoader
-import com.github.firenox89.shinobooru.service.ShinoWallpaperService
+import com.github.firenox89.shinobooru.service.ShinoboorusWallpaperService
 import com.github.firenox89.shinobooru.ui.ThumbnailActivity
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
@@ -119,7 +119,7 @@ class SettingsActivity : PreferenceActivity() {
             addPreferencesFromResource(R.xml.pref_wallpaper)
 
             val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
-                ShinoWallpaperService.setWallpaperService(Shinobooru.appContext); true }
+                ShinoboorusWallpaperService.setWallpaperService(Shinobooru.appContext); true }
             findPreference("enable_wallpaper").onPreferenceChangeListener = changeListener
         }
     }

@@ -15,6 +15,10 @@ import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.Tag
 import org.jetbrains.anko.*
 
+/**
+ * Creates the ui for the post details fragment.
+ * @param post to take the details from
+ */
 class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
     override fun createView(ui: AnkoContext<T>): View = with(ui) {
         val downloadIcon = BitmapFactory.decodeResource(ctx.resources, R.drawable.cloud_download_2_32x32)
@@ -30,10 +34,11 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                     imageBitmap = downloadIcon
                     onClick {
                         post.downloadFile()
-                        showToast(ctx, post.file_url)
+                        toast("Download ${post.file}")
                     }
                 }
             }
+            //only adds these if there actually is a jpeg
             if (post.jpeg_file_size != 0) {
                 verticalLayout {
                     textView {
@@ -46,7 +51,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                         imageBitmap = downloadIcon
                         onClick {
                             post.downloadJpeg()
-                            showToast(ctx, post.file_url)
+                            toast("Download ${post.jpeg_url}")
                         }
                     }
                 }
@@ -91,15 +96,12 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
         }
     }
 
-
-    fun showToast(context: Context, url: String) {
-        val text = "Download $url"
-        val duration = Toast.LENGTH_SHORT
-
-        val toast = Toast.makeText(context, text, duration)
-        toast.show()
-    }
-
+    /**
+     * Converts a byte value into a human readable value.
+     *
+     * @param size in bytes
+     * @return value in kb/mb as string
+     */
     private fun humanizeSize(size: Int): String {
         if (size > 1024 * 1024)
             return "${(size.toDouble() / (1024 * 1024)).format(2)} M"
@@ -108,14 +110,24 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
         return "$size"
     }
 
+    /** Extension function to format a double value to the given number of digits */
     fun Double.format(digits: Int) = java.lang.String.format("%.${digits}f", this)
 
+    /**
+     * [ListAdapter] to get detailed tag information and displays them in two columns.
+     *
+     * @param post to get the tags for
+     */
     class TagListAdapter(val post: Post) : BaseAdapter(), ListAdapter {
         var tagList = mutableListOf<Pair<Tag, Tag?>>()
 
+        /**
+         * Asynchronously loads the tag information.
+         */
         init {
             doAsync {
                 val tags = post.getTagList()
+                //group the tags in pairs
                 for (i in 0..tags.size - 1 step 2) {
                     if (i + 1 < tags.size)
                         tagList.add(Pair(tags[i], tags[i + 1]))
@@ -128,15 +140,29 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
             }
         }
 
+        /**
+         * Starts a new [ThumbnailActivity] with the given tags a search parameters.
+         *
+         * @param ctx to start the activity with
+         * @param tag to search for
+         */
         fun searchForTag(ctx: Context, tag: String) {
             val intent = Intent(ctx, ThumbnailActivity::class.java)
             intent.putExtra("tags", tag)
             ctx.startActivity(intent)
         }
 
+        /**
+         * Composes a view out of the tag pair from the given position.
+         * Second textview is omitted when the pair contains only one tag.
+         *
+         * @param position of the tag pair
+         * @param convertView gets ignored
+         * @param parent view
+         */
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             val layout = GridLayout(parent.context)
-            val parentWithd = parent.width
+            val parentWidth = parent.width
 
             val firstTag = tagList[position].first
             val textView1 = TextView(parent.context)
@@ -146,7 +172,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
             textView1.text = firstTag.name
             textView1.textColor = firstTag.getTextColor()
             textView1.onClick { searchForTag(parent.context, firstTag.name) }
-            layout.addView(textView1, parentWithd / 2, -1)
+            layout.addView(textView1, parentWidth / 2, -1)
 
             val secondTag = tagList[position].second
             if (secondTag != null) {
@@ -157,20 +183,37 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                 textView2.text = secondTag.name
                 textView2.textColor = secondTag.getTextColor()
                 textView2.onClick { searchForTag(parent.context, secondTag.name) }
-                layout.addView(textView2, parentWithd / 2, -1)
+                layout.addView(textView2, parentWidth / 2, -1)
             }
 
             return layout
         }
 
+        /**
+         * Returns the tag for the given position.
+         *
+         * @param position
+         * @return tag for positon
+         */
         override fun getItem(position: Int): Any {
             return tagList[position]
         }
 
+        /**
+         * Returns the given position.
+         *
+         * @param position
+         * @return position
+         */
         override fun getItemId(position: Int): Long {
             return position.toLong()
         }
 
+        /**
+         * Returns the number of tags.
+         *
+         * @return number of tags
+         */
         override fun getCount(): Int {
             return tagList.size
         }

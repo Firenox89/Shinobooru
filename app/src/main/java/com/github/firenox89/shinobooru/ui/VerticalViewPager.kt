@@ -10,9 +10,6 @@ import android.view.View
 /**
  * Uses a combination of a PageTransformer and swapping X & Y coordinates
  * of touch events to create the illusion of a vertically scrolling ViewPager.
- *
- *
- * Requires API 11+
  */
 class VerticalViewPager(context: Context) : ViewPager(context) {
 
