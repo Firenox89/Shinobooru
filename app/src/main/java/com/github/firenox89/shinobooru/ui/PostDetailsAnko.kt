@@ -11,17 +11,26 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.firenox89.shinobooru.R
+import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.Tag
 import org.jetbrains.anko.*
 
 /**
  * Creates the ui for the post details fragment.
+ * This fragment contains information about the post, buttons to download and the tags.
  * @param post to take the details from
  */
 class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
+    companion object {
+        val downloadIcon = BitmapFactory.decodeResource(Shinobooru.appContext.resources,
+                                                        R.drawable.cloud_download_2_32x32)
+    }
+
+    /**
+     * Creates the ui and returns it to the caller.
+     */
     override fun createView(ui: AnkoContext<T>): View = with(ui) {
-        val downloadIcon = BitmapFactory.decodeResource(ctx.resources, R.drawable.cloud_download_2_32x32)
         verticalLayout {
             verticalLayout {
                 textView {
@@ -34,7 +43,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                     imageBitmap = downloadIcon
                     onClick {
                         post.downloadFile()
-                        toast("Download ${post.file}")
+                        toast("Download ${post.file_url}")
                     }
                 }
             }
@@ -134,6 +143,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                     else
                         tagList.add(Pair(tags[i], null))
                 }
+                //notifies that don't come from the ui thread get ignored
                 uiThread {
                     notifyDataSetChanged()
                 }

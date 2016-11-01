@@ -13,13 +13,19 @@ import rx.Observable
 import rx.Subscription
 import rx.lang.kotlin.PublishSubject
 
+/**
+ * [RecyclerView.Adapter] that provides the post images.
+ */
 class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
-    private val onClickSubject = PublishSubject<Int>()
-    var usePreview = true
-    lateinit var subscription: Subscription
+    //emits click events for the clicked images
+    val onImageClickStream = PublishSubject<Int>()
 
-    val loadingBitmap: Bitmap by lazy {
+    private var postLoaderChangeSubscription = subscribeLoader()
+    var usePreview = true
+
+    //a placeholder bitmap to display while the real image is loading
+    val placeholderBitmap: Bitmap by lazy {
         val rect = Rect(0, 0, 250, 400)
         val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
         val canvas = Canvas(image)
@@ -30,15 +36,14 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         image
     }
 
-    init {
-        subscribeLoader()
-    }
-
-    fun subscribeLoader() {
-        subscription = postLoader.getRangeChangeEventStream().subscribe {
+    /**
+     * Subscribe for newly loaded posts.
+     */
+    fun subscribeLoader(): Subscription {
+        return postLoader.getRangeChangeEventStream().subscribe {
+            val (posi, count) = it
             //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
-            if (it.first != 0) {
-                val (posi, count) = it
+            if (posi != 0) {
                 notifyItemRangeChanged(posi, count)
             } else {
                 notifyDataSetChanged()
@@ -46,18 +51,27 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         }
     }
 
-    fun resetPostLoader(postLoader: PostLoader) {
-        subscription.unsubscribe()
+    /**
+     * Sets the given [PostLoader], removes the old post subscription and creates a new one.
+     *
+     * @param postLoader to switch to
+     */
+    fun changePostLoader(postLoader: PostLoader) {
         this.postLoader = postLoader
-        subscribeLoader()
+        postLoaderChangeSubscription.unsubscribe()
+        postLoaderChangeSubscription = subscribeLoader()
         notifyDataSetChanged()
     }
 
+    /**
+     * Fill the given [PostViewHolder] with the content from the [Post] at the given positon.
+     * Also requests new posts if there a less than 5 left to load.
+     */
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = postLoader.getPostAt(position)
         if (postLoader.getCount() - position > 5) postLoader.requestNextPosts()
 
-        holder.postImage.setImageBitmap(loadingBitmap)
+        holder.postImage.setImageBitmap(placeholderBitmap)
         //if the recyclerView is set to one image per row use the sample image for quality reasons
         if (usePreview)
             post?.loadPreview { holder.postImage.setImageBitmap(it) }
@@ -66,11 +80,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
 
         holder.downloadedIcon.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
         holder.viewedIcon.visibility = if (post?.wasViewed() ?: false) View.VISIBLE else View.INVISIBLE
-        holder.itemView?.setOnClickListener { onClickSubject.onNext(position) }
-    }
-
-    fun getPositionClicks(): Observable<Int> {
-        return onClickSubject.asObservable()
+        holder.itemView?.setOnClickListener { onImageClickStream.onNext(position) }
     }
 
     override fun getItemCount(): Int {
@@ -81,6 +91,9 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         return PostViewHolder(RelativeLayout(parent.context))
     }
 
+    /**
+     * A [RecyclerView.ViewHolder] containing the post image and to icons.
+     */
     class PostViewHolder(parent: ViewGroup) : RecyclerView.ViewHolder(parent) {
         lateinit var postImage: ImageView
         lateinit var downloadedIcon: ImageView

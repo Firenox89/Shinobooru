@@ -5,7 +5,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.service.wallpaper.WallpaperService
 import android.util.Size
 import android.view.MotionEvent
@@ -82,7 +85,8 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * @param visible gets ignored.
          */
         override fun onVisibilityChanged(visible: Boolean) {
-            draw()
+            //hide drawing through doing it when invisible
+            if (visible == false) draw()
         }
 
         /**
@@ -119,28 +123,38 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         private fun draw() {
             drawRequestQueue.onNext {
-                if (surfaceHolder.surface.isValid) {
-                    val image = pickImage()
-                    val transformationInfo = calcTransformation(image)
-                    val black = Paint()
-                    black.color = 0x000000
-                    black.alpha = 255
-                    //smooths the scaled image while drawing
-                    val filter = Paint()
-                    filter.isAntiAlias = true
-                    filter.isFilterBitmap = true
-                    filter.isDither = true
-                    val canvas = surfaceHolder.lockCanvas()
-                    //clear previous drawing
-                    canvas.drawPaint(black)
-                    //scales image
-                    canvas.translate(transformationInfo.second.width.toFloat() / 2,
-                            transformationInfo.second.height.toFloat() / 2)
-                    //draws scaled image
-                    canvas.drawBitmap(image, transformationInfo.first, filter)
-                    surfaceHolder.unlockCanvasAndPost(canvas)
-                }
+                val black = Paint()
+                black.color = 0x000000
+                black.alpha = 255
+                //stop if surface got invalid
+                if (isSurfaceInvalid()) return@onNext
+                val canvas = surfaceHolder.lockCanvas()
+                //clear previous drawing
+                canvas.drawPaint(black)
+                val image = pickImage()
+                val transformationInfo = calcTransformation(image)
+                //smooths the scaled image while drawing
+                val filter = Paint()
+                filter.isAntiAlias = true
+                filter.isFilterBitmap = true
+                filter.isDither = true
+                if (isSurfaceInvalid()) return@onNext
+                //scales image
+                canvas.translate(transformationInfo.second.width.toFloat() / 2,
+                        transformationInfo.second.height.toFloat() / 2)
+                if (isSurfaceInvalid()) return@onNext
+                //draws scaled image
+                canvas.drawBitmap(image, transformationInfo.first, filter)
+                surfaceHolder.unlockCanvasAndPost(canvas)
+
             }
+        }
+
+        /**
+         * Returns true if surface is invalid
+         */
+        private fun isSurfaceInvalid(): Boolean {
+            return !surfaceHolder.surface.isValid
         }
 
         /**

@@ -27,6 +27,10 @@ import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.swipeRefreshLayout
 import rx.subjects.PublishSubject
 
+/**
+ * Contains a [DrawerLayout] with a menu drawer on the left and a drawer for searching on the right,
+ * in the middle the is a [RecyclerView] with thumbnails of posts.
+ */
 class ThumbnailActivity : Activity(), KodeinInjected {
 
     override val injector = KodeinInjector()
@@ -43,11 +47,27 @@ class ThumbnailActivity : Activity(), KodeinInjected {
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO: save and reload position
         super.onCreate(savedInstanceState)
+
+        inject(appKodein())
+
+        //setup the RecyclerView adapter
         val tags = intent.getStringExtra("tags") ?: ""
         val postLoader = PostLoader.getLoader(SettingsActivity.currentBoardURL, tags)
         recyclerAdapter = ThumbnailAdapter(postLoader)
 
-        inject(appKodein())
+        //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
+        recyclerAdapter.onImageClickStream.subscribe {
+            val post = recyclerAdapter.postLoader.getPostAt(it)
+            val intent = Intent(this, PostPagerActivity::class.java)
+            intent.putExtra("board", recyclerAdapter.postLoader.board)
+            intent.putExtra("tags", recyclerAdapter.postLoader.tags)
+            intent.putExtra(resources.getString(R.string.post_class), post)
+            startActivityForResult(intent, 1)
+        }
+
+        //update the number of posts per row of the recycler layout
+        updatePostPerRow(sharedPrefs.getString("post_per_row_list", "5").toInt())
+        updateThumbnail.subscribe { updatePostPerRow(it) }
 
         drawerLayout {
             menuDrawerLayout = this
@@ -103,7 +123,6 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                             //consume
                             true
                         }
-
                     }
                     listView {
                         //TODO: add previous searches
@@ -112,30 +131,35 @@ class ThumbnailActivity : Activity(), KodeinInjected {
             }
         }
 
-        recyclerAdapter.getPositionClicks().subscribe {
-            val post = recyclerAdapter.postLoader.getPostAt(it)
-            val intent = Intent(this, PostPagerActivity::class.java)
-            intent.putExtra("board", recyclerAdapter.postLoader.board)
-            intent.putExtra("tags", recyclerAdapter.postLoader.tags)
-            intent.putExtra(resources.getString(R.string.post_class), post)
-            startActivityForResult(intent, 1)
-        }
-
-        updatePostPerRow(sharedPrefs.getString("post_per_row_list", "5").toInt())
-
-        updateThumbnail.subscribe { updatePostPerRow(it) }
     }
 
+    /**
+     * Removes the layout manager so it can be assigned again
+     */
     override fun onDestroy() {
         recyclerView.layoutManager = null
         super.onDestroy()
     }
 
+    /**
+     * Gets called when a [PostPagerActivity] returns.
+     * Scrolls the [RecyclerView] to the post position of the last view post of [PostPagerActivity].
+     *
+     * @param requestCode gets ignored
+     * @param resultCode gets ignored
+     * @param data if an Int value for position is stored there it will be used to scroll
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val post = data?.getSerializableExtra(resources.getString(R.string.post_class)) as Post
-        recyclerView.scrollToPosition(recyclerAdapter.postLoader.getIndexOf(post))
+        val post = data?.getIntExtra("position", -1)
+        if (post != null && post != -1)
+            recyclerView.scrollToPosition(post)
     }
 
+    /**
+     * Updates the span count of the layout manager.
+     * If the given value is 1 the [RecyclerView] will display sample instead of preview images.
+     * @param value that should be used as spanCount
+     */
     fun updatePostPerRow(value: Int) {
         recyclerLayout.spanCount = value
         recyclerAdapter.usePreview = value != 1
@@ -144,36 +168,50 @@ class ThumbnailActivity : Activity(), KodeinInjected {
     private fun setKonachan() {
         menuDrawerLayout.closeDrawers()
         recyclerView.scrollTo(0, 0)
-        recyclerAdapter.resetPostLoader(PostLoader.getLoader(SettingsActivity.konachanURL))
+        recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.konachanURL))
     }
 
+    /**
+     * Close drawers, scroll the [RecyclerView] to the beginning
+     * and sets [SettingsActivity#yandereURL] as Post Source.
+     */
     private fun setYandere() {
         menuDrawerLayout.closeDrawers()
         recyclerView.scrollTo(0, 0)
-        recyclerAdapter.resetPostLoader(PostLoader.getLoader(SettingsActivity.yandereURL))
+        recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.yandereURL))
     }
 
+    /**
+     * Close drawers, scroll the [RecyclerView] to the beginning
+     * and sets [FileLoader] as Post Source.
+     */
     private fun openFileView() {
         //TODO: loading animation
         menuDrawerLayout.closeDrawers()
-        recyclerView.scrollToPosition(1)
-        recyclerAdapter.resetPostLoader(PostLoader.getLoader("FileLoader"))
+        recyclerView.scrollTo(0, 0)
+        recyclerAdapter.changePostLoader(PostLoader.getLoader("FileLoader"))
     }
 
+    /**
+     * Starts the [SettingsActivity].
+     */
     private fun openSettings() {
         startActivity<SettingsActivity>()
     }
 
+    /**
+     * [ListAdapter] for the menu drawer.
+     */
     class MenuDrawerAdapter : BaseAdapter() {
         val items: Array<String> = arrayOf("Settings", "FileView", "yande.re", "konachan.com")
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            val textView = TextView(parent?.context)
-            textView.textSize = 24F
-            textView.gravity = Gravity.CENTER
-            textView.padding = 10
-            textView.text = items[position]
-            return textView
+            return TextView(parent?.context).apply {
+                textSize = 24F
+                gravity = Gravity.CENTER
+                padding = 10
+                text = items[position]
+            }
         }
 
         override fun getItem(position: Int): Any {
@@ -187,9 +225,11 @@ class ThumbnailActivity : Activity(), KodeinInjected {
         override fun getCount(): Int {
             return items.size
         }
-
     }
 
+    /**
+     * [ListAdapter] for the auto complete search suggestions.
+     */
     inner class TagSearchAutoCompleteAdapter : BaseAdapter(), Filterable {
         val tagList = mutableListOf<Tag>()
 
@@ -211,18 +251,22 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                     val results = FilterResults()
                     val board = recyclerAdapter.postLoader.board
 
-                    //constraint can be null, FileLoader does not support tag search yet
+                    //constraint can be null and FileLoader does not support tag search yet
                     if (!constraint.isNullOrBlank() && recyclerAdapter.postLoader !is FileLoader) {
                         //tags are always lower case
                         val name = constraint.toString().toLowerCase().trim()
+                        //request tags
                         val jsonResponse = ApiWrapper.requestTag(board, name)
+                        //and parse the result
                         val tags = Gson().fromJson<Array<Tag>>(jsonResponse, Array<Tag>::class.java)
 
                         //TODO: could be settable
-                        val numberOfResult = 10
+                        val numberOfResults = 10
                         val sortedTagList = mutableListOf<Tag>()
 
+                        //first look if results start with the given search string
                         val primaryMatches = tags.filter { it.name.startsWith(name) }
+                        //then look if the second word matches
                         val secondaryMatches = tags.filter {
                             //split into words, drop the first word since it is already covered in primaryMatches
                             val words = it.name.split("_").drop(1)
@@ -230,23 +274,24 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                             //true if at least one word matches
                             words.filter { it.startsWith(name) }.any()
                         }
+                        //then get the list of matches where the search string was only part of a word
+                        val restOfResults = tags.subtract(primaryMatches).subtract(secondaryMatches)
                         //add primaryMatches
-                        sortedTagList.addAll(primaryMatches.take(numberOfResult))
+                        sortedTagList.addAll(primaryMatches.take(numberOfResults))
 
-                        //not enough results yet, try to fill the rest with secondaryMatches
-                        if (sortedTagList.size < numberOfResult)
-                            sortedTagList.addAll(secondaryMatches.take(numberOfResult - primaryMatches.size))
+                        //if not enough results yet, try to fill the rest with secondaryMatches
+                        if (sortedTagList.size < numberOfResults)
+                            sortedTagList.addAll(secondaryMatches.take(numberOfResults - primaryMatches.size))
 
-                        //still not enough matches, add rest
-                        if (sortedTagList.size < numberOfResult)
+                        //if still not enough matches, add the rest
+                        if (sortedTagList.size < numberOfResults)
                         {
-                            val matchesLeft = numberOfResult - primaryMatches.size - secondaryMatches.size
+                            val matchesLeft = numberOfResults - primaryMatches.size - secondaryMatches.size
                             //remove primary and secondary matches to not add them twice
-                            val restOfResults = tags.subtract(primaryMatches).subtract(secondaryMatches)
                             sortedTagList.addAll(restOfResults.take(matchesLeft))
                         }
 
-                        results.count = numberOfResult
+                        results.count = numberOfResults
                         //take only the first entries
                         results.values = sortedTagList
                     }
@@ -266,13 +311,13 @@ class ThumbnailActivity : Activity(), KodeinInjected {
         }
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val textView = TextView(parent.context)
-            textView.text = tagList[position].name
-            textView.gravity = Gravity.CENTER
-            textView.textSize = 20F
-            textView.textColor = tagList[position].getTextColor()
-            textView.backgroundColor = Color.BLACK
-            return textView
+            return TextView(parent.context).apply {
+                text = tagList[position].name
+                gravity = Gravity.CENTER
+                textSize = 20F
+                textColor = tagList[position].getTextColor()
+                backgroundColor = Color.BLACK
+            }
         }
     }
 }
