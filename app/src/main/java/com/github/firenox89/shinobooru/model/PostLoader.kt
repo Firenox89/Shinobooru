@@ -1,5 +1,6 @@
 package com.github.firenox89.shinobooru.model
 
+import android.util.Log
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import rx.Observable
 import rx.lang.kotlin.PublishSubject
@@ -11,6 +12,7 @@ import rx.lang.kotlin.PublishSubject
 open class PostLoader {
 
     companion object {
+        val TAG = "PostLoader"
         private val loaderList = mutableListOf<PostLoader>().apply { add(FileLoader()) }
         private val viewedList = FileManager.loadViewedList() ?: mutableListOf<Long>()
 
@@ -29,7 +31,12 @@ open class PostLoader {
                 loader = PostLoader(board, tags)
                 loaderList.add(loader)
             }
+            Log.e(TAG, "loader count ${loaderList.size}")
             return loader
+        }
+
+        fun discardLoader(loader: PostLoader) {
+            loaderList.remove(loader)
         }
 
         /**
@@ -101,22 +108,24 @@ open class PostLoader {
      * @param quantity of post that should be loaded
      */
     open fun requestNextPosts(quantity: Int = 20) {
-            ApiWrapper.request(board, currentPage++, tags) {
-                //TODO: order results before adding
-                val currentSize = posts.size
-                val tmpList = mutableListOf<Post>()
-                it?.forEach {
-                    if (SettingsActivity.filterRating(it.rating)) {
-                        tmpList.add(it)
-                    }
+        ApiWrapper.request(board, currentPage++, tags) {
+            //TODO: order results before adding
+            val currentSize = posts.size
+            val tmpList = mutableListOf<Post>()
+            it?.forEach {
+                if (SettingsActivity.filterRating(it.rating)) {
+                    tmpList.add(it)
                 }
-                val count = tmpList.size
-                posts.addAll(tmpList)
-                rangeChangeEventStream.onNext(Pair(currentSize, count))
-
-                if (count < quantity)
-                    requestNextPosts(quantity - count)
             }
+            val count = tmpList.size
+            posts.addAll(tmpList)
+            rangeChangeEventStream.onNext(Pair(currentSize, count))
+
+            // count == 0 means that all posts are loaded
+            if (count < quantity && count > 0) {
+                requestNextPosts(quantity - count)
+            }
+        }
     }
 
     /**

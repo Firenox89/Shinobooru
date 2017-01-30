@@ -16,11 +16,11 @@ import java.util.regex.Pattern
 object FileManager {
 
     /** The image directory inside androids picture dir. */
-    private val shinobooruImageDir = File(Environment.getExternalStoragePublicDirectory(
+    val shinobooruImageDir = File(Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_PICTURES), "shinobooru")
 
     /** Map of boards and the post images downloaded from them */
-    private val boards = mutableMapOf<String, List<Post>>()
+    val boards = mutableMapOf<String, List<Post>>()
     /** List of cached post thumbnails */
     private val cachedFiles = mutableListOf<String>()
 
@@ -35,7 +35,7 @@ object FileManager {
     }
 
     /**
-     * Loading files from a given directory by using [postFromFile] for each file.
+     * Loading files from a given directory by using [postFromName] for each file.
      *
      * @param dir the directory to take the files from
      * @return a list of loaded posts
@@ -43,20 +43,20 @@ object FileManager {
     private fun loadPostListFromFile(dir: File): List<Post> {
         val postList = mutableListOf<Post>()
 
-        dir.listFiles().forEach { postList.add(postFromFile(it)) }
+        dir.listFiles().forEach { postList.add(postFromName(it.name, it)) }
         return postList
     }
 
     /**
      * Load a post from a file by parsing the file name to get the post id
      */
-    private fun postFromFile(postFile: File): Post {
+    fun postFromName(postFileName: String, postFile: File?): Post {
         //TODO: handle non posts
         //compatibility with mbooru saved posts
-        val idIndex = if (postFile.name.split(" ")[1].equals("-")) 2 else 1
+        val idIndex = if (postFileName.split(" ")[1].equals("-")) 2 else 1
 
-        val id = postFile.name.split(" ")[idIndex].toLong()
-        val source = postFile.name.split(" ")[0].toLowerCase()
+        val id = postFileName.split(" ")[idIndex].toLong()
+        val source = postFileName.split(" ")[0].toLowerCase()
 
         return Post(id = id, fileSource = source, file = postFile)
     }
@@ -84,13 +84,13 @@ object FileManager {
 
             boardSubDir.mkdirs()
 
-            Log.i("Download", "dest = $shinobooruImageDir/$fileName")
+            Log.i("Download", "dest = $boardSubDir/$fileName")
 
             //next line will be used as destination file
             File(boardSubDir, fileName)
         }.response { request, response, result ->
-            //TODO: there have to be a nicer way to kick this off
-            Log.d("Download", "Error = ${result.component2()}")
+            if (result.component2() != null)
+                Log.d("Download", "Error = ${result.component2()}")
         }
     }
 

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit
 
 /** Singleton class for handling API requests, currently only post and tag requests */
 object ApiWrapper {
+    private val TAG = "ApiWrapper"
     /** Scheduler to run post requests */
     private val requestScheduler = Schedulers.from(Executors.newCachedThreadPool())
     /** Post request queue */
@@ -32,7 +33,7 @@ object ApiWrapper {
                     getR.responseObject(Post.PostDeserializer()) { req, res, result ->
                         val (post, err) = result
                         if (err != null) {
-                            Log.e("Http request error", "$err")
+                            Log.e(TAG, "Http request error $err")
                         } else {
                             it.handler(post)
                         }
@@ -64,8 +65,8 @@ object ApiWrapper {
                 handler: (Array<Post>?) -> Unit) {
         //TODO: add board dependent request limits, so that we can stop before the board will stop us
         val params = "?limit=$limit${if (page > 1) "&page=$page" else ""}" +
-                "${if (tags != "") "&tags=$tags" else ""}"
-        var request = "$board/post.json$params"
+                if (tags != "") "&tags=$tags" else ""
+        val request = "$board/post.json$params"
 
         requestQueue.onNext(Request(request, handler))
     }
@@ -80,7 +81,7 @@ object ApiWrapper {
      * @return Response as a string or null if something has gone wrong
      */
     fun requestTag(board: String, name: String): String? {
-        Log.i("AW", "Request tag info from board $board with name $name")
+        Log.i(TAG, "Request tag info from board $board with name $name")
         var jsonResponse: String? = null
         //add protocol if it is missing
         val requestString = "${if (board.startsWith("http")) "" else "https://"}$board/tag.json?name=$name&limit=0"
@@ -90,7 +91,7 @@ object ApiWrapper {
         if (tag != null) {
             jsonResponse = tag
         } else {
-            Log.e("Tag", "Http request error $err")
+            Log.e(TAG, "Http request error $err")
         }
         return jsonResponse
     }

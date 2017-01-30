@@ -1,11 +1,24 @@
 package com.github.firenox89.shinobooru.model
 
+import java.util.*
+
 /**
  * Sub-classes the [PostLoader] to use the downloaded post images as a source for posts.
  * Does not refresh the post list when new images are downloaded.
  */
-internal class FileLoader: PostLoader("FileLoader", "") {
-    private val posts = FileManager.getAllPosts()
+internal class FileLoader : PostLoader("FileLoader", "") {
+    private val newestPostComperator = Comparator<Post> { post1, post2 ->
+        val date1 = post1.file!!.lastModified()
+        val date2 = post2.file!!.lastModified()
+        var result = 0
+        if (date1 < date2)
+            result = 1
+        if (date1 > date2)
+            result = -1
+        result
+    }
+
+    private val posts = FileManager.getAllPosts().sortedWith(newestPostComperator)
 
     /**
      * Return a post from the postlist for the given number

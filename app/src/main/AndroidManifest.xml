@@ -2,10 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.github.firenox89.shinobooru">
 
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <uses-feature
         android:name="android.software.live_wallpaper"
@@ -37,13 +38,16 @@
                 android:value=".ui.ThumbnailActivity" />
         </activity>
         <activity
+            android:name=".ui.SyncActivity"
+            android:label="@string/title_activity_sync" />
+        <activity
             android:name=".settings.SettingsActivity"
             android:label="@string/title_activity_settings" />
 
         <service
             android:name=".service.ShinoboorusWallpaperService"
             android:enabled="true"
-            android:label="Wallpaper Example "
+            android:label="Shinobooru"
             android:permission="android.permission.BIND_WALLPAPER" >
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" >

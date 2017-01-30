@@ -27,18 +27,14 @@ data class Post(
         var score: Int = 0,
         var md5: String = "",
         var file_size: Int = 0,
-        var file_url: String = "",
         var is_shown_in_index: Boolean = false,
-        var preview_url: String = "",
         var preview_width: Int = 0,
         var preview_height: Int = 0,
         var actual_preview_width: Int = 0,
         var actual_preview_height: Int = 0,
-        var sample_url: String = "",
         var sample_width: Int = 0,
         var sample_height: Int = 0,
         var sample_file_size: Int = 0,
-        var jpeg_url: String = "",
         var jpeg_width: Int = 0,
         var jpeg_height: Int = 0,
         var jpeg_file_size: Int = 0,
@@ -58,6 +54,20 @@ data class Post(
         val fileSource: String = "",
         val file: File? = null /*FileManager.fileById(id)*/) : Serializable {
 
+    private val TAG = "Post"
+
+    /**
+     * konachan removed the 'http:' part from their links so we have to add it if it is missing.
+     */
+    var preview_url: String = ""
+        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
+    var file_url: String = ""
+        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
+    var sample_url: String = ""
+        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
+    var jpeg_url: String = ""
+        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
+
     /**
      * Class to turn a JSON array into an array of posts using [Gson].
      */
@@ -72,13 +82,15 @@ data class Post(
         override fun deserialize(inputStream: InputStream) = BitmapFactory.decodeStream(inputStream)
     }
 
+
     /**
-     * Returns a list detailed tags.
+     * Returns a list of detailed tags.
      * Must not be call from the ui thread since it loads the tag details via the [ApiWrapper].
      *
      * @return a list of [Tag]
      */
     fun getTagList(): List<Tag> {
+        Log.i(TAG, "tags = $tags")
         return tags.split(" ").map { Tag(name = it, board = getBoard()) }
     }
 
@@ -107,8 +119,10 @@ data class Post(
         var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(id))
         if (bitmap == null || SettingsActivity.disableCaching) {
             loadBitmap(preview_url) {
+                //TODO check if post comes from storage rather then the width
                 if (it != null && it.width > 250) {
                     val height = it.height.toDouble() / it.width * 250
+                    //TODO multithreaded
                     bitmap = Bitmap.createScaledBitmap(it, 250, height.toInt(), false)
                     handler.invoke(bitmap)
                     FileManager.previewBitmapToCache(id, bitmap)

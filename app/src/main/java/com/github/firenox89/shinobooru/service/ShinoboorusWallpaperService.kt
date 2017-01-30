@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.service.wallpaper.WallpaperService
+import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
 import android.view.SurfaceHolder
@@ -43,6 +44,8 @@ class ShinoboorusWallpaperService : WallpaperService() {
         }
     }
 
+    val TAG = "WallpaperService"
+
     override fun onCreateEngine(): Engine {
         return ShinoboorusWallpaperEngine()
     }
@@ -50,7 +53,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
     /**
      * The engine drawing on te live wallpaper.
      */
-    inner class ShinoboorusWallpaperEngine() : Engine(), KodeinInjected {
+    inner class ShinoboorusWallpaperEngine : Engine(), KodeinInjected {
         override val injector = KodeinInjector()
         val pref: SharedPreferences by instance()
         //TODO: make the wallpaperService more configurable
@@ -86,7 +89,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         override fun onVisibilityChanged(visible: Boolean) {
             //hide drawing through doing it when invisible
-            if (visible == false) draw()
+            if (!visible) draw()
         }
 
         /**
@@ -123,6 +126,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         private fun draw() {
             drawRequestQueue.onNext {
+                try {
                 val black = Paint()
                 black.color = 0x000000
                 black.alpha = 255
@@ -146,7 +150,9 @@ class ShinoboorusWallpaperService : WallpaperService() {
                 //draws scaled image
                 canvas.drawBitmap(image, transformationInfo.first, filter)
                 surfaceHolder.unlockCanvasAndPost(canvas)
-
+                } catch (oom: OutOfMemoryError) {
+                    Log.e(TAG, "OoM", oom)
+                }
             }
         }
 
@@ -183,6 +189,16 @@ class ShinoboorusWallpaperService : WallpaperService() {
             } else {
                 //portray mode
                 finalHeight = (displayWidth.toFloat() / ratioBitmap).toInt()
+            }
+
+            if (finalWidth > displayWidth) {
+                finalHeight = (displayWidth.toFloat() / ratioBitmap).toInt()
+                finalWidth = displayWidth
+            }
+
+            if (finalHeight > displayHeight) {
+                finalWidth = (displayHeight.toFloat() * ratioBitmap).toInt()
+                finalHeight = displayHeight
             }
 
             //get scaling factors

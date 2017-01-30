@@ -2,6 +2,7 @@ package com.github.firenox89.shinobooru.ui
 
 import android.graphics.*
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -18,6 +19,7 @@ import rx.lang.kotlin.PublishSubject
  */
 class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
+    val TAG = "ThumbnailAdapter"
     //emits click events for the clicked images
     val onImageClickStream = PublishSubject<Int>()
 
@@ -69,7 +71,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
      */
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = postLoader.getPostAt(position)
-        if (postLoader.getCount() - position > 5) postLoader.requestNextPosts()
+        if (itemCount - position < 5) postLoader.requestNextPosts()
 
         holder.postImage.setImageBitmap(placeholderBitmap)
         //if the recyclerView is set to one image per row use the sample image for quality reasons

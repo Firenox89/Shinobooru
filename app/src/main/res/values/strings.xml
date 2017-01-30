@@ -6,6 +6,7 @@
 
     <string name="title_activity_view_pager">ViewPagerActivity</string>
     <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_sync">Sync</string>
 
     <!-- Strings related to Settings -->
 

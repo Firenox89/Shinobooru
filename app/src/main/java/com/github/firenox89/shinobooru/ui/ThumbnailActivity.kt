@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.firenox89.shinobooru.R
+import com.github.firenox89.shinobooru.file.GoogleDrive
 import com.github.firenox89.shinobooru.model.*
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.salomonbrys.kodein.KodeinInjected
@@ -52,7 +53,8 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
         //setup the RecyclerView adapter
         val tags = intent.getStringExtra("tags") ?: ""
-        val postLoader = PostLoader.getLoader(SettingsActivity.currentBoardURL, tags)
+        val board = intent.getStringExtra("board") ?: SettingsActivity.currentBoardURL
+        val postLoader = PostLoader.getLoader(board, tags)
         recyclerAdapter = ThumbnailAdapter(postLoader)
 
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
@@ -83,7 +85,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                     layoutManager = recyclerLayout
                 }
             }
-            //right drawer
+            //left drawer
             listView {
                 //TODO: add header
                 adapter = MenuDrawerAdapter()
@@ -98,12 +100,13 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                     when (position) {
                         0 -> openSettings()
                         1 -> openFileView()
-                        2 -> setYandere()
-                        3 -> setKonachan()
+                        2 -> openGoogleDriveView()
+                        3 -> setYandere()
+                        4 -> setKonachan()
                     }
                 }
             }
-            //left drawer
+            //right drawer
             linearLayout {
                 lparams(width = 500, height = matchParent, gravity = Gravity.END)
                 backgroundColor = Color.parseColor("#111111")
@@ -111,13 +114,15 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                 linearLayout {
                     orientation = LinearLayout.VERTICAL
                     autoCompleteTextView {
-                        setAdapter(TagSearchAutoCompleteAdapter())
+                        setAdapter(TagSearchAutoCompleteAdapter(recyclerAdapter))
                         //start autocomplete after the third letter
                         threshold = 3
                         hint = "Search..."
+                        //TODO something starts looping
                         setOnEditorActionListener { textView, i, keyEvent ->
                             val intent = Intent(ctx, ThumbnailActivity::class.java)
                             intent.putExtra("tags", textView.text.toString())
+                            intent.putExtra("board", recyclerAdapter.postLoader.board)
                             ctx.startActivity(intent)
 
                             //consume
@@ -137,6 +142,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      * Removes the layout manager so it can be assigned again
      */
     override fun onDestroy() {
+        PostLoader.discardLoader(recyclerAdapter.postLoader)
         recyclerView.layoutManager = null
         super.onDestroy()
     }
@@ -193,9 +199,19 @@ class ThumbnailActivity : Activity(), KodeinInjected {
     }
 
     /**
+     * Starts the [SyncActivity].
+     */
+    private fun openGoogleDriveView() {
+        menuDrawerLayout.closeDrawers()
+        val intent = Intent(this, SyncActivity::class.java)
+        startActivity(intent)
+    }
+
+    /**
      * Starts the [SettingsActivity].
      */
     private fun openSettings() {
+        menuDrawerLayout.closeDrawers()
         startActivity<SettingsActivity>()
     }
 
@@ -203,7 +219,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      * [ListAdapter] for the menu drawer.
      */
     class MenuDrawerAdapter : BaseAdapter() {
-        val items: Array<String> = arrayOf("Settings", "FileView", "yande.re", "konachan.com")
+        val items: Array<String> = arrayOf("Settings", "FileView", "Google Drive", "yande.re", "konachan.com")
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
             return TextView(parent?.context).apply {
@@ -230,7 +246,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
     /**
      * [ListAdapter] for the auto complete search suggestions.
      */
-    inner class TagSearchAutoCompleteAdapter : BaseAdapter(), Filterable {
+    class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : BaseAdapter(), Filterable {
         val tagList = mutableListOf<Tag>()
 
         override fun getItem(position: Int): Any {
@@ -284,8 +300,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                             sortedTagList.addAll(secondaryMatches.take(numberOfResults - primaryMatches.size))
 
                         //if still not enough matches, add the rest
-                        if (sortedTagList.size < numberOfResults)
-                        {
+                        if (sortedTagList.size < numberOfResults) {
                             val matchesLeft = numberOfResults - primaryMatches.size - secondaryMatches.size
                             //remove primary and secondary matches to not add them twice
                             sortedTagList.addAll(restOfResults.take(matchesLeft))
