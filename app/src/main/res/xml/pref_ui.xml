@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <ListPreference
-        android:defaultValue="-1"
+        android:defaultValue="3"
         android:entries="@array/pref_post_per_row_titles"
         android:entryValues="@array/pref_post_per_row_values"
         android:key="post_per_row_list"

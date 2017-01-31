@@ -73,7 +73,6 @@ class SettingsActivity : PreferenceActivity() {
         return PreferenceFragment::class.java.name == fragmentName
                 || UIPreferenceFragment::class.java.name == fragmentName
                 || RatingPreferenceFragment::class.java.name == fragmentName
-                || WallpaperPreferenceFragment::class.java.name == fragmentName
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -112,18 +111,6 @@ class SettingsActivity : PreferenceActivity() {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class WallpaperPreferenceFragment : PreferenceFragment() {
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            addPreferencesFromResource(R.xml.pref_wallpaper)
-
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
-                ShinoboorusWallpaperService.setWallpaperService(Shinobooru.appContext); true }
-            findPreference("enable_wallpaper").onPreferenceChangeListener = changeListener
-        }
-    }
-
     companion object {
         //boards
         var yandereURL = "https://yande.re"
@@ -142,7 +129,7 @@ class SettingsActivity : PreferenceActivity() {
                 return pref.getBoolean("rating_questionable", false)
             if (rating.equals("e"))
                 return pref.getBoolean("rating_explicit", false)
-            throw IllegalArgumentException("Unknown rating")
+            throw IllegalArgumentException("Unknown rating: $rating")
         }
 
         /**

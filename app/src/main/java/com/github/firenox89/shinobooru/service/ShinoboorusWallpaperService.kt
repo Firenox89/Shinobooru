@@ -1,9 +1,5 @@
 package com.github.firenox89.shinobooru.service
 
-import android.app.WallpaperManager
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -31,18 +27,6 @@ import java.util.concurrent.TimeUnit
  * Also landscape and portray mode get a different set of wallpapers.
  */
 class ShinoboorusWallpaperService : WallpaperService() {
-    companion object {
-        /**
-         * Opens the set live wallpaper dialog.
-         */
-        fun setWallpaperService(context: Context) {
-            val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            intent.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                    ComponentName(context, ShinoboorusWallpaperService::class.java))
-            context.startActivity(intent)
-        }
-    }
 
     val TAG = "WallpaperService"
 

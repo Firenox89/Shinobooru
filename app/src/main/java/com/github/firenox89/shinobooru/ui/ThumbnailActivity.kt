@@ -34,6 +34,7 @@ import rx.subjects.PublishSubject
  */
 class ThumbnailActivity : Activity(), KodeinInjected {
 
+    val TAG = "ThumbnailActivity"
     override val injector = KodeinInjector()
 
     private val sharedPrefs: SharedPreferences by instance()
@@ -68,7 +69,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
         }
 
         //update the number of posts per row of the recycler layout
-        updatePostPerRow(sharedPrefs.getString("post_per_row_list", "5").toInt())
+        updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3").toInt())
         updateThumbnail.subscribe { updatePostPerRow(it) }
 
         drawerLayout {
