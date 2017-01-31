@@ -119,7 +119,6 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                         //start autocomplete after the third letter
                         threshold = 3
                         hint = "Search..."
-                        //TODO something starts looping
                         setOnEditorActionListener { textView, i, keyEvent ->
                             val intent = Intent(ctx, ThumbnailActivity::class.java)
                             intent.putExtra("tags", textView.text.toString())

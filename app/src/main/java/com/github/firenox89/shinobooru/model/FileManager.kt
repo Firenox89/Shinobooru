@@ -31,6 +31,7 @@ object FileManager {
         shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadPostListFromFile(it)) }
 
         // load list of files from cache
+
         cachedFiles.addAll(Shinobooru.appContext.fileList())
     }
 
@@ -58,7 +59,7 @@ object FileManager {
         val id = postFileName.split(" ")[idIndex].toLong()
         val source = postFileName.split(" ")[0].toLowerCase()
 
-        return Post(id = id, fileSource = source, file = postFile)
+        return Post(id = id, file = postFile)
     }
 
     /**

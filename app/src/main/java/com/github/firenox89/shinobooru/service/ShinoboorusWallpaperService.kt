@@ -202,6 +202,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * @return a loaded [Bitmap] fitting for the display ratio.
          */
         private fun pickImage(): Bitmap {
+            //TODO stop looping when no image with a fitting ration is present
             //picks random image
             var post = pickRandomPost()
             //load image bounds from file

@@ -22,6 +22,7 @@ import com.github.salomonbrys.kodein.instance
 import com.ortiz.touch.TouchImageView
 import fr.castorflex.android.verticalviewpager.VerticalViewPager
 import org.jetbrains.anko.AnkoContext
+import org.jetbrains.anko.support.v4.onUiThread
 import rx.lang.kotlin.PublishSubject
 import java.util.concurrent.TimeUnit
 
@@ -233,7 +234,10 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
             val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
 
             val imageview = TouchImageView(context)
-            post.loadSample { imageview.setImageBitmap(it) }
+            post.loadSample {
+                onUiThread {
+                    imageview.setImageBitmap(it) }
+                }
             return imageview
         }
     }

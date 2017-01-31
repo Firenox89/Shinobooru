@@ -7,7 +7,7 @@ import java.util.*
  * Does not refresh the post list when new images are downloaded.
  */
 internal class FileLoader : PostLoader("FileLoader", "") {
-    private val newestPostComperator = Comparator<Post> { post1, post2 ->
+    private val newestPostComparator = Comparator<Post> { post1, post2 ->
         val date1 = post1.file!!.lastModified()
         val date2 = post2.file!!.lastModified()
         var result = 0
@@ -18,7 +18,7 @@ internal class FileLoader : PostLoader("FileLoader", "") {
         result
     }
 
-    private val posts = FileManager.getAllPosts().sortedWith(newestPostComperator)
+    private val posts = FileManager.getAllPosts().sortedWith(newestPostComparator)
 
     /**
      * Return a post from the postlist for the given number

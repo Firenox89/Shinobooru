@@ -36,7 +36,8 @@ open class PostLoader {
         }
 
         fun discardLoader(loader: PostLoader) {
-            loaderList.remove(loader)
+            if (!loader.board.equals("FileLoader"))
+                loaderList.remove(loader)
         }
 
         /**
@@ -45,6 +46,7 @@ open class PostLoader {
          * @param id to add
          */
         fun addPostIdToViewedList(id: Long) {
+            //TODO implement run-length encoding
             viewedList.add(id)
             //TODO: hook this to app closing event
             FileManager.saveViewedList(viewedList)
@@ -112,7 +114,7 @@ open class PostLoader {
             //TODO: order results before adding
             val currentSize = posts.size
             val tmpList = mutableListOf<Post>()
-            it?.forEach {
+            it.forEach {
                 if (SettingsActivity.filterRating(it.rating)) {
                     tmpList.add(it)
                 }
@@ -121,8 +123,8 @@ open class PostLoader {
             posts.addAll(tmpList)
             rangeChangeEventStream.onNext(Pair(currentSize, count))
 
-            // count == 0 means that all posts are loaded
-            if (count < quantity && count > 0) {
+            // an empty result means that all posts are loaded
+            if (count < quantity && it.isNotEmpty()) {
                 requestNextPosts(quantity - count)
             }
         }

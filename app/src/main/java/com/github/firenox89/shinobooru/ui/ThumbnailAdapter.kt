@@ -76,9 +76,21 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         holder.postImage.setImageBitmap(placeholderBitmap)
         //if the recyclerView is set to one image per row use the sample image for quality reasons
         if (usePreview)
-            post?.loadPreview { holder.postImage.setImageBitmap(it) }
+            post?.loadPreview {
+                val img = it
+                doAsync {
+                    uiThread {
+                        holder.postImage.setImageBitmap(img) }
+                    }
+                }
         else
-            post?.loadSample { holder.postImage.setImageBitmap(it) }
+            post?.loadSample {
+                val img = it
+                doAsync {
+                    uiThread {
+                        holder.postImage.setImageBitmap(img) }
+                }
+            }
 
         holder.downloadedIcon.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
         holder.viewedIcon.visibility = if (post?.wasViewed() ?: false) View.VISIBLE else View.INVISIBLE
