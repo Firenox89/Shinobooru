@@ -11,6 +11,7 @@ import org.jetbrains.anko.doAsync
 import java.io.File
 import java.io.InputStream
 import java.io.Serializable
+import java.util.concurrent.Executors
 import java.util.regex.Pattern
 
 /**
@@ -117,20 +118,22 @@ data class Post(
      * @param handler will be called after the image was loaded.
      */
     fun loadPreview(handler: (Bitmap?) -> Unit): Unit {
-        var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(id))
-        if (bitmap == null || SettingsActivity.disableCaching) {
-            if (file != null) {
-                doAsync {
-                    handler.invoke(loadSubsampledImage(file, 250, 400))
+        doAsync {
+            var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(id))
+            if (bitmap == null || SettingsActivity.disableCaching) {
+                if (file != null) {
+                    doAsync {
+                        handler.invoke(loadSubsampledImage(file, 250, 400))
+                    }
+                } else {
+                    loadBitmap(preview_url) {
+                        handler.invoke(it)
+                        FileManager.previewBitmapToCache(id, it)
+                    }
                 }
             } else {
-                loadBitmap(preview_url) {
-                    handler.invoke(it)
-                    FileManager.previewBitmapToCache(id, it)
-                }
+                handler.invoke(bitmap)
             }
-        } else {
-            handler.invoke(bitmap)
         }
     }
 
@@ -165,7 +168,8 @@ data class Post(
      * @param handler will be called after the image was loaded.
      */
     private fun loadBitmap(url: String, retries: Int = 2, handler: (Bitmap?) -> Unit): Unit {
-        url.httpGet().responseObject(BitmapDeserializer()) { req, res, result ->
+        url.httpGet().apply { callbackExecutor = Executors.newSingleThreadExecutor() }
+                .responseObject(BitmapDeserializer()) { req, res, result ->
             val (bitmap, err) = result
             if (err != null) {
                 Log.e("Http request error", "$err")
