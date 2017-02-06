@@ -35,6 +35,7 @@ open class PostLoader {
             return loader
         }
 
+        //TODO turn list into weakhashmap instead of discarding by hand
         fun discardLoader(loader: PostLoader) {
             if (!loader.board.equals("FileLoader"))
                 loaderList.remove(loader)

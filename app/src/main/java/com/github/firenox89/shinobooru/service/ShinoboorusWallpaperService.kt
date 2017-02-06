@@ -57,13 +57,13 @@ class ShinoboorusWallpaperService : WallpaperService() {
         init {
             inject(appKodein())
 
-            clickEventStream.buffer(800, TimeUnit.MILLISECONDS).forEach {
+            clickEventStream.buffer(clickEventStream.debounce(300, TimeUnit.MILLISECONDS)).forEach {
                 when (it.size) {
                     2 -> draw()
                 }
             }
 
-            drawRequestQueue.debounce(1000, TimeUnit.MILLISECONDS, drawScheduler).subscribe { it.invoke() }
+            drawRequestQueue.throttleFirst(500, TimeUnit.MILLISECONDS, drawScheduler).subscribe { it.invoke() }
         }
 
         /**
@@ -110,7 +110,6 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         private fun draw() {
             drawRequestQueue.onNext {
-                try {
                 val black = Paint()
                 black.color = 0x000000
                 black.alpha = 255
@@ -134,9 +133,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
                 //draws scaled image
                 canvas.drawBitmap(image, transformationInfo.first, filter)
                 surfaceHolder.unlockCanvasAndPost(canvas)
-                } catch (oom: OutOfMemoryError) {
-                    Log.e(TAG, "OoM", oom)
-                }
+                image.recycle()
             }
         }
 
@@ -221,7 +218,10 @@ class ShinoboorusWallpaperService : WallpaperService() {
                     bounds = getBounds(post.file!!.absolutePath)
                 }
             }
-            return BitmapFactory.decodeFile(post.file?.absolutePath)
+            val options = BitmapFactory.Options()
+            if (bounds.width > displayWidth * 2 && bounds.height > displayHeight * 2)
+                options.inSampleSize = 2
+            return BitmapFactory.decodeFile(post.file?.absolutePath, options)
         }
 
         /**
