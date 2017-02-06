@@ -58,9 +58,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
             inject(appKodein())
 
             clickEventStream.buffer(clickEventStream.debounce(300, TimeUnit.MILLISECONDS)).forEach {
-                when (it.size) {
-                    2 -> draw()
-                }
+                if (it.size == 2) draw()
             }
 
             drawRequestQueue.throttleFirst(500, TimeUnit.MILLISECONDS, drawScheduler).subscribe { it.invoke() }
