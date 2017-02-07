@@ -171,7 +171,7 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
     /**
      * Contains the two child fragments.
      */
-    class PostFragment() : Fragment() {
+    class PostFragment : Fragment() {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
 

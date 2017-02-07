@@ -1,8 +1,10 @@
 package com.github.firenox89.shinobooru.ui
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
@@ -14,7 +16,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.file.GoogleDrive
 import com.github.firenox89.shinobooru.model.*
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.salomonbrys.kodein.KodeinInjected
@@ -88,7 +89,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
             }
             //left drawer
             listView {
-                //TODO: add header
+                addHeaderView(buildHeader(ctx))
                 adapter = MenuDrawerAdapter()
                 lparams(width = 500, height = matchParent, gravity = Gravity.START)
                 descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
@@ -99,11 +100,11 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
                 onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
                     when (position) {
-                        0 -> openSettings()
-                        1 -> openFileView()
-                        2 -> openGoogleDriveView()
-                        3 -> setYandere()
-                        4 -> setKonachan()
+                        1 -> openSettings()
+                        2 -> openFileView()
+                        3 -> openGoogleDriveView()
+                        4 -> setYandere()
+                        5 -> setKonachan()
                     }
                 }
             }
@@ -135,7 +136,18 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                 }
             }
         }
+    }
 
+    fun buildHeader(context: Context): View {
+        val header = LinearLayout(context)
+        val imageView = ImageView(header.context)
+        val image = BitmapFactory.decodeResource(resources, R.drawable.shinobu_header)
+        imageView.setImageBitmap(image)
+        header.addView(imageView)
+        imageView.layoutParams = LinearLayout.LayoutParams(500, 300)
+        //TODO this does not work as intended
+        header.isClickable = false
+        return header
     }
 
     /**

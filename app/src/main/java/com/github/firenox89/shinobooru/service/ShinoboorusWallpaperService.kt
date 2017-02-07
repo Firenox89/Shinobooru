@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.service.wallpaper.WallpaperService
-import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
 import android.view.SurfaceHolder
