@@ -54,6 +54,7 @@ class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Po
         }
         try {
             result.startResolutionForResult(activity, REQUEST_CODE_RESOLUTION)
+            googleApiClient.connect()
         } catch (e: IntentSender.SendIntentException) {
             Log.e("GD", "Exception while starting resolution activity", e)
         }

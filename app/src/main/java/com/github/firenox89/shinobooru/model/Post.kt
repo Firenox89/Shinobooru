@@ -119,7 +119,7 @@ data class Post(
      */
     fun loadPreview(handler: (Bitmap?) -> Unit): Unit {
         doAsync {
-            var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(id))
+            var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(getBoard(), id))
             if (bitmap == null || SettingsActivity.disableCaching) {
                 if (file != null) {
                     doAsync {
@@ -128,7 +128,7 @@ data class Post(
                 } else {
                     loadBitmap(preview_url) {
                         handler.invoke(it)
-                        FileManager.previewBitmapToCache(id, it)
+                        FileManager.previewBitmapToCache(getBoard(), id, it)
                     }
                 }
             } else {
