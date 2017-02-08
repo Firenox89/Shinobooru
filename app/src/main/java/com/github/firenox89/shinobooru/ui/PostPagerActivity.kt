@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
+import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.PostLoader
 import com.github.salomonbrys.kodein.KodeinInjected
@@ -31,12 +32,15 @@ import java.util.concurrent.TimeUnit
  */
 class PostPagerActivity : FragmentActivity(), KodeinInjected {
 
+    val TAG = "PostPagerActivity"
     override val injector = KodeinInjector()
 
     val width: Int by instance("width")
     val height: Int by instance("height")
 
     lateinit private var postLoader: PostLoader
+    lateinit var board: String
+    lateinit var tags: String
 
     //used for click events
     var x1 = 0F
@@ -57,19 +61,19 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         inject(appKodein())
 
         //better fail here then later
-        val board = intent.getStringExtra("board") ?: throw IllegalArgumentException("Postloader can't be null")
+        board = intent.getStringExtra("board") ?: throw IllegalArgumentException("Postloader can't be null")
         //TODO: check if there are post available for the tags, switching to an empty Activity is kinda stupid...
-        val tags = intent.getStringExtra("tags") ?: ""
+        tags = intent.getStringExtra("tags") ?: ""
         postLoader = PostLoader.getLoader(board, tags)
 
-        val post = intent.getSerializableExtra(resources.getString(R.string.post_class)) as Post
-
+        val posi = intent.getIntExtra("posi", -1)
+        if (posi == -1) throw IllegalArgumentException("Id must not be null")
 
         val verticalPager = VerticalViewPager(this).apply {
             //TODO: use proper id
             id = 0x12345678
             adapter = PostPagerAdapter(supportFragmentManager)
-            currentItem = postLoader.getIndexOf(post)
+            currentItem = posi
         }
 
         onPostSwitch.subscribe { runOnUiThread { verticalPager.currentItem += it } }
@@ -146,7 +150,6 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
          * Also sets the activity result to the current position.
          */
         override fun getItem(position: Int): Fragment? {
-            val post = postLoader.getPostAt(position)
             //request new posts when less then 5 posts are left to load
             if (postLoader.getCount() - position > 5) postLoader.requestNextPosts()
 
@@ -158,7 +161,9 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
 
             return PostFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable(Shinobooru.appContext.getString(R.string.post_class), post)
+                    putString("board", postLoader.board)
+                    putString("tags", postLoader.tags)
+                    putInt("posi", position)
                 }
             }
         }
@@ -172,13 +177,16 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
      * Contains the two child fragments.
      */
     class PostFragment : Fragment() {
+        val TAG = "PostFragment"
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-            val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
+            val board = arguments.getString("board")
+            val tags = arguments.getString("tags")
+            val posi = arguments.getInt("posi")
 
             return ViewPager(context).apply {
                 //TODO: use proper id
                 id = 987654321
-                adapter = PostDetailsPagerAdapter(childFragmentManager, post, this.context)
+                adapter = PostDetailsPagerAdapter(childFragmentManager, board, tags, posi, this.context)
             }
         }
     }
@@ -188,7 +196,10 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
      * @param fm the child fragment manager
      * @param post to create the fragments for
      */
-    class PostDetailsPagerAdapter(fm: FragmentManager, val post: Post, val context: Context) : FragmentPagerAdapter(fm) {
+    class PostDetailsPagerAdapter(fm: FragmentManager, val board: String, val tags: String,
+                                  val posi: Int, val context: Context) : FragmentPagerAdapter(fm) {
+
+        val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)!!
 
         /** mark the given post as viewed */
         init {
@@ -211,7 +222,9 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
             }
             fragment.apply {
                 arguments = Bundle().apply {
-                    putSerializable(Shinobooru.appContext.getString(R.string.post_class), post)
+                    putString("board", board)
+                    putString("tags", tags)
+                    putInt("posi", posi)
                 }
             }
             return fragment
@@ -222,7 +235,7 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
          * so only the image fragment get created for it.
          */
         override fun getCount(): Int {
-            return if (post.file != null) 1 else 2
+            return if (post is DownloadedPost) 1 else 2
         }
     }
 
@@ -230,8 +243,12 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
      * Get the post from the bundle argument and create a [TouchImageView] with sample image.
      */
     class PostImageFragment : Fragment() {
+        val TAG = "PostImageFragment"
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-            val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
+            val board = arguments.getString("board")
+            val tags = arguments.getString("tags")
+            val posi = arguments.getInt("posi")
+            val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)!!
 
             val imageview = TouchImageView(context)
             post.loadSample {
@@ -247,7 +264,10 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
      */
     class PostDetailsFragment : Fragment() {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-            val post = arguments.getSerializable(resources.getString(R.string.post_class)) as Post
+            val board = arguments.getString("board")
+            val tags = arguments.getString("tags")
+            val posi = arguments.getInt("posi")
+            val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)!!
 
             return PostDetailsAnko<Fragment>(post).createView(AnkoContext.create(context, this))
         }

@@ -5,7 +5,7 @@ import android.content.IntentSender
 import android.os.Bundle
 import android.util.Log
 import com.github.firenox89.shinobooru.model.FileManager
-import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
@@ -21,7 +21,7 @@ import java.nio.channels.Channels
 /**
  * Created by firenox on 02.11.16.
  */
-class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Post>>?) -> Unit) :
+class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<DownloadedPost>>?) -> Unit) :
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
@@ -31,7 +31,7 @@ class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Po
 
     var appRootDriveId: DriveId? = null
     var connected = false
-    var driveContent: Map<Metadata, List<Post>>? = null
+    var driveContent: Map<Metadata, List<DownloadedPost>>? = null
 
     //TODO check if that instance expires
     val googleApiClient: GoogleApiClient = GoogleApiClient.Builder(activity)
@@ -54,6 +54,7 @@ class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Po
         }
         try {
             result.startResolutionForResult(activity, REQUEST_CODE_RESOLUTION)
+            //TODO this does not work
             googleApiClient.connect()
         } catch (e: IntentSender.SendIntentException) {
             Log.e("GD", "Exception while starting resolution activity", e)
@@ -76,7 +77,7 @@ class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Po
                 val postList = driveContent.filter { it.key.title.equals(name) }.toList()
                 if (postList.isNotEmpty()) {
                     val fileList = it.value
-                    val driveList = postList[0].second.map(Post::id)
+                    val driveList = postList[0].second.map(DownloadedPost::id)
                     val unsyncedFiles = fileList.filter { !driveList.contains(it.id) }
                     unsyncedFiles.forEach { uploadFile(it.file!!, postList[0].first.driveId.asDriveFolder()) }
                 } else {
@@ -112,18 +113,19 @@ class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Po
         uicallback(driveContent)
     }
 
-    fun scanAppRootDirectoryContent(): Map<Metadata, List<Post>> {
+    fun scanAppRootDirectoryContent(): Map<Metadata, List<DownloadedPost>> {
         val driveId = appRootDriveId
         if (driveId != null) {
             val result = driveId.asDriveFolder().listChildren(googleApiClient).await()
-            return result.metadataBuffer.associateBy({ it }, { listPostFromDriveId(it.driveId) })
+            return result.metadataBuffer.associateBy({ it }, { listDownloadedPostFromDriveId(it.driveId) })
         }
         return mutableMapOf()
     }
 
-    fun listPostFromDriveId(driveId: DriveId): List<Post> {
+    fun listDownloadedPostFromDriveId(driveId: DriveId): List<DownloadedPost> {
         val result = driveId.asDriveFolder().listChildren(googleApiClient).await()
-        return result.metadataBuffer.map { FileManager.postFromName(it.title, null) }
+        //create a non existing file is nicer then passing null
+        return result.metadataBuffer.map { FileManager.postFromName(it.title, File(it.title)) }
     }
 
     override fun onConnectionSuspended(p0: Int) {

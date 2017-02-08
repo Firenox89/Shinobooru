@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import com.github.firenox89.shinobooru.R
+import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.PostLoader
 import org.jetbrains.anko.*
 import rx.Observable
@@ -92,7 +93,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
                 }
             }
 
-        holder.downloadedIcon.visibility = if (post?.hasFile() ?: false) View.VISIBLE else View.INVISIBLE
+        holder.downloadedIcon.visibility = if (post is DownloadedPost) View.VISIBLE else View.INVISIBLE
         holder.viewedIcon.visibility = if (post?.wasViewed() ?: false) View.VISIBLE else View.INVISIBLE
         holder.itemView?.setOnClickListener { onImageClickStream.onNext(position) }
     }

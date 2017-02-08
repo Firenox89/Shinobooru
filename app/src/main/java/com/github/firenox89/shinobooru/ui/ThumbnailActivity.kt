@@ -61,11 +61,10 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
         recyclerAdapter.onImageClickStream.subscribe {
-            val post = recyclerAdapter.postLoader.getPostAt(it)
             val intent = Intent(this, PostPagerActivity::class.java)
             intent.putExtra("board", recyclerAdapter.postLoader.board)
             intent.putExtra("tags", recyclerAdapter.postLoader.tags)
-            intent.putExtra(resources.getString(R.string.post_class), post)
+            intent.putExtra("posi", it)
             startActivityForResult(intent, 1)
         }
 

@@ -20,7 +20,7 @@ object FileManager {
             Environment.DIRECTORY_PICTURES), "shinobooru")
 
     /** Map of boards and the post images downloaded from them */
-    val boards = mutableMapOf<String, List<Post>>()
+    val boards = mutableMapOf<String, List<DownloadedPost>>()
     /** List of cached post thumbnails */
     private val cachedFiles = mutableListOf<String>()
 
@@ -33,7 +33,7 @@ object FileManager {
     init {
         checkExternalStorage()
         shinobooruImageDir.mkdirs()
-        shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadPostListFromFile(it)) }
+        shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadDownloadedPostListFromFile(it)) }
 
         // load list of files from cache
 
@@ -46,8 +46,8 @@ object FileManager {
      * @param dir the directory to take the files from
      * @return a list of loaded posts
      */
-    private fun loadPostListFromFile(dir: File): List<Post> {
-        val postList = mutableListOf<Post>()
+    private fun loadDownloadedPostListFromFile(dir: File): List<DownloadedPost> {
+        val postList = mutableListOf<DownloadedPost>()
 
         dir.listFiles().forEach { postList.add(postFromName(it.name, it)) }
         return postList
@@ -56,7 +56,7 @@ object FileManager {
     /**
      * Load a post from a file by parsing the file name to get the post id
      */
-    fun postFromName(postFileName: String, postFile: File?): Post {
+    fun postFromName(postFileName: String, postFile: File): DownloadedPost {
         //TODO: handle non posts
         //compatibility with mbooru saved posts
         val idIndex = if (postFileName.split(" ")[1].equals("-")) 2 else 1
@@ -64,7 +64,7 @@ object FileManager {
         val id = postFileName.split(" ")[idIndex].toLong()
         val source = postFileName.split(" ")[0].toLowerCase()
 
-        return Post(id = id, file = postFile)
+        return DownloadedPost(id = id, file = postFile)
     }
 
     /**
@@ -113,15 +113,15 @@ object FileManager {
      * @param board name to get the list from
      * @return list of posts for the given board
      */
-    fun getPosts(board: String): List<Post>? {
+    fun getDownloadedPosts(board: String): List<DownloadedPost>? {
         return boards[board]
     }
 
     /**
      * Returns a list of all downloaded posts by combining the different board lists
      */
-    fun getAllPosts(): List<Post> {
-        val list = mutableListOf<Post>()
+    fun getAllDownloadedPosts(): List<DownloadedPost> {
+        val list = mutableListOf<DownloadedPost>()
         boards.forEach { list.addAll(it.value) }
         return list
     }
@@ -131,7 +131,7 @@ object FileManager {
      *
      * @param board name for the list
      * @param id of the post
-     * @return [Post] or null
+     * @return [DownloadedPost] or null
      */
     fun fileById(board: String, id: Long): File? {
         return boards[board]?.filter { it.id == id }?.first()?.file

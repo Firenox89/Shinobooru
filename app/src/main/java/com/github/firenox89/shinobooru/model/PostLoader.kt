@@ -31,7 +31,6 @@ open class PostLoader {
                 loader = PostLoader(board, tags)
                 loaderList.add(loader)
             }
-            Log.e(TAG, "loader count ${loaderList.size}")
             return loader
         }
 

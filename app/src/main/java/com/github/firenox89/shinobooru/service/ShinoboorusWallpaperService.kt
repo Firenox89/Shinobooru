@@ -9,6 +9,7 @@ import android.service.wallpaper.WallpaperService
 import android.util.Size
 import android.view.MotionEvent
 import android.view.SurfaceHolder
+import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.FileManager
 import com.github.firenox89.shinobooru.model.Post
 import com.github.salomonbrys.kodein.KodeinInjected
@@ -44,7 +45,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
         private var displayWidth: Int = 0
         private var displayHeight: Int = 0
 
-        private val postList = FileManager.getAllPosts()
+        private val postList = FileManager.getAllDownloadedPosts()
 
         private val clickEventStream = PublishSubject<MotionEvent>()
         private val drawRequestQueue = PublishSubject<() -> Unit>()
@@ -200,25 +201,25 @@ class ShinoboorusWallpaperService : WallpaperService() {
             //picks random image
             var post = pickRandomPost()
             //load image bounds from file
-            var bounds = getBounds(post.file!!.absolutePath)
+            var bounds = getBounds(post.file.absolutePath)
             //landscape or portray?
             if (displayWidth > displayHeight) {
                 //while not fitting try new image
                 while (bounds.width < bounds.height) {
                     post = pickRandomPost()
-                    bounds = getBounds(post.file!!.absolutePath)
+                    bounds = getBounds(post.file.absolutePath)
                 }
             } else {
                 //while not fitting try new image
                 while (bounds.width > bounds.height) {
                     post = pickRandomPost()
-                    bounds = getBounds(post.file!!.absolutePath)
+                    bounds = getBounds(post.file.absolutePath)
                 }
             }
             val options = BitmapFactory.Options()
             if (bounds.width > displayWidth * 2 && bounds.height > displayHeight * 2)
                 options.inSampleSize = 2
-            return BitmapFactory.decodeFile(post.file?.absolutePath, options)
+            return BitmapFactory.decodeFile(post.file.absolutePath, options)
         }
 
         /**
@@ -226,7 +227,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          *
          * @return a random post.
          */
-        private fun pickRandomPost(): Post {
+        private fun pickRandomPost(): DownloadedPost {
             var i = (Math.random() * postList.size).toInt()
             return postList[i]
         }

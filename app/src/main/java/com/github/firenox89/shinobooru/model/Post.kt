@@ -8,7 +8,6 @@ import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.httpGet
 import com.google.gson.Gson
 import org.jetbrains.anko.doAsync
-import java.io.File
 import java.io.InputStream
 import java.io.Serializable
 import java.util.concurrent.Executors
@@ -18,7 +17,7 @@ import java.util.regex.Pattern
  * Data class to store the meta information of a post.
  * Contains some utility functions.
  */
-data class Post(
+open class Post(
         var id: Long = 0,
         var tags: String = "",
         var created_at: Int = 0,
@@ -52,11 +51,9 @@ data class Post(
         var frames_string: String = "",
         //        var frames : Array<String>,
         val firstName: String = "",
-        val lastName: String = "",
-        val file: File? = null /*FileManager.fileById(id)*/) : Serializable {
+        val lastName: String = "") {
 
     private val TAG = "Post"
-    private val MAX_FILE_SIZE = 5L * 1024L * 1024L
 
     /**
      * konachan removed the 'http:' part from their links so we have to add it if it is missing.
@@ -117,19 +114,13 @@ data class Post(
      *
      * @param handler will be called after the image was loaded.
      */
-    fun loadPreview(handler: (Bitmap?) -> Unit): Unit {
-        doAsync {
+    open fun loadPreview(handler: (Bitmap?) -> Unit): Unit {
+        doAsync(Throwable::printStackTrace) {
             var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(getBoard(), id))
             if (bitmap == null || SettingsActivity.disableCaching) {
-                if (file != null) {
-                    doAsync {
-                        handler.invoke(loadSubsampledImage(file, 250, 400))
-                    }
-                } else {
-                    loadBitmap(preview_url) {
-                        handler.invoke(it)
-                        FileManager.previewBitmapToCache(getBoard(), id, it)
-                    }
+                loadBitmap(preview_url) {
+                    handler.invoke(it)
+                    FileManager.previewBitmapToCache(getBoard(), id, it)
                 }
             } else {
                 handler.invoke(bitmap)
@@ -142,21 +133,8 @@ data class Post(
      *
      * @param handler will be called after the image was loaded.
      */
-    fun loadSample(handler: (Bitmap?) -> Unit): Unit {
-        if (file != null) {
-            doAsync {
-                val options = BitmapFactory.Options()
-                //sample huge images
-                if (file.length() > MAX_FILE_SIZE) {
-                    options.inSampleSize = 2
-                    options.inDither = true
-                    options.inPreferQualityOverSpeed = true
-                }
-                handler.invoke(BitmapFactory.decodeFile(file.path, options))
-            }
-        } else {
-            loadBitmap(url = sample_url, handler = handler)
-        }
+    open fun loadSample(handler: (Bitmap?) -> Unit): Unit {
+        loadBitmap(url = sample_url, handler = handler)
     }
 
     /**
@@ -170,51 +148,19 @@ data class Post(
     private fun loadBitmap(url: String, retries: Int = 2, handler: (Bitmap?) -> Unit): Unit {
         url.httpGet().apply { callbackExecutor = Executors.newSingleThreadExecutor() }
                 .responseObject(BitmapDeserializer()) { req, res, result ->
-            val (bitmap, err) = result
-            if (err != null) {
-                Log.e("Http request error", "$err")
-                if (retries > 0) {
-                    //TODO: improve that
-                    //try again
-                    Thread.sleep(500)
-                    loadBitmap(url, retries - 1, handler)
+                    val (bitmap, err) = result
+                    if (err != null) {
+                        Log.e("Http request error", "$err")
+                        if (retries > 0) {
+                            //TODO: improve that
+                            //try again
+                            Thread.sleep(500)
+                            loadBitmap(url, retries - 1, handler)
+                        }
+                    } else {
+                        handler(bitmap)
+                    }
                 }
-            } else {
-                handler(bitmap)
-            }
-        }
-    }
-
-    /**
-     * Loads a sub sampled imaae from a given file.
-     * The sample rate gets determined by the given width and height and the image size.
-     */
-    private fun loadSubsampledImage(file: File, reqWidth: Int, reqHeight: Int): Bitmap {
-        val options = BitmapFactory.Options()
-        options.inJustDecodeBounds = true
-        BitmapFactory.decodeFile(file.path, options)
-        // Raw height and width of image
-        val height = options.outHeight
-        val width = options.outWidth
-        var inSampleSize = 1
-
-        if (height > reqWidth || width > reqHeight) {
-
-            val halfHeight = height / 2
-            val halfWidth = width / 2
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width larger than the requested height and width.
-            while (halfHeight / inSampleSize >= reqWidth && halfWidth / inSampleSize >= reqHeight) {
-                inSampleSize *= 2
-            }
-        }
-        options.inJustDecodeBounds = false
-        options.inSampleSize = inSampleSize
-        options.inDither = true
-        options.inPreferQualityOverSpeed = true
-
-        return BitmapFactory.decodeFile(file.path, options)
     }
 
     /**
@@ -239,15 +185,6 @@ data class Post(
     }
 
     /**
-     * Returns if that post was downloaded
-     *
-     * @return true if the post exists in storage, false otherwise.
-     */
-    fun hasFile(): Boolean {
-        return file != null
-    }
-
-    /**
      * Returns if that post was viewed.
      *
      * @return if viewed true, false otherwise
@@ -269,6 +206,17 @@ data class Post(
     }
 
     override fun toString(): String {
-        return "Post(id=$id, tags='$tags', created_at=$created_at, creator_id=$creator_id, author='$author', change=$change, source='$source', score=$score, md5='$md5', file_size=$file_size, is_shown_in_index=$is_shown_in_index, preview_width=$preview_width, preview_height=$preview_height, actual_preview_width=$actual_preview_width, actual_preview_height=$actual_preview_height, sample_width=$sample_width, sample_height=$sample_height, sample_file_size=$sample_file_size, jpeg_width=$jpeg_width, jpeg_height=$jpeg_height, jpeg_file_size=$jpeg_file_size, rating='$rating', has_children=$has_children, parent_id=$parent_id, status='$status', width=$width, height=$height, is_held=$is_held, frames_pending_string='$frames_pending_string', frames_string='$frames_string', firstName='$firstName', lastName='$lastName', file=$file, TAG='$TAG')"
+        return "Post(id=$id, tags='$tags', created_at=$created_at, creator_id=$creator_id," +
+                " author='$author', change=$change, source='$source', score=$score, md5='$md5'," +
+                " file_size=$file_size, is_shown_in_index=$is_shown_in_index," +
+                " preview_width=$preview_width, preview_height=$preview_height," +
+                " actual_preview_width=$actual_preview_width," +
+                " actual_preview_height=$actual_preview_height, sample_width=$sample_width," +
+                " sample_height=$sample_height, sample_file_size=$sample_file_size," +
+                " jpeg_width=$jpeg_width, jpeg_height=$jpeg_height, jpeg_file_size=$jpeg_file_size," +
+                " rating='$rating', has_children=$has_children, parent_id=$parent_id," +
+                " status='$status', width=$width, height=$height, is_held=$is_held," +
+                " frames_pending_string='$frames_pending_string', frames_string='$frames_string'," +
+                " firstName='$firstName', lastName='$lastName', TAG='$TAG')"
     }
 }
