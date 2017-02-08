@@ -79,7 +79,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         if (usePreview)
             post?.loadPreview {
                 val img = it
-                doAsync {
+                doAsync(Throwable::printStackTrace) {
                     uiThread {
                         holder.postImage.setImageBitmap(img) }
                     }
@@ -87,7 +87,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         else
             post?.loadSample {
                 val img = it
-                doAsync {
+                doAsync(Throwable::printStackTrace) {
                     uiThread {
                         holder.postImage.setImageBitmap(img) }
                 }

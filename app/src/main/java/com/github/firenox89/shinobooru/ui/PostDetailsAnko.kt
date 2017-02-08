@@ -134,7 +134,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
          * Asynchronously loads the tag information.
          */
         init {
-            doAsync {
+            doAsync(Throwable::printStackTrace) {
                 val tags = post.getTagList()
                 //group the tags in pairs
                 for (i in 0..tags.size - 1 step 2) {

@@ -14,7 +14,7 @@ class DownloadedPost(id: Long, val file: File) : Post(id = id) {
     private val MAX_FILE_SIZE = 5L * 1024L * 1024L
 
     override fun loadSample(handler: (Bitmap?) -> Unit) {
-        doAsync {
+        doAsync(Throwable::printStackTrace) {
             val options = BitmapFactory.Options()
             //sample huge images
             if (file.length() > MAX_FILE_SIZE) {
@@ -27,7 +27,7 @@ class DownloadedPost(id: Long, val file: File) : Post(id = id) {
     }
 
     override fun loadPreview(handler: (Bitmap?) -> Unit) {
-        doAsync {
+        doAsync(Throwable::printStackTrace) {
             handler.invoke(loadSubsampledImage(file, 250, 400))
         }
     }

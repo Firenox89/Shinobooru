@@ -138,7 +138,7 @@ class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Do
 
         Drive.DriveApi.getRootFolder(googleApiClient).queryChildren(googleApiClient, appDirQuery).setResultCallback {
             if (it.status.isSuccess) {
-                doAsync {
+                doAsync(Throwable::printStackTrace) {
                     if (it.metadataBuffer.count == 1) {
                         appRootDriveId = it.metadataBuffer[0].driveId
                         driveContent = scanAppRootDirectoryContent()
