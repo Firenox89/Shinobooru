@@ -115,6 +115,7 @@ open class PostLoader {
             val currentSize = posts.size
             val tmpList = mutableListOf<Post>()
             it.forEach {
+                //TODO forbid to search with all ratings disabled
                 if (SettingsActivity.filterRating(it.rating)) {
                     tmpList.add(it)
                 }

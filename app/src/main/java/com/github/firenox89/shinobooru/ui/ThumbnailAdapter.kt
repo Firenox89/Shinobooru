@@ -138,12 +138,12 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
                                         }
                         imageView {
                             downloadedIcon = this
-                            imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.view_32x32)
+                            imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.cloud_download_2_32x32)
                             padding = 10
                         }
                         imageView {
                             viewedIcon = this
-                            imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.cloud_download_2_32x32)
+                            imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.view_32x32)
                             padding = 10
                         }
                     }

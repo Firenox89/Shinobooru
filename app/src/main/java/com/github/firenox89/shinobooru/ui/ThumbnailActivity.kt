@@ -8,12 +8,14 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.widget.DrawerLayout
+import android.support.v4.widget.DrawerLayout.DrawerListener
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.*
@@ -121,6 +123,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                         //start autocomplete after the third letter
                         threshold = 3
                         hint = "Search..."
+                        singleLine = true
                         setOnEditorActionListener { textView, i, keyEvent ->
                             val intent = Intent(ctx, ThumbnailActivity::class.java)
                             intent.putExtra("tags", textView.text.toString())
@@ -135,6 +138,24 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                         //TODO: add previous searches
                     }
                 }
+                addDrawerListener(object: DrawerListener {
+                    override fun onDrawerClosed(drawerView: View?) {
+                        if (drawerView != null) {
+                            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                            imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
+                        }
+                    }
+
+                    override fun onDrawerStateChanged(newState: Int) {
+                    }
+
+                    override fun onDrawerSlide(drawerView: View?, slideOffset: Float) {
+                    }
+
+                    override fun onDrawerOpened(drawerView: View?) {
+                    }
+
+                })
             }
         }
     }
