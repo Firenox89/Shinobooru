@@ -67,7 +67,7 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         postLoader = PostLoader.getLoader(board, tags)
 
         val posi = intent.getIntExtra("posi", -1)
-        if (posi == -1) throw IllegalArgumentException("Id must not be null")
+        if (posi == -1) throw IllegalArgumentException("Position must not be null")
 
         val verticalPager = VerticalViewPager(this).apply {
             //TODO: use proper id
@@ -252,9 +252,14 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
 
             val imageview = TouchImageView(context)
             post.loadSample {
-                onUiThread {
-                    imageview.setImageBitmap(it) }
+                if (activity != null) {
+                    onUiThread {
+                        imageview.setImageBitmap(it)
+                    }
+                } else {
+                    it?.recycle()
                 }
+            }
             return imageview
         }
     }

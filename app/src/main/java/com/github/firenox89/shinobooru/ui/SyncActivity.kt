@@ -17,6 +17,7 @@ import org.jetbrains.anko.*
 class SyncActivity : Activity() {
     val TAG = "SyncActivity"
     override fun onCreate(savedInstanceState: Bundle?) {
+        //TODO check permissions
         super.onCreate(savedInstanceState)
         val boards = FileManager.boards.map { it.key }
 

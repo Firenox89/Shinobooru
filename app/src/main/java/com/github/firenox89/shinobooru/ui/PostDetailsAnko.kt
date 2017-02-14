@@ -158,6 +158,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
          */
         fun searchForTag(ctx: Context, tag: String) {
             val intent = Intent(ctx, ThumbnailActivity::class.java)
+            intent.putExtra("board", post.getBoard())
             intent.putExtra("tags", tag)
             ctx.startActivity(intent)
         }

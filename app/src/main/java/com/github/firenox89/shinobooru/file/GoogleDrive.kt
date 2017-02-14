@@ -79,13 +79,13 @@ class GoogleDrive(val activity: Activity, val uicallback: (Map<Metadata, List<Do
                     val fileList = it.value
                     val driveList = postList[0].second.map(DownloadedPost::id)
                     val unsyncedFiles = fileList.filter { !driveList.contains(it.id) }
-                    unsyncedFiles.forEach { uploadFile(it.file!!, postList[0].first.driveId.asDriveFolder()) }
+                    unsyncedFiles.forEach { uploadFile(it.file, postList[0].first.driveId.asDriveFolder()) }
                 } else {
                     val changeSet = MetadataChangeSet.Builder().setTitle(it.key).build()
                     val result = appRootDriveId?.asDriveFolder()?.createFolder(googleApiClient, changeSet)?.await()
                     it.value.forEach {
                         val file = it.file
-                        if (file != null && result != null)
+                        if (result != null)
                             uploadFile(file, result.driveFolder)
                     }
                 }

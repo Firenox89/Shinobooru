@@ -20,7 +20,7 @@ object FileManager {
             Environment.DIRECTORY_PICTURES), "shinobooru")
 
     /** Map of boards and the post images downloaded from them */
-    val boards = mutableMapOf<String, List<DownloadedPost>>()
+    val boards = mutableMapOf<String, MutableList<DownloadedPost>>()
     /** List of cached post thumbnails */
     private val cachedFiles = mutableListOf<String>()
 
@@ -36,7 +36,6 @@ object FileManager {
         shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadDownloadedPostListFromFile(it)) }
 
         // load list of files from cache
-
         cachedFiles.addAll(Shinobooru.appContext.fileList())
     }
 
@@ -46,7 +45,7 @@ object FileManager {
      * @param dir the directory to take the files from
      * @return a list of loaded posts
      */
-    private fun loadDownloadedPostListFromFile(dir: File): List<DownloadedPost> {
+    private fun loadDownloadedPostListFromFile(dir: File): MutableList<DownloadedPost> {
         val postList = mutableListOf<DownloadedPost>()
 
         dir.listFiles().forEach { postList.add(postFromName(it.name, it)) }
@@ -64,7 +63,7 @@ object FileManager {
         val id = postFileName.split(" ")[idIndex].toLong()
         val source = postFileName.split(" ")[0].toLowerCase()
 
-        return DownloadedPost(id = id, file = postFile)
+        return DownloadedPost(id = id, file = postFile, boardName = source)
     }
 
     /**
@@ -82,13 +81,14 @@ object FileManager {
         matcher.find()
         val board = matcher.group(1)
 
-        url.httpDownload().destination { res, realUrl ->
-            val boardSubDirName = board
-            val dataType = url.split(".").last()
-            val fileName = "$board ${post.id} ${post.tags}.$dataType"
-            val boardSubDir = File(shinobooruImageDir, boardSubDirName)
+        val boardSubDirName = board
+        val dataType = url.split(".").last()
+        val fileName = "$board ${post.id} ${post.tags}.$dataType"
+        val boardSubDir = File(shinobooruImageDir, boardSubDirName)
 
-            boardSubDir.mkdirs()
+        boardSubDir.mkdirs()
+
+        url.httpDownload().destination { res, realUrl ->
 
             Log.i("Download", "dest = $boardSubDir/$fileName")
 
@@ -97,6 +97,8 @@ object FileManager {
         }.response { request, response, result ->
             if (result.component2() != null)
                 Log.d("Download", "Error = ${result.component2()}")
+            else
+                boards[boardSubDirName]?.add(postFromName(fileName, File(boardSubDir, fileName)))
         }
     }
 

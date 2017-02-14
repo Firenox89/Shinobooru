@@ -81,6 +81,9 @@ open class Post(
         override fun deserialize(inputStream: InputStream) = BitmapFactory.decodeStream(inputStream)
     }
 
+    companion object{
+        val boardPattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
+    }
 
     /**
      * Returns a list of detailed tags.
@@ -198,9 +201,8 @@ open class Post(
      *
      * @return the board name this post belongs to.
      */
-    fun getBoard(): String {
-        val pattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
-        val matcher = pattern.matcher(file_url)
+    open fun getBoard(): String {
+        val matcher = boardPattern.matcher(file_url)
         matcher.find()
         return matcher.group(1)
     }

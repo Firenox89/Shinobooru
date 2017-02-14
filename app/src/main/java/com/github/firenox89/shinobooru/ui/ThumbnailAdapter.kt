@@ -27,16 +27,18 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
     private var postLoaderChangeSubscription = subscribeLoader()
     var usePreview = true
 
-    //a placeholder bitmap to display while the real image is loading
-    val placeholderBitmap: Bitmap by lazy {
-        val rect = Rect(0, 0, 250, 400)
-        val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(image)
-        val color = Color.argb(255, 80, 80, 80)
-        val paint = Paint()
-        paint.color = color
-        canvas.drawRect(rect, paint)
-        image
+    companion object {
+        //a placeholder bitmap to display while the real image is loading
+        val placeholderBitmap: Bitmap by lazy {
+            val rect = Rect(0, 0, 250, 400)
+            val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(image)
+            val color = Color.argb(255, 80, 80, 80)
+            val paint = Paint()
+            paint.color = color
+            canvas.drawRect(rect, paint)
+            image
+        }
     }
 
     /**

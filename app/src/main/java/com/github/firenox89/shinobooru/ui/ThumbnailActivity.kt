@@ -48,15 +48,17 @@ class ThumbnailActivity : Activity(), KodeinInjected {
     private val updateThumbnail: PublishSubject<Int> by instance("thumbnailUpdates")
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        //TODO: save and reload position
         super.onCreate(savedInstanceState)
+        //TODO: save and reload position
 
         inject(appKodein())
 
         //setup the RecyclerView adapter
         val tags = intent.getStringExtra("tags") ?: ""
         val board = intent.getStringExtra("board") ?: SettingsActivity.currentBoardURL
-        val postLoader = PostLoader.getLoader(board, tags)
+
+        Log.i(TAG, "start $board $tags")
+        val postLoader = PostLoader.getLoader("${if (board.startsWith("http")) "" else "http://"}$board", tags)
         recyclerAdapter = ThumbnailAdapter(postLoader)
 
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
@@ -184,7 +186,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
     private fun setKonachan() {
         menuDrawerLayout.closeDrawers()
-        recyclerView.scrollTo(0, 0)
+        recyclerView.scrollToPosition(1)
         recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.konachanURL))
     }
 
@@ -194,7 +196,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      */
     private fun setYandere() {
         menuDrawerLayout.closeDrawers()
-        recyclerView.scrollTo(0, 0)
+        recyclerView.scrollToPosition(1)
         recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.yandereURL))
     }
 
@@ -203,6 +205,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      * and sets [FileLoader] as Post Source.
      */
     private fun openFileView() {
+        PostLoader.getLoader("FileLoader").onRefresh()
         //TODO: loading animation
         menuDrawerLayout.closeDrawers()
         recyclerView.scrollTo(0, 0)

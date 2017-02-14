@@ -2,27 +2,25 @@ package com.github.firenox89.shinobooru.model
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Point
+import com.github.firenox89.shinobooru.app.Shinobooru
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.windowManager
 import java.io.File
 
 /**
  * Created by firenox on 2/8/17.
  */
 
-class DownloadedPost(id: Long, val file: File) : Post(id = id) {
-
-    private val MAX_FILE_SIZE = 5L * 1024L * 1024L
+class DownloadedPost(id: Long, val file: File, val boardName: String) : Post(id = id) {
 
     override fun loadSample(handler: (Bitmap?) -> Unit) {
         doAsync(Throwable::printStackTrace) {
-            val options = BitmapFactory.Options()
+            val display = Shinobooru.appContext.windowManager.defaultDisplay
+            val size = Point()
+            display.getSize(size)
             //sample huge images
-            if (file.length() > MAX_FILE_SIZE) {
-                options.inSampleSize = 2
-                options.inDither = true
-                options.inPreferQualityOverSpeed = true
-            }
-            handler.invoke(BitmapFactory.decodeFile(file.path, options))
+            handler.invoke(loadSubsampledImage(file, size.x, size.y))
         }
     }
 
@@ -62,6 +60,10 @@ class DownloadedPost(id: Long, val file: File) : Post(id = id) {
         options.inPreferQualityOverSpeed = true
 
         return BitmapFactory.decodeFile(file.path, options)
+    }
+
+    override fun getBoard(): String {
+        return boardName
     }
 
     override fun toString(): String {

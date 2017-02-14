@@ -3,9 +3,12 @@ package com.github.firenox89.shinobooru.app
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.Point
+import android.os.Build
 import android.preference.PreferenceManager
 import android.view.Display
+import com.github.firenox89.shinobooru.Manifest
 import com.github.salomonbrys.kodein.*
 import org.jetbrains.anko.windowManager
 import rx.lang.kotlin.PublishSubject

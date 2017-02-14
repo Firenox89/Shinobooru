@@ -34,6 +34,19 @@ class ShinoboorusWallpaperService : WallpaperService() {
         return ShinoboorusWallpaperEngine()
     }
 
+    companion object {
+        val black = Paint().apply {
+            color = 0x000000
+            alpha = 255
+        }
+        //smooths the scaled image while drawing
+        val filter = Paint().apply {
+            isAntiAlias = true
+            isFilterBitmap = true
+            isDither = true
+        }
+    }
+
     /**
      * The engine drawing on te live wallpaper.
      */
@@ -44,8 +57,6 @@ class ShinoboorusWallpaperService : WallpaperService() {
 
         private var displayWidth: Int = 0
         private var displayHeight: Int = 0
-
-        private val postList = FileManager.getAllDownloadedPosts()
 
         private val clickEventStream = PublishSubject<MotionEvent>()
         private val drawRequestQueue = PublishSubject<() -> Unit>()
@@ -108,30 +119,27 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         private fun draw() {
             drawRequestQueue.onNext {
-                val black = Paint()
-                black.color = 0x000000
-                black.alpha = 255
-                //stop if surface got invalid
-                if (isSurfaceInvalid()) return@onNext
-                val canvas = surfaceHolder.lockCanvas()
-                //clear previous drawing
-                canvas.drawPaint(black)
-                val image = pickImage()
-                val transformationInfo = calcTransformation(image)
-                //smooths the scaled image while drawing
-                val filter = Paint()
-                filter.isAntiAlias = true
-                filter.isFilterBitmap = true
-                filter.isDither = true
-                if (isSurfaceInvalid()) return@onNext
-                //scales image
-                canvas.translate(transformationInfo.second.width.toFloat() / 2,
-                        transformationInfo.second.height.toFloat() / 2)
-                if (isSurfaceInvalid()) return@onNext
-                //draws scaled image
-                canvas.drawBitmap(image, transformationInfo.first, filter)
-                surfaceHolder.unlockCanvasAndPost(canvas)
-                image.recycle()
+                try {
+                    //stop if surface got invalid
+                    if (isSurfaceInvalid()) return@onNext
+                    val canvas = surfaceHolder.lockCanvas()
+                    //clear previous drawing
+                    canvas.drawPaint(black)
+                    val image = pickImage()
+                    val transformationInfo = calcTransformation(image)
+                    if (isSurfaceInvalid()) return@onNext
+                    //scales image
+                    canvas.translate(transformationInfo.second.width.toFloat() / 2,
+                            transformationInfo.second.height.toFloat() / 2)
+                    if (isSurfaceInvalid()) return@onNext
+                    //draws scaled image
+                    canvas.drawBitmap(image, transformationInfo.first, filter)
+                    if (isSurfaceInvalid()) return@onNext
+                    surfaceHolder.unlockCanvasAndPost(canvas)
+                    image.recycle()
+                } catch (OoM: OutOfMemoryError) {
+                    OoM.printStackTrace()
+                }
             }
         }
 
@@ -228,6 +236,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * @return a random post.
          */
         private fun pickRandomPost(): DownloadedPost {
+            val postList = FileManager.getAllDownloadedPosts()
             var i = (Math.random() * postList.size).toInt()
             return postList[i]
         }

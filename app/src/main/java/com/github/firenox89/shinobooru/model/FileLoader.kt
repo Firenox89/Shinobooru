@@ -18,13 +18,13 @@ internal class FileLoader : PostLoader("FileLoader", "") {
         result
     }
 
-    private val posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
+    private var posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
 
     /**
      * Return a post from the postlist for the given number
      */
-    override fun getPostAt(position: Int): Post? {
-        return posts[position]
+    override fun getPostAt(index: Int): Post? {
+        return posts[index]
     }
 
     /** Does nothing */
@@ -48,6 +48,6 @@ internal class FileLoader : PostLoader("FileLoader", "") {
 
     /** Does nothing */
     override fun onRefresh(quantity: Int) {
-        //no refresh either
+        posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
     }
 }
