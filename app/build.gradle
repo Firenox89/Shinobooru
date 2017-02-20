@@ -9,13 +9,19 @@ android {
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
-        versionName "0.1"
+        versionName "0.1.1"
     }
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable false
+            applicationVariants.all { variant ->
+                variant.outputs.each { output ->
+                    project.ext { appName = 'Shinobooru' }
+                    output.outputFile = new File(output.outputFile.parent, "Shinobooru.apk")
+                }
+            }
         }
     }
     sourceSets {

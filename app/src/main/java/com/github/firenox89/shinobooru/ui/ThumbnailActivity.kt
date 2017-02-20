@@ -207,7 +207,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
     private fun setKonachan() {
         menuDrawerLayout.closeDrawers()
-        recyclerView.scrollToPosition(1)
+        recyclerView.scrollTo(0, 0)
         recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.konachanURL))
     }
 
@@ -217,7 +217,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      */
     private fun setYandere() {
         menuDrawerLayout.closeDrawers()
-        recyclerView.scrollToPosition(1)
+        recyclerView.scrollTo(0, 0)
         recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.yandereURL))
     }
 

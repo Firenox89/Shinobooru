@@ -135,6 +135,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
                     //draws scaled image
                     canvas.drawBitmap(image, transformationInfo.first, filter)
                     if (isSurfaceInvalid()) return@onNext
+                    //TODO this sometimes crashes when setting this as lockscreen
                     surfaceHolder.unlockCanvasAndPost(canvas)
                     image.recycle()
                 } catch (OoM: OutOfMemoryError) {
