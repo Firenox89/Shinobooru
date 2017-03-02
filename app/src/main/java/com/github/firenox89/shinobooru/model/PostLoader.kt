@@ -96,7 +96,7 @@ open class PostLoader {
      * @param index of a post
      * @return [Post] for the given index or null
      */
-    open fun getPostAt(index: Int): Post? {
+    open fun getPostAt(index: Int): Post {
         return posts[index]
     }
 

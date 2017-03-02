@@ -23,7 +23,7 @@ internal class FileLoader : PostLoader("FileLoader", "") {
     /**
      * Return a post from the postlist for the given number
      */
-    override fun getPostAt(index: Int): Post? {
+    override fun getPostAt(index: Int): Post {
         return posts[index]
     }
 

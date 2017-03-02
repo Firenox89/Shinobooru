@@ -9,4 +9,8 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:title="@string/pref_title_post_per_row" />
+    <CheckBoxPreference
+        android:title="Alternate Post Viewer Layout"
+        android:defaultValue="true"
+        android:key="alt_postview_layout" />
 </PreferenceScreen>

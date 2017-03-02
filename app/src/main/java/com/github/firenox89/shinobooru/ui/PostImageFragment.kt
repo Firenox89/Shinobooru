@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.PostLoader
+import com.ortiz.touch.TouchImageView
 import org.jetbrains.anko.support.v4.onUiThread
 
 /**
@@ -21,7 +22,7 @@ class PostImageFragment : Fragment() {
         val posi = arguments.getInt("posi")
         val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)!!
 
-        val imageview = ImageView(context)
+        val imageview = TouchImageView(context)
         post.loadSample {
             if (activity != null) {
                 onUiThread {

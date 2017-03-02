@@ -65,11 +65,19 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
         recyclerAdapter.onImageClickStream.subscribe {
-            val intent = Intent(this, PostPagerActivity::class.java)
-            intent.putExtra("board", recyclerAdapter.postLoader.board)
-            intent.putExtra("tags", recyclerAdapter.postLoader.tags)
-            intent.putExtra("posi", it)
-            startActivityForResult(intent, 1)
+            if (sharedPrefs.getBoolean("alt_postview_layout", true)) {
+                val intent = Intent(this, AlternatePostPagerActivity::class.java)
+                intent.putExtra("board", recyclerAdapter.postLoader.board)
+                intent.putExtra("tags", recyclerAdapter.postLoader.tags)
+                intent.putExtra("posi", it)
+                startActivityForResult(intent, 1)
+            } else {
+                val intent = Intent(this, PostPagerActivity::class.java)
+                intent.putExtra("board", recyclerAdapter.postLoader.board)
+                intent.putExtra("tags", recyclerAdapter.postLoader.tags)
+                intent.putExtra("posi", it)
+                startActivityForResult(intent, 1)
+            }
         }
 
         //update the number of posts per row of the recycler layout
