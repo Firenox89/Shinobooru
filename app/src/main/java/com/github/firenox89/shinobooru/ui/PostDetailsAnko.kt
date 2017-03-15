@@ -32,6 +32,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
      */
     override fun createView(ui: AnkoContext<T>): View = with(ui) {
         verticalLayout {
+
             verticalLayout {
                 textView {
                     text = "Size ${humanizeSize(post.file_size)}"

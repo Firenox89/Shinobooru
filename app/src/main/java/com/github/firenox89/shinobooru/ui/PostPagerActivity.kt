@@ -5,6 +5,7 @@ import android.support.v4.app.*
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.PostLoader
 import com.github.salomonbrys.kodein.KodeinInjected
@@ -12,6 +13,7 @@ import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
 import fr.castorflex.android.verticalviewpager.VerticalViewPager
+import org.jetbrains.anko.backgroundColor
 import rx.lang.kotlin.PublishSubject
 import java.util.concurrent.TimeUnit
 
@@ -73,6 +75,8 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
         }
 
         setContentView(verticalPager)
+
+        verticalPager.rootView.setBackgroundColor(resources.getColor(R.color.richtigesGrau))
     }
 
     /**

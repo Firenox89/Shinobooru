@@ -17,7 +17,7 @@ class PostDetailsFragment : Fragment() {
         val board = arguments.getString("board")
         val tags = arguments.getString("tags")
         val posi = arguments.getInt("posi")
-        val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)!!
+        val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)
 
         return PostDetailsAnko<Fragment>(post).createView(AnkoContext.create(context, this))
     }
