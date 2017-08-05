@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
+import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.Tag
 import org.jetbrains.anko.*
@@ -31,6 +32,8 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
      * Creates the ui and returns it to the caller.
      */
     override fun createView(ui: AnkoContext<T>): View = with(ui) {
+        val downloadedPost = post is DownloadedPost
+
         verticalLayout {
             verticalLayout {
                 textView {
@@ -39,11 +42,13 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                 textView {
                     text = "Dimension ${post.width}x${post.height}"
                 }
-                imageButton {
-                    imageBitmap = downloadIcon
-                    onClick {
-                        post.downloadFile()
-                        toast("Download ${post.file_url}")
+                if (!downloadedPost) {
+                    imageButton {
+                        imageBitmap = downloadIcon
+                        onClick {
+                            post.downloadFile()
+                            toast("Download ${post.file_url}")
+                        }
                     }
                 }
             }
@@ -65,8 +70,10 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
                     }
                 }
             }
-            textView {
-                text = "Author ${post.author}"
+            if (!downloadedPost) {
+                textView {
+                    text = "Author ${post.author}"
+                }
             }
             if (post.source.isNotEmpty()) {
                 linearLayout {

@@ -53,6 +53,6 @@ class PostDetailsPagerAdapter(fm: FragmentManager, val board: String, val tags: 
      * so only the image fragment get created for it.
      */
     override fun getCount(): Int {
-        return if (post is DownloadedPost) 1 else 2
+        return 2
     }
 }
