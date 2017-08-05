@@ -81,7 +81,7 @@ open class Post(
         override fun deserialize(inputStream: InputStream) = BitmapFactory.decodeStream(inputStream)
     }
 
-    companion object{
+    companion object {
         val boardPattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
     }
 

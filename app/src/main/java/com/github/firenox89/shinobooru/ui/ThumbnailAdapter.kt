@@ -79,19 +79,21 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         holder.postImage.setImageBitmap(placeholderBitmap)
         //if the recyclerView is set to one image per row use the sample image for quality reasons
         if (usePreview)
-            post?.loadPreview {
+            post.loadPreview {
                 val img = it
                 doAsync(Throwable::printStackTrace) {
                     uiThread {
-                        holder.postImage.setImageBitmap(img) }
+                        holder.postImage.setImageBitmap(img)
                     }
                 }
+            }
         else
-            post?.loadSample {
+            post.loadSample {
                 val img = it
                 doAsync(Throwable::printStackTrace) {
                     uiThread {
-                        holder.postImage.setImageBitmap(img) }
+                        holder.postImage.setImageBitmap(img)
+                    }
                 }
             }
 

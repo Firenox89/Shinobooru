@@ -23,6 +23,17 @@ class PostImageFragment : Fragment() {
         val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)!!
 
         val imageview = TouchImageView(context)
+        //display preview image first for faster response
+        post.loadPreview {
+            if (activity != null) {
+                onUiThread {
+                    imageview.setImageBitmap(it)
+                }
+            } else {
+                it?.recycle()
+            }
+        }
+        //TODO check for the unlikely case that sample loaded fast then preview and preview overrides sample
         post.loadSample {
             if (activity != null) {
                 onUiThread {
