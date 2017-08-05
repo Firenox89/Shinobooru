@@ -19,6 +19,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.*
+import com.github.firenox89.shinobooru.openGL.OpenGLViewer
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
@@ -116,6 +117,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                         3 -> openGoogleDriveView()
                         4 -> setYandere()
                         5 -> setKonachan()
+                        6 -> openGL()
                     }
                 }
             }
@@ -250,6 +252,12 @@ class ThumbnailActivity : Activity(), KodeinInjected {
         startActivity(intent)
     }
 
+    private fun openGL() {
+        menuDrawerLayout.closeDrawers()
+        val intent = Intent(this, OpenGLViewer::class.java)
+        startActivity(intent)
+    }
+
     /**
      * Starts the [SettingsActivity].
      */
@@ -262,7 +270,12 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      * [ListAdapter] for the menu drawer.
      */
     class MenuDrawerAdapter : BaseAdapter() {
-        val items: Array<String> = arrayOf("Settings", "FileView", "Google Drive", "yande.re", "konachan.com")
+        val items: Array<String> = arrayOf("Settings",
+                "FileView",
+                "Google Drive",
+                "yande.re",
+                "konachan.com",
+                "OpenGL")
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
             return TextView(parent?.context).apply {

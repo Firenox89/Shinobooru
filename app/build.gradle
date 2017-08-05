@@ -12,6 +12,13 @@ android {
         versionName "0.2.0"
     }
     buildTypes {
+        debug {
+            minifyEnabled true
+            useProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'),
+                    'proguard-rules.pro'
+        }
+
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -32,16 +39,16 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:25.0.0'
-    compile 'com.android.support:recyclerview-v7:25.0.0'
-    compile 'com.android.support:support-v4:25.0.0'
+    compile 'com.android.support:appcompat-v7:25.2.0'
+    compile 'com.android.support:recyclerview-v7:25.2.0'
+    compile 'com.android.support:support-v4:25.2.0'
     compile 'com.github.castorflex.verticalviewpager:library:19.0.1'
     compile 'com.github.kittinunf.fuel:fuel:1.4.0'
     compile 'com.github.kittinunf.fuel:fuel-android:1.4.0'
     compile 'com.github.salomonbrys.kodein:kodein:3.0.0'
     compile 'com.github.salomonbrys.kodein:kodein-android:3.0.0'
     compile 'com.github.wirasto:TouchImageView:2.0.0'
-    compile 'com.google.android.gms:play-services:9.8.0'
+    compile 'com.google.android.gms:play-services:11.0.4'
     compile 'com.google.code.gson:gson:2.7'
     compile 'io.reactivex:rxkotlin:0.60.0'
     compile 'io.reactivex:rxjava:1.1.8'
