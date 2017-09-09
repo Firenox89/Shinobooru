@@ -18,6 +18,7 @@ import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
 import rx.lang.kotlin.PublishSubject
 import rx.schedulers.Schedulers
+import java.lang.IllegalArgumentException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -122,7 +123,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
                 try {
                     //stop if surface got invalid
                     if (isSurfaceInvalid()) return@onNext
-                    val canvas = surfaceHolder.lockCanvas()
+                    val canvas = surfaceHolder.lockCanvas() ?: return@onNext
                     //clear previous drawing
                     canvas.drawPaint(black)
                     val image = pickImage()
@@ -140,6 +141,9 @@ class ShinoboorusWallpaperService : WallpaperService() {
                     image.recycle()
                 } catch (OoM: OutOfMemoryError) {
                     OoM.printStackTrace()
+                } catch (iae: IllegalArgumentException) {
+                    //unlockCanvasAndPost throws this in the wallpaper chooser
+                    iae.printStackTrace()
                 }
             }
         }
