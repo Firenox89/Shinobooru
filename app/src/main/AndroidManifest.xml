@@ -41,7 +41,6 @@
                 android:value=".ui.ThumbnailActivity" />
         </activity>
         <activity android:name=".ui.ThumbnailActivity" />
-        <activity android:name=".ui.AlternatePostPagerActivity" />
         <activity
             android:name=".ui.SyncActivity"
             android:label="@string/title_activity_sync" />

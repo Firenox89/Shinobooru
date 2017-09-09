@@ -66,19 +66,11 @@ class ThumbnailActivity : Activity(), KodeinInjected {
 
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
         recyclerAdapter.onImageClickStream.subscribe {
-            if (sharedPrefs.getBoolean("alt_postview_layout", true)) {
-                val intent = Intent(this, AlternatePostPagerActivity::class.java)
-                intent.putExtra("board", recyclerAdapter.postLoader.board)
-                intent.putExtra("tags", recyclerAdapter.postLoader.tags)
-                intent.putExtra("posi", it)
-                startActivityForResult(intent, 1)
-            } else {
-                val intent = Intent(this, PostPagerActivity::class.java)
-                intent.putExtra("board", recyclerAdapter.postLoader.board)
-                intent.putExtra("tags", recyclerAdapter.postLoader.tags)
-                intent.putExtra("posi", it)
-                startActivityForResult(intent, 1)
-            }
+            val intent = Intent(this, PostPagerActivity::class.java)
+            intent.putExtra("board", recyclerAdapter.postLoader.board)
+            intent.putExtra("tags", recyclerAdapter.postLoader.tags)
+            intent.putExtra("posi", it)
+            startActivityForResult(intent, 1)
         }
 
         //update the number of posts per row of the recycler layout
@@ -148,7 +140,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                         //TODO: add previous searches
                     }
                 }
-                addDrawerListener(object: DrawerListener {
+                addDrawerListener(object : DrawerListener {
                     override fun onDrawerClosed(drawerView: View?) {
                         if (drawerView != null) {
                             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
