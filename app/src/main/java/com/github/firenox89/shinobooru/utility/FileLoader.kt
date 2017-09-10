@@ -1,5 +1,7 @@
-package com.github.firenox89.shinobooru.model
+package com.github.firenox89.shinobooru.utility
 
+import com.github.firenox89.shinobooru.model.DownloadedPost
+import com.github.firenox89.shinobooru.model.Post
 import java.util.*
 
 /**

@@ -31,16 +31,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.PostPagerActivity"
+            android:name=".ui.post.PostPagerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_view_pager"
-            android:parentActivityName=".ui.ThumbnailActivity"
+            android:parentActivityName=".ui.thumbnail.ThumbnailActivity"
             android:theme="@style/FullscreenTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.ThumbnailActivity" />
+                android:value=".ui.thumbnail.ThumbnailActivity" />
         </activity>
-        <activity android:name=".ui.ThumbnailActivity" />
+        <activity android:name=".ui.thumbnail.ThumbnailActivity" />
         <activity
             android:name=".ui.SyncActivity"
             android:label="@string/title_activity_sync" />

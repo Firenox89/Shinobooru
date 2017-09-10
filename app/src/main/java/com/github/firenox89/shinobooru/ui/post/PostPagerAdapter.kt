@@ -1,4 +1,4 @@
-package com.github.firenox89.shinobooru.ui
+package com.github.firenox89.shinobooru.ui.post
 
 import android.app.Activity
 import android.content.Intent
@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentStatePagerAdapter
-import com.github.firenox89.shinobooru.model.PostLoader
+import com.github.firenox89.shinobooru.utility.PostLoader
 
 /**
  * Requests post from the [PostLoader] and create fragments out of it.

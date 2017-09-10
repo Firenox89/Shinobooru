@@ -17,7 +17,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 import com.github.firenox89.shinobooru.R;
-import com.github.firenox89.shinobooru.model.PostLoader;
+import com.github.firenox89.shinobooru.utility.PostLoader;
 import com.github.firenox89.shinobooru.openGL.common.RawResourceReader;
 import com.github.firenox89.shinobooru.openGL.common.ShaderHelper;
 import com.github.firenox89.shinobooru.openGL.common.TextureHelper;

@@ -3,25 +3,17 @@ package com.github.firenox89.shinobooru.settings
 
 import android.annotation.TargetApi
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
-import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.preference.*
-import android.text.TextUtils
-import android.view.MenuItem
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
-import com.github.firenox89.shinobooru.model.PostLoader
-import com.github.firenox89.shinobooru.service.ShinoboorusWallpaperService
-import com.github.firenox89.shinobooru.ui.ThumbnailActivity
+import com.github.firenox89.shinobooru.utility.PostLoader
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
-import rx.Observable
 import rx.subjects.PublishSubject
 
 /**

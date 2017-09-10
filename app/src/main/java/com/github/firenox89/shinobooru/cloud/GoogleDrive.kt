@@ -1,10 +1,10 @@
-package com.github.firenox89.shinobooru.file
+package com.github.firenox89.shinobooru.cloud
 
 import android.app.Activity
 import android.content.IntentSender
 import android.os.Bundle
 import android.util.Log
-import com.github.firenox89.shinobooru.model.FileManager
+import com.github.firenox89.shinobooru.utility.FileManager
 import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability

@@ -2,6 +2,7 @@ package com.github.firenox89.shinobooru.model
 
 import android.graphics.Color
 import android.util.Log
+import com.github.firenox89.shinobooru.utility.ApiWrapper
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject

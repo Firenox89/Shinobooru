@@ -13,6 +13,7 @@ import com.github.firenox89.shinobooru.R
 import org.jetbrains.anko.*
 import android.graphics.*
 import android.widget.TextView
+import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 
 
 /**

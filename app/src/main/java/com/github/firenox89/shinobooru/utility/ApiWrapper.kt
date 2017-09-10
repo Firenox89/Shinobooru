@@ -1,9 +1,10 @@
-package com.github.firenox89.shinobooru.model
+package com.github.firenox89.shinobooru.utility
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.util.Log
 import com.github.firenox89.shinobooru.app.Shinobooru
+import com.github.firenox89.shinobooru.model.Post
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.httpGet
 import rx.lang.kotlin.PublishSubject

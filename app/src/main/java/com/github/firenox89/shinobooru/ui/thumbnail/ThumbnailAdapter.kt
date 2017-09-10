@@ -1,17 +1,15 @@
-package com.github.firenox89.shinobooru.ui
+package com.github.firenox89.shinobooru.ui.thumbnail
 
 import android.graphics.*
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.DownloadedPost
-import com.github.firenox89.shinobooru.model.PostLoader
+import com.github.firenox89.shinobooru.utility.PostLoader
 import org.jetbrains.anko.*
-import rx.Observable
 import rx.Subscription
 import rx.lang.kotlin.PublishSubject
 

@@ -1,6 +1,6 @@
-package com.github.firenox89.shinobooru.model
+package com.github.firenox89.shinobooru.utility
 
-import android.util.Log
+import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import rx.Observable
 import rx.lang.kotlin.PublishSubject

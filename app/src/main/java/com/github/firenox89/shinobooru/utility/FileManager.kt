@@ -1,11 +1,12 @@
-package com.github.firenox89.shinobooru.model
+package com.github.firenox89.shinobooru.utility
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Environment
 import android.util.Log
 import com.github.firenox89.shinobooru.app.Shinobooru
+import com.github.firenox89.shinobooru.model.DownloadedPost
+import com.github.firenox89.shinobooru.model.Post
 import com.github.kittinunf.fuel.httpDownload
 import java.io.*
 import java.util.regex.Pattern

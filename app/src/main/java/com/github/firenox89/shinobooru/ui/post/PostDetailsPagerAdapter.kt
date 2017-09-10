@@ -1,13 +1,12 @@
-package com.github.firenox89.shinobooru.ui
+package com.github.firenox89.shinobooru.ui.post
 
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
-import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.Post
-import com.github.firenox89.shinobooru.model.PostLoader
+import com.github.firenox89.shinobooru.utility.PostLoader
 
 /**
  * Creates a [PostImageFragment] and a [PostDetailsFragment] from the given post.

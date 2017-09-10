@@ -1,11 +1,10 @@
-package com.github.firenox89.shinobooru.ui
+package com.github.firenox89.shinobooru.ui.post
 
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.text.Html
 import android.text.method.LinkMovementMethod
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +14,7 @@ import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.Tag
+import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import org.jetbrains.anko.*
 
 /**

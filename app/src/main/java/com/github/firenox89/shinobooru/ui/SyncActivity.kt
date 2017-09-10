@@ -5,9 +5,8 @@ import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.github.firenox89.shinobooru.file.GoogleDrive
-import com.github.firenox89.shinobooru.model.FileManager
-import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.cloud.GoogleDrive
+import com.github.firenox89.shinobooru.utility.FileManager
 import org.jetbrains.anko.*
 
 /**

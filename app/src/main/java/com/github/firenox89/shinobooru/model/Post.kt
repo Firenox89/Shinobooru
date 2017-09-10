@@ -4,12 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import com.github.firenox89.shinobooru.settings.SettingsActivity
+import com.github.firenox89.shinobooru.utility.FileManager
+import com.github.firenox89.shinobooru.utility.PostLoader
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.httpGet
 import com.google.gson.Gson
 import org.jetbrains.anko.doAsync
 import java.io.InputStream
-import java.io.Serializable
 import java.util.concurrent.Executors
 import java.util.regex.Pattern
 
@@ -119,7 +120,7 @@ open class Post(
      */
     open fun loadPreview(handler: (Bitmap?) -> Unit): Unit {
         doAsync(Throwable::printStackTrace) {
-            var bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(getBoard(), id))
+            val bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(getBoard(), id))
             if (bitmap == null || SettingsActivity.disableCaching) {
                 loadBitmap(preview_url) {
                     handler.invoke(it)
@@ -181,20 +182,11 @@ open class Post(
     }
 
     /**
-     * Downloads the sample image to the storage using [FileManager.downloadFileToStorage]
-     */
-    fun downloadSample() {
-        FileManager.downloadFileToStorage(sample_url, this)
-    }
-
-    /**
      * Returns if that post was viewed.
      *
      * @return if viewed true, false otherwise
      */
-    fun wasViewed(): Boolean {
-        return PostLoader.postViewed(id)
-    }
+    fun wasViewed(): Boolean = PostLoader.postViewed(id)
 
     /**
      * Parse and return the board name from the file url.

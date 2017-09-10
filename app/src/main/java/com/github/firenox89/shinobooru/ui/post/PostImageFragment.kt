@@ -1,4 +1,4 @@
-package com.github.firenox89.shinobooru.ui
+package com.github.firenox89.shinobooru.ui.post
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import com.github.firenox89.shinobooru.model.Post
-import com.github.firenox89.shinobooru.model.PostLoader
+import com.github.firenox89.shinobooru.utility.PostLoader
 import com.ortiz.touch.TouchImageView
 import org.jetbrains.anko.support.v4.onUiThread
 

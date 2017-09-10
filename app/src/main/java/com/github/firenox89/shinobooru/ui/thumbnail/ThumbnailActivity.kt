@@ -1,4 +1,4 @@
-package com.github.firenox89.shinobooru.ui
+package com.github.firenox89.shinobooru.ui.thumbnail
 
 import android.app.Activity
 import android.content.Context
@@ -21,6 +21,11 @@ import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.*
 import com.github.firenox89.shinobooru.openGL.OpenGLViewer
 import com.github.firenox89.shinobooru.settings.SettingsActivity
+import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
+import com.github.firenox89.shinobooru.ui.SyncActivity
+import com.github.firenox89.shinobooru.utility.ApiWrapper
+import com.github.firenox89.shinobooru.utility.FileLoader
+import com.github.firenox89.shinobooru.utility.PostLoader
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein

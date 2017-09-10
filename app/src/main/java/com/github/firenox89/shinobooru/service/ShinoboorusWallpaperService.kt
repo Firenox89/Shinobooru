@@ -10,8 +10,7 @@ import android.util.Size
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import com.github.firenox89.shinobooru.model.DownloadedPost
-import com.github.firenox89.shinobooru.model.FileManager
-import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.utility.FileManager
 import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
