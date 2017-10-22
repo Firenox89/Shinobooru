@@ -240,6 +240,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * @return a random post.
          */
         private fun pickRandomPost(): DownloadedPost {
+            //TODO handle 0 images case
             val postList = FileManager.getAllDownloadedPosts()
             var i = (Math.random() * postList.size).toInt()
             return postList[i]

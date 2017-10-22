@@ -1,11 +1,15 @@
 package com.github.firenox89.shinobooru.ui
 
 import android.app.Activity
+import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.firenox89.shinobooru.cloud.GoogleDrive
+import com.github.firenox89.shinobooru.model.DownloadedPost
+import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.FileManager
 import org.jetbrains.anko.*
 
@@ -15,6 +19,8 @@ import org.jetbrains.anko.*
 
 class SyncActivity : Activity() {
     val TAG = "SyncActivity"
+    var drive = GoogleDrive()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO check permissions
         super.onCreate(savedInstanceState)
@@ -40,24 +46,45 @@ class SyncActivity : Activity() {
                 boards.forEach {
                     verticalLayout {
                         textView(it)
-                        textViewsforBoard.put(it, textView("loading"))
+                        linearLayout {
+                            textViewsforBoard.put(it, textView("loading"))
+                            textViewsforBoard.put(it + "green",
+                                    textView {
+                                        text = "0"
+                                        setTextColor(Color.GREEN)
+                                    })
+                            textViewsforBoard.put(it + "red",
+                                    textView {
+                                        text = "0"
+                                        setTextColor(Color.RED)
+                                    })
+                        }
                     }
                 }
             }
-            var drive = GoogleDrive(this@SyncActivity) {
-                val data = it?.mapKeys { it.key.title }
-                if (data != null) {
-                    runOnUiThread {
-                        textViewsforBoard.forEach {
-                            val board = it.key
-                            it.value.text = "${data[board]?.size}"
+            doAsync(Throwable::printStackTrace) {
+                drive.collectData {
+                    val data = it?.mapKeys { it.key.title }
+                    if (data != null) {
+                        runOnUiThread {
+                            updateUI(textViewsforBoard, data)
                         }
                     }
                 }
             }
             button("Sync") {
                 onClick {
-                    drive.sync()
+                    doAsync(Throwable::printStackTrace) {
+                        drive.sync {
+                            val data = it?.mapKeys { it.key.title }
+                            if (data != null) {
+                                runOnUiThread {
+                                    updateUI(textViewsforBoard, data)
+                                }
+                            }
+
+                        }
+                    }
                 }
             }
         }.applyRecursively { view ->
@@ -65,7 +92,7 @@ class SyncActivity : Activity() {
                 is TextView -> {
                     view.padding = dip(10)
                     view.gravity = Gravity.CENTER
-                    view.textSize = 24.toFloat()
+                    view.textSize = Constants.FONT_SIZE
                 }
                 is LinearLayout -> {
                     view.gravity = Gravity.CENTER
@@ -73,5 +100,34 @@ class SyncActivity : Activity() {
             }
         }
 
+    }
+    fun updateUI(textViewsforBoard: Map<String, TextView>, data: Map<String, List<DownloadedPost>>) {
+        textViewsforBoard.forEach {
+            val textView = it.value
+            when {
+                it.key.endsWith("green") -> {
+                    val board = it.key.substring(0, it.key.length - 5)
+                    doAsync {
+                        val newText = "+${drive.getPostOnlyOnDrive(board)?.size}"
+                        uiThread {
+                            textView.text = newText
+                        }
+                    }
+                }
+                it.key.endsWith("red") -> {
+                    val board = it.key.substring(0, it.key.length - 3)
+                    doAsync {
+                        val newText = "+${drive.getPostOnlyOnDevice(board)?.size}"
+                        uiThread {
+                            textView.text = newText
+                        }
+                    }
+                }
+                else -> {
+                    val board = it.key
+                    it.value.text = "${data[board]?.size}"
+                }
+            }
+        }
     }
 }

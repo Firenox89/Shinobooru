@@ -9,10 +9,9 @@
     <uses-feature
         android:glEsVersion="0x00030000"
         android:required="true" />
-
     <uses-feature
         android:name="android.software.live_wallpaper"
-        android:required="true"></uses-feature>
+        android:required="true" />
 
     <application
         android:name=".app.Shinobooru"
@@ -22,8 +21,8 @@
         android:largeHeap="true"
         android:theme="@android:style/Theme.Black"> <!-- android:theme="@style/AppTheme" -->
 
-            <activity android:name=".openGL.OpenGLViewer" />
-                <activity android:name=".ui.SplashScreenActivity">
+        <activity android:name=".openGL.OpenGLViewer" />
+        <activity android:name=".ui.SplashScreenActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -54,14 +53,15 @@
             android:label="Shinobooru"
             android:permission="android.permission.BIND_WALLPAPER">
             <intent-filter>
-                <action android:name="android.service.wallpaper.WallpaperService"></action>
+                <action android:name="android.service.wallpaper.WallpaperService" />
             </intent-filter>
 
             <meta-data
                 android:name="android.service.wallpaper"
-                android:resource="@xml/wallpaper"></meta-data>
+                android:resource="@xml/wallpaper" />
         </service>
 
+        <activity android:name=".ui.GoogleSignIn"></activity>
     </application>
 
 </manifest>

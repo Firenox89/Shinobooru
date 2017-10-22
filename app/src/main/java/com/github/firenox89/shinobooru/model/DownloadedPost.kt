@@ -15,14 +15,16 @@ import java.io.File
 class DownloadedPost(id: Long, val file: File, val boardName: String) : Post(id = id) {
 
     init {
-        val options = BitmapFactory.Options()
-        options.inJustDecodeBounds = true
-        BitmapFactory.decodeFile(file.path, options)
-        height = options.outHeight
-        width = options.outWidth
-        file_size = file.length().toInt()
-        val tagsStartIndex = file.name.indexOf(' ', file.name.indexOf(' ')+1)
-        tags = file.name.substring(tagsStartIndex+1, file.name.length-4)
+        if (file.exists()) {
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeFile(file.path, options)
+            height = options.outHeight
+            width = options.outWidth
+            file_size = file.length().toInt()
+            val tagsStartIndex = file.name.indexOf(' ', file.name.indexOf(' ') + 1)
+            tags = file.name.substring(tagsStartIndex + 1, file.name.length - 4)
+        }
     }
 
     override fun loadSample(handler: (Bitmap?) -> Unit) {

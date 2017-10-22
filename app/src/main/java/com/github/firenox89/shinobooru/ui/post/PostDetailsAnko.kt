@@ -15,6 +15,7 @@ import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
+import com.github.firenox89.shinobooru.utility.Constants
 import org.jetbrains.anko.*
 
 /**
@@ -35,31 +36,41 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
         val downloadedPost = post is DownloadedPost
 
         verticalLayout {
-            verticalLayout {
-                textView {
-                    text = "Size ${humanizeSize(post.file_size)}"
+            linearLayout {
+                gravity = Gravity.FILL_HORIZONTAL
+
+                verticalLayout {
+                    gravity = Gravity.LEFT
+                    textView {
+                        text = "Size ${humanizeSize(post.file_size)}"
+                    }
+                    textView {
+                        text = "Dimension ${post.width}x${post.height}"
+                    }
                 }
-                textView {
-                    text = "Dimension ${post.width}x${post.height}"
-                }
-                if (!downloadedPost) {
-                    imageButton {
-                        imageBitmap = downloadIcon
-                        onClick {
-                            post.downloadFile()
-                            toast("Download ${post.file_url}")
+                linearLayout {
+                    gravity = Gravity.RIGHT
+                    if (!downloadedPost) {
+                        imageButton {
+                            imageBitmap = downloadIcon
+                            onClick {
+                                post.downloadFile()
+                                toast("Download ${post.file_url}")
+                            }
                         }
                     }
                 }
             }
             //only adds these if there actually is a jpeg
             if (post.jpeg_file_size != 0) {
-                verticalLayout {
-                    textView {
-                        text = "Jpeg Size ${humanizeSize(post.jpeg_file_size)}"
-                    }
-                    textView {
-                        text = "Jpeg Dimension ${post.jpeg_width}x${post.jpeg_height}"
+                linearLayout {
+                    verticalLayout {
+                        textView {
+                            text = "Jpeg Size ${humanizeSize(post.jpeg_file_size)}"
+                        }
+                        textView {
+                            text = "Jpeg Dimension ${post.jpeg_width}x${post.jpeg_height}"
+                        }
                     }
                     imageButton {
                         imageBitmap = downloadIcon
@@ -89,25 +100,25 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
             }
             verticalLayout {
                 gravity = Gravity.CENTER
-                linearLayout {
-                    textView {
-                        text = "Tags"
-                    }
-                    listView {
-                        adapter = TagListAdapter(post)
-                    }
+//                linearLayout {
+                textView {
+                    text = "Tags"
                 }
+                listView {
+                    adapter = TagListAdapter(post)
+                }
+//                }
             }
         }.applyRecursively { view ->
             when (view) {
                 is TextView -> {
-                    view.padding = dip(10)
+//                    view.padding = dip(6)
                     view.gravity = Gravity.CENTER
-                    view.textSize = 24.toFloat()
+                    view.textSize = Constants.FONT_SIZE
                 }
-                is ImageButton -> {
-                    view.padding = dip(10)
-                }
+//                is ImageButton -> {
+//                    view.padding = dip(6)
+//                }
             }
         }
     }
@@ -184,7 +195,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
 
             val firstTag = tagList[position].first
             val textView1 = TextView(parent.context)
-            textView1.textSize = 24.toFloat()
+            textView1.textSize = Constants.FONT_SIZE
             textView1.gravity = Gravity.CENTER
             textView1.padding = 5
             textView1.text = firstTag.name
@@ -195,7 +206,7 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
             val secondTag = tagList[position].second
             if (secondTag != null) {
                 val textView2 = TextView(parent.context)
-                textView2.textSize = 24.toFloat()
+                textView2.textSize = Constants.FONT_SIZE
                 textView2.gravity = Gravity.CENTER
                 textView2.padding = 5
                 textView2.text = secondTag.name

@@ -65,7 +65,6 @@ class SplashScreenActivity : Activity() {
     fun startThumbnailActivity() {
         val intent = Intent(this, ThumbnailActivity::class.java)
         startActivity(intent)
-
     }
 
     @SuppressLint("NewApi")

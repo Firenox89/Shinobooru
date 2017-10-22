@@ -59,7 +59,7 @@ object FileManager {
     fun postFromName(postFileName: String, postFile: File): DownloadedPost {
         //TODO: handle non posts
         //compatibility with mbooru saved posts
-        val idIndex = if (postFileName.split(" ")[1].equals("-")) 2 else 1
+        val idIndex = if (postFileName.split(" ")[1] == "-") 2 else 1
 
         val id = postFileName.split(" ")[idIndex].toLong()
         val source = postFileName.split(" ")[0].toLowerCase()

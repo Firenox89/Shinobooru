@@ -21,6 +21,7 @@ import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.*
 import com.github.firenox89.shinobooru.openGL.OpenGLViewer
 import com.github.firenox89.shinobooru.settings.SettingsActivity
+import com.github.firenox89.shinobooru.ui.GoogleSignIn
 import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
 import com.github.firenox89.shinobooru.ui.SyncActivity
 import com.github.firenox89.shinobooru.utility.ApiWrapper
@@ -245,7 +246,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      */
     private fun openGoogleDriveView() {
         menuDrawerLayout.closeDrawers()
-        val intent = Intent(this, SyncActivity::class.java)
+        val intent = Intent(this, GoogleSignIn::class.java)
         startActivity(intent)
     }
 
