@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import com.github.firenox89.shinobooru.utility.FileManager
 import com.github.firenox89.shinobooru.model.DownloadedPost
+import com.github.firenox89.shinobooru.model.Post
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.drive.*
 import com.google.android.gms.drive.query.Filters
@@ -65,6 +66,43 @@ class GoogleDrive : GoogleApiClient.ConnectionCallbacks {
         }
     }
 
+    fun findDoubleID() {
+        FileManager.boards.forEach {
+            val set: MutableSet<Long> = mutableSetOf()
+            val list: MutableList<Post> = mutableListOf()
+            it.value.forEach {
+                if (!set.add(it.id)) {
+                    list.add(it)
+                }
+            }
+            val board = it.key
+            list.forEach {
+                val id = it.id
+                val dlist = FileManager.boards[board]?.filter { it.id == id }!!
+                Log.e(TAG, "delete")
+                if (dlist[0].file_size != dlist[1].file_size) {
+                    if (dlist[0].file_size > dlist[1].file_size) {
+                        FileManager.deleteDownloadedPost(dlist[1])
+                        Log.e(TAG, "${dlist[1]}")
+                    } else {
+                        FileManager.deleteDownloadedPost(dlist[0])
+                        Log.e(TAG, "${dlist[0]}")
+                    }
+                } else if (dlist[0].tags != dlist[1].tags) {
+                    if (dlist[0].file.lastModified() > dlist[1].file.lastModified()) {
+                        FileManager.deleteDownloadedPost(dlist[1])
+                        Log.e(TAG, "${dlist[1]}")
+                    } else {
+                        FileManager.deleteDownloadedPost(dlist[0])
+                        Log.e(TAG, "${dlist[0]}")
+                    }
+                } else {
+                    Log.e(TAG, "Wut?")
+                }
+            }
+        }
+    }
+
     fun getPostOnlyOnDevice(board: String): List<DownloadedPost>? {
         val driveContent = scanAppRootDirectoryContent()
         val driveList = driveContent.filter { it.key.title == board }.map { it.value }.first()
@@ -86,7 +124,8 @@ class GoogleDrive : GoogleApiClient.ConnectionCallbacks {
     }
 
     fun collectData(updateUI: (Map<Metadata, List<DownloadedPost>>?) -> Unit) {
-        updateUI(scanAppRootDirectoryContent())
+        val res = scanAppRootDirectoryContent()
+        updateUI(res)
     }
 
     private fun uploadFile(file: File, driveFolder: DriveFolder) {

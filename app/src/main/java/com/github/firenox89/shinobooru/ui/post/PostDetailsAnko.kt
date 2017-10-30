@@ -72,7 +72,7 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
             }
             verticalLayout {
                 background = resources.getDrawable(R.drawable.roundcorners)
-                val rl = relativeLayout {
+                relativeLayout {
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                                           ViewGroup.LayoutParams.MATCH_PARENT)
 
@@ -94,8 +94,8 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
                             imageButton {
                                 imageBitmap = downloadIcon
                                 onClick {
-                                    post.downloadFile()
-                                    toast("Download ${post.file_url}")
+                                    val downloadResult = post.downloadFile()
+                                    toast(downloadResult ?: "Download ${post.file_url}")
                                 }
                             }
                         }
@@ -115,8 +115,8 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
                         imageButton {
                             imageBitmap = downloadIcon
                             onClick {
-                                post.downloadJpeg()
-                                toast("Download ${post.jpeg_url}")
+                                val downloadResult = post.downloadJpeg()
+                                toast(downloadResult ?: "Download ${post.jpeg_url}")
                             }
                         }
                     }
@@ -158,7 +158,7 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
      * @param post to get the tags for
      */
     class TagListAdapter(val post: Post) : BaseAdapter(), ListAdapter {
-        var tagList = mutableListOf<Pair<Tag, Tag?>>()
+        private var tagList = mutableListOf<Pair<Tag, Tag?>>()
 
         /**
          * Asynchronously loads the tag information.
@@ -167,7 +167,7 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
             doAsync(Throwable::printStackTrace) {
                 val tags = post.getTagList()
                 //group the tags in pairs
-                for (i in 0..tags.size - 1 step 2) {
+                for (i in 0 until tags.size step 2) {
                     if (i + 1 < tags.size)
                         tagList.add(Pair(tags[i], tags[i + 1]))
                     else
@@ -186,7 +186,7 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
          * @param ctx to start the activity with
          * @param tag to search for
          */
-        fun searchForTag(ctx: Context, tag: String) {
+        private fun searchForTag(ctx: Context, tag: String) {
             val intent = Intent(ctx, ThumbnailActivity::class.java)
             intent.putExtra("board", post.getBoard())
             intent.putExtra("tags", tag)
@@ -236,9 +236,7 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
          * @param position
          * @return tag for positon
          */
-        override fun getItem(position: Int): Any {
-            return tagList[position]
-        }
+        override fun getItem(position: Int): Any = tagList[position]
 
         /**
          * Returns the given position.
@@ -246,17 +244,13 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
          * @param position
          * @return position
          */
-        override fun getItemId(position: Int): Long {
-            return position.toLong()
-        }
+        override fun getItemId(position: Int): Long = position.toLong()
 
         /**
          * Returns the number of tags.
          *
          * @return number of tags
          */
-        override fun getCount(): Int {
-            return tagList.size
-        }
+        override fun getCount(): Int = tagList.size
     }
 }

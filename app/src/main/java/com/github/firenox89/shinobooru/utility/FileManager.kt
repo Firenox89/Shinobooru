@@ -21,14 +21,17 @@ object FileManager {
             Environment.DIRECTORY_PICTURES), "shinobooru")
 
     /** Map of boards and the post images downloaded from them */
+    //TODO map and list should be immutable from outside this class
     val boards = mutableMapOf<String, MutableList<DownloadedPost>>()
     /** List of cached post thumbnails */
     private val cachedFiles = mutableListOf<String>()
 
     //TODO into the settings with you
-    val maxCachedSize = 1000
+    private val maxCachedSize = 1000
 
     val TAG = "FileManager"
+
+    @Volatile private var checkingCache = false
 
     /** Initialize the cached and downloaded post lists. */
     init {
@@ -75,17 +78,20 @@ object FileManager {
      * @param url to load from
      * @param post to get the id and tags from
      */
-    fun downloadFileToStorage(url: String, post: Post) {
+    fun downloadFileToStorage(url: String, post: Post): String? {
         checkExternalStorage()
-        val pattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
+        val pattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z.]*)")
         val matcher = pattern.matcher(url)
         matcher.find()
         val board = matcher.group(1)
 
-        val boardSubDirName = board
+        if (boards[board]?.find { it.id == post.id } != null) {
+            return "Post already exists"
+        }
+
         val dataType = url.split(".").last()
         val fileName = "$board ${post.id} ${post.tags}.$dataType"
-        val boardSubDir = File(shinobooruImageDir, boardSubDirName)
+        val boardSubDir = File(shinobooruImageDir, board)
 
         boardSubDir.mkdirs()
 
@@ -99,12 +105,14 @@ object FileManager {
             if (result.component2() != null)
                 Log.d("Download", "Error = ${result.component2()}")
             else
-                boards[boardSubDirName]?.add(postFromName(fileName, File(boardSubDir, fileName)))
+                boards[board]?.add(postFromName(fileName, File(boardSubDir, fileName)))
         }
+
+        return null
     }
 
     /** Check for Storage availability */
-    fun checkExternalStorage() {
+    private fun checkExternalStorage() {
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
             throw IOException("External storage not mounted")
         }
@@ -116,9 +124,7 @@ object FileManager {
      * @param board name to get the list from
      * @return list of posts for the given board
      */
-    fun getDownloadedPosts(board: String): List<DownloadedPost>? {
-        return boards[board]
-    }
+    fun getDownloadedPosts(board: String): List<DownloadedPost>? = boards[board]
 
     /**
      * Returns a list of all downloaded posts by combining the different board lists
@@ -136,9 +142,7 @@ object FileManager {
      * @param id of the post
      * @return [DownloadedPost] or null
      */
-    fun fileById(board: String, id: Long): File? {
-        return boards[board]?.filter { it.id == id }?.first()?.file
-    }
+    fun fileById(board: String, id: Long): File? = boards[board]?.filter { it.id == id }?.first()?.file
 
     /**
      * Return a [FileInputStream] of the cached preview image or null if not cached.
@@ -168,16 +172,13 @@ object FileManager {
         checkCacheSize()
     }
 
-    @Volatile
-    var checkingCache = false
-
-    fun checkCacheSize() {
+    private fun checkCacheSize() {
         if (checkingCache)
             return
         if (cachedFiles.size > maxCachedSize) {
             checkingCache = true
             Log.i(TAG, "clean up cache")
-            var list = Shinobooru.appContext.filesDir.list().filter { it.endsWith(".jpeg") }
+            val list = Shinobooru.appContext.filesDir.list().filter { it.endsWith(".jpeg") }
             list.sortedBy { File(it).lastModified() }
             list.drop(500).forEach { File(Shinobooru.appContext.filesDir, it).delete() }
 
@@ -210,5 +211,10 @@ object FileManager {
             return list
         }
         return null
+    }
+
+    fun deleteDownloadedPost(post: DownloadedPost) {
+        val deleteResult = post.file.delete()
+        boards[post.boardName]!!.remove(post)
     }
 }

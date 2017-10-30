@@ -170,16 +170,12 @@ open class Post(
     /**
      * Downloads the original file to the storage using [FileManager.downloadFileToStorage]
      */
-    fun downloadFile() {
-        FileManager.downloadFileToStorage(file_url, this)
-    }
+    fun downloadFile(): String? = FileManager.downloadFileToStorage(file_url, this)
 
     /**
      * Downloads the jpeg image to the storage using [FileManager.downloadFileToStorage]
      */
-    fun downloadJpeg() {
-        FileManager.downloadFileToStorage(jpeg_url, this)
-    }
+    fun downloadJpeg(): String? = FileManager.downloadFileToStorage(jpeg_url, this)
 
     /**
      * Returns if that post was viewed.
