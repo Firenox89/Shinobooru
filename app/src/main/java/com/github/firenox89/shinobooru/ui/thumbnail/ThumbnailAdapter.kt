@@ -125,8 +125,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
                         padding = 5
                         scaleType = ImageView.ScaleType.FIT_CENTER
                         adjustViewBounds = true
-                        lparams(width = matchParent, height = wrapContent)
-                    }
+                    }.lparams(width = matchParent, height = wrapContent)
                     linearLayout {
                         layoutParams =
                                 RelativeLayout.LayoutParams(

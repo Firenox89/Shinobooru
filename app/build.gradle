@@ -1,12 +1,14 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+def anko_version = "0.10.2"
+
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.0'
+    buildToolsVersion '25.0.2'
     defaultConfig {
         applicationId "com.github.firenox89.shinobooru"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 25
         versionCode 2
         versionName "0.2.0"
@@ -49,13 +51,15 @@ dependencies {
     compile 'com.github.wirasto:TouchImageView:2.0.0'
     compile 'com.google.android.gms:play-services-auth:11.0.4'
     compile 'com.google.android.gms:play-services-drive:11.0.4'
-    compile 'com.google.code.gson:gson:2.7'
+    compile 'com.google.code.gson:gson:2.8.0'
     compile 'io.reactivex:rxkotlin:0.60.0'
     compile 'io.reactivex:rxjava:1.1.8'
-    compile 'org.jetbrains.anko:anko-sdk21:0.9'
-    compile 'org.jetbrains.anko:anko-appcompat-v7:0.9'
-    compile 'org.jetbrains.anko:anko-design:0.9'
-    compile 'org.jetbrains.anko:anko-recyclerview-v7:0.9'
+    compile "org.jetbrains.anko:anko-appcompat-v7:$anko_version"
+    compile "org.jetbrains.anko:anko-design:$anko_version"
+    compile "org.jetbrains.anko:anko-recyclerview-v7:$anko_version"
+    compile "org.jetbrains.anko:anko-sdk25:$anko_version"
+    compile "org.jetbrains.anko:anko-sdk25-listeners:$anko_version"
+    compile "org.jetbrains.anko:anko-support-v4:$anko_version"
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     testCompile 'junit:junit:4.12'
 }
@@ -63,5 +67,10 @@ dependencies {
 repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
+    maven {
+        url 'https://maven.google.com/'
+        name 'Google'
+    }
 }
+
 apply plugin: 'com.google.gms.google-services'

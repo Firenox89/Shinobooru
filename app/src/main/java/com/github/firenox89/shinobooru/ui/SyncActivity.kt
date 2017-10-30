@@ -12,6 +12,7 @@ import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.FileManager
 import org.jetbrains.anko.*
+import org.jetbrains.anko.sdk25.listeners.onClick
 
 /**
  * Created by firenox on 1/21/17.

@@ -17,13 +17,14 @@ import com.github.firenox89.shinobooru.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants
 import org.jetbrains.anko.*
+import org.jetbrains.anko.sdk25.listeners.onClick
 
 /**
  * Creates the ui for the post details fragment.
  * This fragment contains information about the post, buttons to download and the tags.
  * @param post to take the details from
  */
-class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
+class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
     companion object {
         val downloadIcon = BitmapFactory.decodeResource(Shinobooru.appContext.resources,
                                                         R.drawable.cloud_download_2_32x32)
@@ -32,93 +33,104 @@ class PostDetailsAnko<T>(val post: Post) : AnkoComponent<T> {
     /**
      * Creates the ui and returns it to the caller.
      */
-    override fun createView(ui: AnkoContext<T>): View = with(ui) {
+    override fun createView(ui: AnkoContext<PostDetailsFragment>): View = with(ui) {
         val downloadedPost = post is DownloadedPost
 
         verticalLayout {
-            linearLayout {
-                gravity = Gravity.FILL_HORIZONTAL
-
+            dividerPadding = 20
+            if (!downloadedPost) {
                 verticalLayout {
-                    gravity = Gravity.LEFT
+                    background = resources.getDrawable(R.drawable.roundcorners)
+
                     textView {
-                        text = "Size ${humanizeSize(post.file_size)}"
+                        text = "Author ${post.author}"
                     }
-                    textView {
-                        text = "Dimension ${post.width}x${post.height}"
-                    }
-                }
-                linearLayout {
-                    gravity = Gravity.RIGHT
-                    if (!downloadedPost) {
-                        imageButton {
-                            imageBitmap = downloadIcon
-                            onClick {
-                                post.downloadFile()
-                                toast("Download ${post.file_url}")
+                    if (post.source.isNotEmpty()) {
+                        linearLayout {
+                            gravity = Gravity.CENTER
+                            textView {
+                                text = "Source "
+                            }
+                            textView {
+                                text = Html.fromHtml("<a href=\"${post.source}\">${post.source}</a>")
+                                movementMethod = LinkMovementMethod.getInstance()
                             }
                         }
                     }
                 }
             }
-            //only adds these if there actually is a jpeg
-            if (post.jpeg_file_size != 0) {
-                linearLayout {
-                    verticalLayout {
-                        textView {
-                            text = "Jpeg Size ${humanizeSize(post.jpeg_file_size)}"
-                        }
-                        textView {
-                            text = "Jpeg Dimension ${post.jpeg_width}x${post.jpeg_height}"
-                        }
-                    }
-                    imageButton {
-                        imageBitmap = downloadIcon
-                        onClick {
-                            post.downloadJpeg()
-                            toast("Download ${post.jpeg_url}")
-                        }
-                    }
-                }
-            }
-            if (!downloadedPost) {
-                textView {
-                    text = "Author ${post.author}"
-                }
-            }
-            if (post.source.isNotEmpty()) {
-                linearLayout {
-                    gravity = Gravity.CENTER
-                    textView {
-                        text = "Source"
-                    }
-                    textView {
-                        text = Html.fromHtml("<a href=\"${post.source}\">${post.source}</a>")
-                        movementMethod = LinkMovementMethod.getInstance()
-                    }
-                }
-            }
             verticalLayout {
+                background = resources.getDrawable(R.drawable.roundcorners)
+                clipToOutline = true
                 gravity = Gravity.CENTER
-//                linearLayout {
                 textView {
                     text = "Tags"
                 }
                 listView {
                     adapter = TagListAdapter(post)
                 }
-//                }
+            }
+            verticalLayout {
+                background = resources.getDrawable(R.drawable.roundcorners)
+                val rl = relativeLayout {
+                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                                                          ViewGroup.LayoutParams.MATCH_PARENT)
+
+                    verticalLayout {
+                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                                                              ViewGroup.LayoutParams.MATCH_PARENT)
+                        textView {
+                            text = "Size ${humanizeSize(post.file_size)}"
+                        }
+                        textView {
+                            text = "Dimension ${post.width}x${post.height}"
+                        }
+                    }
+                    if (!downloadedPost) {
+                        relativeLayout {
+                            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                                                                  ViewGroup.LayoutParams.WRAP_CONTENT)
+
+                            imageButton {
+                                imageBitmap = downloadIcon
+                                onClick {
+                                    post.downloadFile()
+                                    toast("Download ${post.file_url}")
+                                }
+                            }
+                        }
+                    }
+                }
+                //only adds these if there actually is a jpeg
+                if (post.jpeg_file_size != 0) {
+                    linearLayout {
+                        verticalLayout {
+                            textView {
+                                text = "Jpeg Size ${humanizeSize(post.jpeg_file_size)}"
+                            }
+                            textView {
+                                text = "Jpeg Dimension ${post.jpeg_width}x${post.jpeg_height}"
+                            }
+                        }
+                        imageButton {
+                            imageBitmap = downloadIcon
+                            onClick {
+                                post.downloadJpeg()
+                                toast("Download ${post.jpeg_url}")
+                            }
+                        }
+                    }
+                }
             }
         }.applyRecursively { view ->
             when (view) {
                 is TextView -> {
-//                    view.padding = dip(6)
                     view.gravity = Gravity.CENTER
                     view.textSize = Constants.FONT_SIZE
                 }
-//                is ImageButton -> {
-//                    view.padding = dip(6)
-//                }
+                is LinearLayout -> {
+                    view.padding = 20
+                }
             }
         }
     }
