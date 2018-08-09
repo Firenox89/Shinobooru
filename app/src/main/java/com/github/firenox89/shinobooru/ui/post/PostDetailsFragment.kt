@@ -13,12 +13,12 @@ import org.jetbrains.anko.AnkoContext
  * Get the post from the bundle arguments and use [PostDetailsAnko] to build the view.
  */
 class PostDetailsFragment : Fragment() {
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val board = arguments.getString("board")
-        val tags = arguments.getString("tags")
-        val posi = arguments.getInt("posi")
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val board = arguments!!.getString("board")
+        val tags = arguments!!.getString("tags")
+        val posi = arguments!!.getInt("posi")
         val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)
 
-        return PostDetailsAnko(post).createView(AnkoContext.create(context, this))
+        return PostDetailsAnko(post).createView(AnkoContext.create(context!!, this))
     }
 }

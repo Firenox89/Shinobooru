@@ -14,7 +14,7 @@ import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
-import rx.subjects.PublishSubject
+import io.reactivex.subjects.PublishSubject
 
 /**
  * A [PreferenceActivity] that presents a set of application settings. On

@@ -209,4 +209,6 @@ open class Post(
                 " frames_pending_string='$frames_pending_string', frames_string='$frames_string'," +
                 " firstName='$firstName', lastName='$lastName', TAG='$TAG')"
     }
+
+    override fun equals(other: Any?): Boolean = if (other is Post) other.id == id && other.getBoard() == getBoard() else false
 }

@@ -21,7 +21,7 @@ import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.*
 import com.github.firenox89.shinobooru.openGL.OpenGLViewer
 import com.github.firenox89.shinobooru.settings.SettingsActivity
-import com.github.firenox89.shinobooru.ui.GoogleSignIn
+import com.github.firenox89.shinobooru.ui.GoogleSignInActivity
 import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
 import com.github.firenox89.shinobooru.ui.SyncActivity
 import com.github.firenox89.shinobooru.utility.ApiWrapper
@@ -32,11 +32,11 @@ import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
 import com.google.gson.Gson
+import io.reactivex.subjects.PublishSubject
 import org.jetbrains.anko.*
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.drawerLayout
 import org.jetbrains.anko.support.v4.swipeRefreshLayout
-import rx.subjects.PublishSubject
 
 /**
  * Contains a [DrawerLayout] with a menu drawer on the left and a drawer for searching on the right,
@@ -146,20 +146,18 @@ class ThumbnailActivity : Activity(), KodeinInjected {
                 }
             }.lparams(width = 500, height = matchParent, gravity = Gravity.END)
         }.addDrawerListener(object : DrawerListener {
-            override fun onDrawerClosed(drawerView: View?) {
-                if (drawerView != null) {
-                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
-                }
+            override fun onDrawerClosed(drawerView: View) {
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
             }
 
             override fun onDrawerStateChanged(newState: Int) {
             }
 
-            override fun onDrawerSlide(drawerView: View?, slideOffset: Float) {
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
             }
 
-            override fun onDrawerOpened(drawerView: View?) {
+            override fun onDrawerOpened(drawerView: View) {
             }
 
         })
@@ -243,7 +241,7 @@ class ThumbnailActivity : Activity(), KodeinInjected {
      */
     private fun openGoogleDriveView() {
         menuDrawerLayout.closeDrawers()
-        val intent = Intent(this, GoogleSignIn::class.java)
+        val intent = Intent(this, GoogleSignInActivity::class.java)
         startActivity(intent)
     }
 

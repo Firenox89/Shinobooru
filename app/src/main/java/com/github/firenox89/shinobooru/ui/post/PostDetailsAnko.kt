@@ -11,13 +11,19 @@ import android.view.ViewGroup
 import android.widget.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
+import com.github.firenox89.shinobooru.cloud.GoogleDrive
 import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants
+import com.github.firenox89.shinobooru.utility.FileManager
 import org.jetbrains.anko.*
 import org.jetbrains.anko.sdk25.listeners.onClick
+import android.R.attr.button
+import android.util.Log
+import android.widget.RelativeLayout
+
 
 /**
  * Creates the ui for the post details fragment.
@@ -29,6 +35,7 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
         val downloadIcon = BitmapFactory.decodeResource(Shinobooru.appContext.resources,
                                                         R.drawable.cloud_download_2_32x32)
     }
+    var downloadButton: ImageButton? = null
 
     /**
      * Creates the ui and returns it to the caller.
@@ -40,7 +47,7 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
             dividerPadding = 20
             if (!downloadedPost) {
                 verticalLayout {
-                    background = resources.getDrawable(R.drawable.roundcorners)
+                    background = resources.getDrawable(R.drawable.roundcorners, null)
 
                     textView {
                         text = "Author ${post.author}"
@@ -58,6 +65,40 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
                         }
                     }
                 }
+            } else {
+                verticalLayout {
+                    button("Delete") {
+                        onClick {
+                            alert {
+                                title = "Really delete this port?"
+                                positiveButton("Yep") {
+                                    FileManager.deleteDownloadedPost(post as DownloadedPost)
+                                    toast("Post ${post.id} deleted")
+                                }
+                                negativeButton(android.R.string.no) {}
+                            }
+                        }
+                    }
+                    button("Delete from Google Drive") {
+                        onClick {
+                            GoogleDrive.delete(post as DownloadedPost)
+                        }
+                    }
+                }
+            }
+            verticalLayout {
+                background = resources.getDrawable(R.drawable.roundcorners)
+                clipToOutline = true
+                gravity = Gravity.CENTER
+                textView {
+                    text = "Post"
+                }
+                textView {
+                    text = "Board ${post.getBoard()}"
+                }
+                textView {
+                    text = "ID ${post.id}"
+                }
             }
             verticalLayout {
                 background = resources.getDrawable(R.drawable.roundcorners)
@@ -72,30 +113,54 @@ class PostDetailsAnko(val post: Post) : AnkoComponent<PostDetailsFragment> {
             }
             verticalLayout {
                 background = resources.getDrawable(R.drawable.roundcorners)
-                relativeLayout {
-                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                                                          ViewGroup.LayoutParams.MATCH_PARENT)
-
-                    verticalLayout {
-                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                                                              ViewGroup.LayoutParams.MATCH_PARENT)
-                        textView {
-                            text = "Size ${humanizeSize(post.file_size)}"
+//                relativeLayout {
+//                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+//                                                          ViewGroup.LayoutParams.MATCH_PARENT)
+//
+//                    verticalLayout {
+//                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+//                                                              ViewGroup.LayoutParams.MATCH_PARENT)
+//                        textView {
+//                            text = "Size ${humanizeSize(post.file_size)}"
+//                        }
+//                        textView {
+//                            text = "Dimension ${post.width}x${post.height}"
+//                        }
+//                    }
+//                    if (!downloadedPost) {
+//                        relativeLayout {
+//                            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+//                                                                  ViewGroup.LayoutParams.WRAP_CONTENT)
+//
+//                            imageButton {
+//                                imageBitmap = downloadIcon
+//                                onClick {
+//                                    val downloadResult = post.downloadFile()
+//                                    toast(downloadResult ?: "Download ${post.file_url}")
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+                tableLayout {
+                    tableRow {
+                        verticalLayout {
+                            textView {
+                                text = "Size ${humanizeSize(post.file_size)}"
+                            }
+                            textView {
+                                text = "Dimension ${post.width}x${post.height}"
+                            }
                         }
-                        textView {
-                            text = "Dimension ${post.width}x${post.height}"
-                        }
-                    }
-                    if (!downloadedPost) {
-                        relativeLayout {
-                            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                                                                  ViewGroup.LayoutParams.WRAP_CONTENT)
-
-                            imageButton {
-                                imageBitmap = downloadIcon
-                                onClick {
-                                    val downloadResult = post.downloadFile()
-                                    toast(downloadResult ?: "Download ${post.file_url}")
+                        if (!downloadedPost) {
+                            relativeLayout {
+                                downloadButton = imageButton {
+                                    imageBitmap = downloadIcon
+                                    onClick {
+                                        val downloadResult = post.downloadFile()
+                                        toast(downloadResult ?: "Download ${post.file_url}")
+                                    }
+                                    Log.e("layout", "${this.layoutParams}")
                                 }
                             }
                         }

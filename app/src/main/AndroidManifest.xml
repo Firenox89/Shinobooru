@@ -61,7 +61,7 @@
                 android:resource="@xml/wallpaper" />
         </service>
 
-        <activity android:name=".ui.GoogleSignIn"></activity>
+        <activity android:name=".ui.GoogleSignInActivity"></activity>
     </application>
 
 </manifest>

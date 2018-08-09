@@ -16,11 +16,11 @@ import org.jetbrains.anko.support.v4.onUiThread
  */
 class PostImageFragment : Fragment() {
     val TAG = "PostImageFragment"
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val board = arguments.getString("board")
-        val tags = arguments.getString("tags")
-        val posi = arguments.getInt("posi")
-        val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)!!
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val board = arguments!!.getString("board")
+        val tags = arguments!!.getString("tags")
+        val posi = arguments!!.getInt("posi")
+        val post: Post = PostLoader.getLoader(board, tags).getPostAt(posi)
 
         val imageview = TouchImageView(context)
         //display preview image first for faster response

@@ -2,8 +2,8 @@ package com.github.firenox89.shinobooru.utility
 
 import com.github.firenox89.shinobooru.model.Post
 import com.github.firenox89.shinobooru.settings.SettingsActivity
-import rx.Observable
-import rx.lang.kotlin.PublishSubject
+import io.reactivex.Observable
+import io.reactivex.subjects.PublishSubject
 
 /**
  * Class in charge of handling post loading.
@@ -75,7 +75,7 @@ open class PostLoader {
     val tags: String
     private val initLoadSize = 40
     private val posts = mutableListOf<Post>()
-    private val rangeChangeEventStream = PublishSubject<Pair<Int, Int>>()
+    private val rangeChangeEventStream = PublishSubject.create<Pair<Int, Int>>()
 
     private var currentPage = 1
 
@@ -159,7 +159,7 @@ open class PostLoader {
      * @return the [rangeChangeEventStream]
      */
     fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> {
-        return rangeChangeEventStream.asObservable()
+        return rangeChangeEventStream.hide()
     }
 
     /**

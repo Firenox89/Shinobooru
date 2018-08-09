@@ -9,9 +9,9 @@ import android.widget.RelativeLayout
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.utility.PostLoader
+import io.reactivex.disposables.Disposable
+import io.reactivex.subjects.PublishSubject
 import org.jetbrains.anko.*
-import rx.Subscription
-import rx.lang.kotlin.PublishSubject
 
 /**
  * [RecyclerView.Adapter] that provides the post images.
@@ -20,29 +20,26 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
 
     val TAG = "ThumbnailAdapter"
     //emits click events for the clicked images
-    val onImageClickStream = PublishSubject<Int>()
+    val onImageClickStream = PublishSubject.create<Int>()
 
     private var postLoaderChangeSubscription = subscribeLoader()
     var usePreview = true
 
-    companion object {
-        //a placeholder bitmap to display while the real image is loading
-        val placeholderBitmap: Bitmap by lazy {
-            val rect = Rect(0, 0, 250, 400)
-            val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(image)
-            val color = Color.argb(255, 80, 80, 80)
-            val paint = Paint()
-            paint.color = color
-            canvas.drawRect(rect, paint)
-            image
-        }
+    fun createPlaceholderBitmap(width: Int, height: Int): Bitmap {
+        val rect = Rect(0, 0, width, height)
+        val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(image)
+        val color = Color.argb(255, 80, 80, 80)
+        val paint = Paint()
+        paint.color = color
+        canvas.drawRect(rect, paint)
+        return image
     }
 
     /**
      * Subscribe for newly loaded posts.
      */
-    fun subscribeLoader(): Subscription {
+    fun subscribeLoader(): Disposable {
         return postLoader.getRangeChangeEventStream().subscribe {
             val (posi, count) = it
             //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
@@ -61,7 +58,7 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
      */
     fun changePostLoader(postLoader: PostLoader) {
         this.postLoader = postLoader
-        postLoaderChangeSubscription.unsubscribe()
+        postLoaderChangeSubscription.dispose()
         postLoaderChangeSubscription = subscribeLoader()
         notifyDataSetChanged()
     }
@@ -74,7 +71,8 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
         val post = postLoader.getPostAt(position)
         if (itemCount - position < 5) postLoader.requestNextPosts()
 
-        holder.postImage.setImageBitmap(placeholderBitmap)
+        holder.postImage.setImageBitmap(createPlaceholderBitmap(post.preview_width, post.preview_height))
+
         //if the recyclerView is set to one image per row use the sample image for quality reasons
         if (usePreview)
             post.loadPreview {
@@ -95,8 +93,8 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
                 }
             }
 
-        holder.downloadedIcon.visibility = if (post is DownloadedPost) View.VISIBLE else View.INVISIBLE
-        holder.viewedIcon.visibility = if (post?.wasViewed() ?: false) View.VISIBLE else View.INVISIBLE
+//        holder.downloadedIcon.visibility = if (post is DownloadedPost) View.VISIBLE else View.INVISIBLE
+//        holder.viewedIcon.visibility = if (post.wasViewed()) View.VISIBLE else View.INVISIBLE
         holder.itemView?.setOnClickListener { onImageClickStream.onNext(position) }
     }
 
@@ -138,11 +136,13 @@ class ThumbnailAdapter(var postLoader: PostLoader) : RecyclerView.Adapter<Thumbn
                         imageView {
                             downloadedIcon = this
                             imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.cloud_download_2_32x32)
+                            visibility = View.INVISIBLE
                             padding = 10
                         }
                         imageView {
                             viewedIcon = this
                             imageBitmap = BitmapFactory.decodeResource(resources, R.drawable.view_32x32)
+                            visibility = View.INVISIBLE
                             padding = 10
                         }
                     }

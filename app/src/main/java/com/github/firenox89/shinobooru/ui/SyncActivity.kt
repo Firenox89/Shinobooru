@@ -6,12 +6,14 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.widget.LinearLayout
+import android.widget.TableLayout
 import android.widget.TextView
 import com.github.firenox89.shinobooru.cloud.GoogleDrive
 import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.FileManager
 import org.jetbrains.anko.*
+import org.jetbrains.anko.constraint.layout.constraintLayout
 import org.jetbrains.anko.sdk25.listeners.onClick
 
 /**
@@ -20,71 +22,63 @@ import org.jetbrains.anko.sdk25.listeners.onClick
 
 class SyncActivity : Activity() {
     val TAG = "SyncActivity"
-    var drive = GoogleDrive()
+    var drive = GoogleDrive(this)
+    lateinit var table: TableLayout
+
+    fun updateTable() {
+        Log.i(TAG, "updateTable")
+        runOnUiThread {
+            try {
+            cleanTable(table)
+            drive.boards.forEach {
+                table.tableRow {
+                    textView(it.first)
+                    textView(it.second.count().toString()) {
+                        gravity = Gravity.CENTER
+                    }
+                    textView(drive.getPostOnlyOnDrive(it.first, it.second).count().toString()) {
+                        gravity = Gravity.CENTER
+                    }
+                    textView(drive.getPostOnlyOnDevice(it.first, it.second)?.count().toString()) {
+                        gravity = Gravity.CENTER
+                    }
+                }
+            }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun cleanTable(table: TableLayout) {
+        val childCount = table.childCount
+
+        // Remove all rows except the first one
+        if (childCount > 1) {
+            table.removeViews(1, childCount - 1)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO check permissions
         super.onCreate(savedInstanceState)
-        val boards = FileManager.boards.map { it.key }
 
+        constraintLayout(){
+
+        }
         verticalLayout {
             gravity = Gravity.CENTER
-            textView("Post on device:")
-            linearLayout {
-                boards.forEach {
-                    verticalLayout {
-                        textView(it)
-                        textView {
-                            text = "${FileManager.boards[it]?.size}"
-                        }
-                    }
-                }
-            }
-            textView("Post on drive:")
-
-            val textViewsforBoard = mutableMapOf<String, TextView>()
-            linearLayout {
-                boards.forEach {
-                    verticalLayout {
-                        textView(it)
-                        linearLayout {
-                            textViewsforBoard.put(it, textView("loading"))
-                            textViewsforBoard.put(it + "green",
-                                    textView {
-                                        text = "0"
-                                        setTextColor(Color.GREEN)
-                                    })
-                            textViewsforBoard.put(it + "red",
-                                    textView {
-                                        text = "0"
-                                        setTextColor(Color.RED)
-                                    })
-                        }
-                    }
-                }
-            }
-            doAsync(Throwable::printStackTrace) {
-                drive.collectData {
-                    val data = it?.mapKeys { it.key.title }
-                    if (data != null) {
-                        runOnUiThread {
-                            updateUI(textViewsforBoard, data)
-                        }
-                    }
+            table = tableLayout {
+                tableRow {
+                    textView("On\n Drive")
+                    textView("Drive\n only")
+                    textView("Device\n only")
                 }
             }
             button("Sync") {
                 onClick {
                     doAsync(Throwable::printStackTrace) {
-                        drive.sync {
-                            val data = it?.mapKeys { it.key.title }
-                            if (data != null) {
-                                runOnUiThread {
-                                    updateUI(textViewsforBoard, data)
-                                }
-                            }
-
-                        }
+                        drive.syncDevice2Drive()
                     }
                 }
             }
@@ -100,35 +94,8 @@ class SyncActivity : Activity() {
                 }
             }
         }
-
-    }
-    fun updateUI(textViewsforBoard: Map<String, TextView>, data: Map<String, List<DownloadedPost>>) {
-        textViewsforBoard.forEach {
-            val textView = it.value
-            when {
-                it.key.endsWith("green") -> {
-                    val board = it.key.substring(0, it.key.length - 5)
-                    doAsync {
-                        val newText = "+${drive.getPostOnlyOnDrive(board)?.size}"
-                        uiThread {
-                            textView.text = newText
-                        }
-                    }
-                }
-                it.key.endsWith("red") -> {
-                    val board = it.key.substring(0, it.key.length - 3)
-                    doAsync {
-                        val newText = "+${drive.getPostOnlyOnDevice(board)?.size}"
-                        uiThread {
-                            textView.text = newText
-                        }
-                    }
-                }
-                else -> {
-                    val board = it.key
-                    it.value.text = "${data[board]?.size}"
-                }
-            }
+        drive.fetchData {
+            updateTable()
         }
     }
 }

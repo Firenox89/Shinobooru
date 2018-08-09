@@ -8,11 +8,9 @@ import android.graphics.Point
 import android.os.Build
 import android.preference.PreferenceManager
 import android.view.Display
-import com.github.firenox89.shinobooru.Manifest
 import com.github.salomonbrys.kodein.*
+import io.reactivex.subjects.PublishSubject
 import org.jetbrains.anko.windowManager
-import rx.lang.kotlin.PublishSubject
-import rx.subjects.PublishSubject
 
 /**
  * Application class, provide the [appContext] for convenience, initialize [Kodein].
@@ -22,7 +20,7 @@ class Shinobooru : Application(), KodeinAware {
     override val kodein by Kodein.lazy {
         bind<SharedPreferences>() with instance(PreferenceManager.getDefaultSharedPreferences(appContext))
 
-        bind<PublishSubject<Int>>("thumbnailUpdates") with singleton { PublishSubject<Int>() }
+        bind<PublishSubject<Int>>("thumbnailUpdates") with singleton { PublishSubject.create<Int>() }
 
         val display = windowManager.defaultDisplay
         val size = Point()

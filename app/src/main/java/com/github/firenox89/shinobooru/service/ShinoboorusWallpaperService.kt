@@ -1,10 +1,8 @@
 package com.github.firenox89.shinobooru.service
 
 import android.content.SharedPreferences
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.graphics.Paint
+import android.graphics.*
+import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.service.wallpaper.WallpaperService
 import android.util.Size
 import android.view.MotionEvent
@@ -15,8 +13,8 @@ import com.github.salomonbrys.kodein.KodeinInjected
 import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
-import rx.lang.kotlin.PublishSubject
-import rx.schedulers.Schedulers
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import java.lang.IllegalArgumentException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -30,9 +28,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
 
     val TAG = "WallpaperService"
 
-    override fun onCreateEngine(): Engine {
-        return ShinoboorusWallpaperEngine()
-    }
+    override fun onCreateEngine(): Engine = ShinoboorusWallpaperEngine()
 
     companion object {
         val black = Paint().apply {
@@ -58,8 +54,8 @@ class ShinoboorusWallpaperService : WallpaperService() {
         private var displayWidth: Int = 0
         private var displayHeight: Int = 0
 
-        private val clickEventStream = PublishSubject<MotionEvent>()
-        private val drawRequestQueue = PublishSubject<() -> Unit>()
+        private val clickEventStream = PublishSubject.create<MotionEvent>()
+        private val drawRequestQueue = PublishSubject.create<() -> Unit>()
         private val drawScheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 
         /**
@@ -68,9 +64,8 @@ class ShinoboorusWallpaperService : WallpaperService() {
         init {
             inject(appKodein())
 
-            clickEventStream.buffer(clickEventStream.debounce(300, TimeUnit.MILLISECONDS)).forEach {
-                if (it.size == 2) draw()
-            }
+            clickEventStream.buffer(clickEventStream.debounce(300, TimeUnit.MILLISECONDS))
+                            .forEach { if (it.size == 2) draw() }
 
             drawRequestQueue.throttleFirst(500, TimeUnit.MILLISECONDS, drawScheduler).subscribe { it.invoke() }
         }
@@ -130,7 +125,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
                     if (isSurfaceInvalid()) return@onNext
                     //scales image
                     canvas.translate(transformationInfo.second.width.toFloat() / 2,
-                            transformationInfo.second.height.toFloat() / 2)
+                                     transformationInfo.second.height.toFloat() / 2)
                     if (isSurfaceInvalid()) return@onNext
                     //draws scaled image
                     canvas.drawBitmap(image, transformationInfo.first, filter)
@@ -150,9 +145,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
         /**
          * Returns true if surface is invalid
          */
-        private fun isSurfaceInvalid(): Boolean {
-            return !surfaceHolder.surface.isValid
-        }
+        private fun isSurfaceInvalid(): Boolean = !surfaceHolder.surface.isValid
 
         /**
          * Calculates the scaling factors, apply the scaling to a transformation matrix,
@@ -209,6 +202,8 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * @return a loaded [Bitmap] fitting for the display ratio.
          */
         private fun pickImage(): Bitmap {
+            if (FileManager.getAllDownloadedPosts().isEmpty())
+                return genNoImagesBitmap()
             //TODO stop looping when no image with a fitting ration is present
             //picks random image
             var post = pickRandomPost()
@@ -260,6 +255,22 @@ class ShinoboorusWallpaperService : WallpaperService() {
             BitmapFactory.decodeFile(path, options)
 
             return Size(options.outWidth, options.outHeight)
+        }
+
+        fun genNoImagesBitmap(): Bitmap {
+            val text = "No Images to display."
+            val paint = Paint(ANTI_ALIAS_FLAG)
+            paint.textSize = 24f
+            paint.color = Color.WHITE
+            paint.textAlign = Paint.Align.LEFT
+            val baseline = - paint.ascent() // ascent() is negative
+            val width =(paint.measureText(text) + 0.5f).toInt() // round
+            val height = (baseline + paint.descent() + 0.5f).toInt()
+            val image = Bitmap . createBitmap (width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(image)
+            canvas.drawPaint(black)
+            canvas.drawText(text, 0f, baseline, paint)
+            return image
         }
     }
 }

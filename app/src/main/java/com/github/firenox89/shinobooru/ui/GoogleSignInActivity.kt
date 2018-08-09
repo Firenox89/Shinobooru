@@ -12,6 +12,8 @@ import com.github.firenox89.shinobooru.cloud.GoogleDrive
 
 import com.github.firenox89.shinobooru.utility.Constants
 import com.google.android.gms.auth.api.Auth
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInResult
 import com.google.android.gms.common.ConnectionResult
@@ -19,9 +21,13 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.drive.Drive
 import org.jetbrains.anko.*
 
-class GoogleSignIn : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
-
+class GoogleSignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
     lateinit var status: TextView
+    private var mGoogleApiClient: GoogleApiClient? = null
+    private val REQUEST_CODE_SIGN_IN = 0
+    val RC_RESOLUTION: Int = 2
+    val TAG = "GoogleSignInActivity"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -41,15 +47,17 @@ class GoogleSignIn : AppCompatActivity(), GoogleApiClient.OnConnectionFailedList
                 }
             }
         }
-        login()
+
+        val mGoogleSignInClient = buildGoogleSignInClient()
+        startActivityForResult(mGoogleSignInClient.signInIntent, REQUEST_CODE_SIGN_IN)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-        if (requestCode == RC_SIGN_IN) {
-            val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
+        if (requestCode == REQUEST_CODE_SIGN_IN) {
+            val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
+            handleSignInResult(result)
         } else if (requestCode == RC_RESOLUTION) {
             Log.e(TAG, "RES RES")
         }
@@ -73,9 +81,6 @@ class GoogleSignIn : AppCompatActivity(), GoogleApiClient.OnConnectionFailedList
         }
     }
 
-    val RC_SIGN_IN: Int = 1
-    val RC_RESOLUTION: Int = 2
-    val TAG = "GoogleSignIn"
     override fun onConnectionFailed(result: ConnectionResult) {
         Log.e(TAG, "status ${result.errorMessage}")
         Log.e(TAG, "status res ${result.hasResolution()}")
@@ -85,26 +90,14 @@ class GoogleSignIn : AppCompatActivity(), GoogleApiClient.OnConnectionFailedList
         }
     }
 
-    fun login() {
-        val apiClient = mGoogleApiClient ?: buildAPIClient()
-        val signInIntent = Auth.GoogleSignInApi.getSignInIntent(apiClient)
-        startActivityForResult(signInIntent, RC_SIGN_IN)
+    fun buildGoogleSignInClient(): GoogleSignInClient {
+        val signInOptions =
+                GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestScopes(Drive.SCOPE_FILE, Drive.SCOPE_APPFOLDER)
+                        .build()
+        return GoogleSignIn.getClient(this, signInOptions)
     }
 
-    var mGoogleApiClient: GoogleApiClient? = null
-
-    fun buildAPIClient(): GoogleApiClient? {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestScopes(Drive.SCOPE_FILE, Drive.SCOPE_APPFOLDER)
-                .build()
-        mGoogleApiClient = GoogleApiClient.Builder(this)
-                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .addApi(Drive.API)
-                .build()
-        return mGoogleApiClient
-    }
 
     fun startSyncActivity() {
         val intent = Intent(this, SyncActivity::class.java)

@@ -21,6 +21,12 @@ class DownloadedPost(id: Long, val file: File, val boardName: String) : Post(id 
             BitmapFactory.decodeFile(file.path, options)
             height = options.outHeight
             width = options.outWidth
+            preview_height = height
+            actual_preview_height = height
+            jpeg_height = height
+            preview_width = width
+            actual_preview_width = width
+            jpeg_width = width
             file_size = file.length().toInt()
             val tagsStartIndex = file.name.indexOf(' ', file.name.indexOf(' ') + 1)
             tags = file.name.substring(tagsStartIndex + 1, file.name.length - 4)

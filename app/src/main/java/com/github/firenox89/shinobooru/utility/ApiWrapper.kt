@@ -7,8 +7,8 @@ import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.Post
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.httpGet
-import rx.lang.kotlin.PublishSubject
-import rx.schedulers.Schedulers
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -18,7 +18,7 @@ object ApiWrapper {
     /** Scheduler to run post requests */
     private val requestScheduler = Schedulers.from(Executors.newCachedThreadPool())
     /** Post request queue */
-    private val requestQueue = PublishSubject<Request>()
+    private val requestQueue = PublishSubject.create<Request>()
     /** Time in ms to wait between api calls */
     private var throttle = 10L
 

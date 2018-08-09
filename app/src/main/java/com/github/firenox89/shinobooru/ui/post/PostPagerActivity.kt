@@ -13,7 +13,7 @@ import com.github.salomonbrys.kodein.KodeinInjector
 import com.github.salomonbrys.kodein.android.appKodein
 import com.github.salomonbrys.kodein.instance
 import fr.castorflex.android.verticalviewpager.VerticalViewPager
-import rx.lang.kotlin.PublishSubject
+import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 
 /**
@@ -38,8 +38,8 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
     val SWIPE_DISTANCE = 1000
     val CLICK_DISTANCE = 5
 
-    private val onPostSwitch = PublishSubject<Int>()
-    private val clickEventStream = PublishSubject<MotionEvent>()
+    private val onPostSwitch = PublishSubject.create<Int>()
+    private val clickEventStream = PublishSubject.create<MotionEvent>()
 
     /**
      * Creates a [VerticalViewPager] that starts on a given [Post] and load new posts from the given [PostLoader]
@@ -89,8 +89,9 @@ class PostPagerActivity : FragmentActivity(), KodeinInjected {
             onPostSwitch.onNext(-1)
         else if (y2 > height - height / 20)
             onPostSwitch.onNext(1)
-        else if (x2 < width / 10)
-            finish()
+        //this ist stupid while the download buttom is on the left side
+//        else if (x2 < width / 10)
+//            finish()
     }
 
     /**
