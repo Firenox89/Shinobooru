@@ -8,6 +8,7 @@ import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.model.Post
 import com.github.kittinunf.fuel.httpDownload
+import timber.log.Timber
 import java.io.*
 import java.util.regex.Pattern
 
@@ -97,13 +98,13 @@ object FileManager {
 
         url.httpDownload().destination { res, realUrl ->
 
-            Log.i("Download", "dest = $boardSubDir/$fileName")
+            Timber.i("dest = $boardSubDir/$fileName")
 
             //next line will be used as destination file
             File(boardSubDir, fileName)
         }.response { request, response, result ->
             if (result.component2() != null)
-                Log.d("Download", "Error = ${result.component2()}")
+                Timber.d("Error = ${result.component2()}")
             else
                 boards[board]?.add(postFromName(fileName, File(boardSubDir, fileName)))
         }
@@ -150,12 +151,13 @@ object FileManager {
      * @param id of the post the preview belongs to
      * @return a [FileInputStream] or null
      */
-    fun previewBitmapFromCache(board: String, id: Long): FileInputStream? {
-        if (cachedFiles.contains("$board $id.jpeg"))
-            return Shinobooru.appContext.openFileInput("$board $id.jpeg")
-        else
-            return null
-    }
+    fun previewBitmapFromCache(board: String, id: Long): FileInputStream? =
+            if (isPreviewBitmapCached(board, id))
+                Shinobooru.appContext.openFileInput("$board $id.jpeg")
+            else
+                null
+
+    fun isPreviewBitmapCached(board: String, id: Long) = cachedFiles.contains("$board $id.jpeg")
 
     /**
      * Stores a given [Bitmap] with the given id as name

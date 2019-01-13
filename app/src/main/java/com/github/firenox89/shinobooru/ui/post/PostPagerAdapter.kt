@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentStatePagerAdapter
 import com.github.firenox89.shinobooru.utility.PostLoader
+import timber.log.Timber
 
 /**
  * Requests post from the [PostLoader] and create fragments out of it.

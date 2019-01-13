@@ -6,9 +6,12 @@ import android.util.Log
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.model.Post
 import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.httpGet
+import com.google.gson.Gson
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import timber.log.Timber
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -31,7 +34,7 @@ object ApiWrapper {
                 subscribe {
                     val getR = it.request.httpGet()
                     // PostDeserializer will convert Inputstreams to an array of posts
-                    getR.responseObject(Post.PostDeserializer()) { req, res, result ->
+                    getR.responseObject(PostDeserializer()) { req, res, result ->
                         val (post, err) = result
                         if (err != null) {
                             Log.e(TAG, "Http request error $err", err.exception)
@@ -70,7 +73,7 @@ object ApiWrapper {
         //TODO: add board dependent request limits, so that we can stop before the board will stop us
         val params = "?limit=$limit${if (page > 1) "&page=$page" else ""}" +
                 if (tags != "") "&tags=$tags" else ""
-        val request = "$board/post.json$params"
+        val request = "${if (board.startsWith("http")) "" else "https://"}$board/post.json$params"
 
         requestQueue.onNext(Request(request, handler))
     }
@@ -85,7 +88,7 @@ object ApiWrapper {
      * @return Response as a string or null if something has gone wrong
      */
     fun requestTag(board: String, name: String): String? {
-        Log.i(TAG, "Request tag info from board $board with name $name")
+        Timber.i("Request tag info from board $board with name $name")
         var jsonResponse: String? = null
         //add protocol if it is missing
         val requestString = "${if (board.startsWith("http")) "" else "https://"}$board/tag.json?name=$name&limit=0"
@@ -107,4 +110,12 @@ object ApiWrapper {
      * @param handler will be called when request was successfully loaded
      */
     data class Request(val request: String, val handler: (Array<Post>) -> Unit)
+
+    /**
+     * Class to turn a JSON array into an array of posts using [Gson].
+     */
+    class PostDeserializer : ResponseDeserializable<Array<Post>> {
+        override fun deserialize(content: String) = Gson().fromJson(content, Array<Post>::class.java)
+    }
+
 }

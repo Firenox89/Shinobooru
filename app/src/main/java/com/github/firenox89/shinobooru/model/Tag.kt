@@ -20,11 +20,15 @@ data class Tag(
         var type: Int = -1,
         var ambiguous: Boolean = false) : Serializable {
 
+
+    companion object {
+        private val boardTagLists = mutableMapOf<String, MutableMap<String, Tag>>()
+    }
     /**
      * If object was created only by board and name load tag info.
      * Do nothing otherwise.
      */
-    init {
+    fun loadColor() {
         if (id == 0L) {
             var tagList: MutableMap<String, Tag>
             var tag: Tag
@@ -89,9 +93,5 @@ data class Tag(
             6 -> textColor = Color.parseColor("#FF2020")
         }
         return textColor
-    }
-
-    companion object {
-        private val boardTagLists = mutableMapOf<String, MutableMap<String, Tag>>()
     }
 }

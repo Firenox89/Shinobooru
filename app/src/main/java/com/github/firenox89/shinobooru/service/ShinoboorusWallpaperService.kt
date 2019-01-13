@@ -9,12 +9,9 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.utility.FileManager
-import com.github.salomonbrys.kodein.KodeinInjected
-import com.github.salomonbrys.kodein.KodeinInjector
-import com.github.salomonbrys.kodein.android.appKodein
-import com.github.salomonbrys.kodein.instance
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import org.koin.android.ext.android.inject
 import java.lang.IllegalArgumentException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -46,9 +43,8 @@ class ShinoboorusWallpaperService : WallpaperService() {
     /**
      * The engine drawing on te live wallpaper.
      */
-    inner class ShinoboorusWallpaperEngine : Engine(), KodeinInjected {
-        override val injector = KodeinInjector()
-        val pref: SharedPreferences by instance()
+    inner class ShinoboorusWallpaperEngine : Engine() {
+        val pref: SharedPreferences by inject()
         //TODO: make the wallpaperService more configurable
 
         private var displayWidth: Int = 0
@@ -62,8 +58,6 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * Sets up the event handler for double clicks und the event queue for drawing request.
          */
         init {
-            inject(appKodein())
-
             clickEventStream.buffer(clickEventStream.debounce(300, TimeUnit.MILLISECONDS))
                             .forEach { if (it.size == 2) draw() }
 

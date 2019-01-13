@@ -1,17 +1,5 @@
 package com.github.firenox89.shinobooru.model
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
-import com.github.firenox89.shinobooru.settings.SettingsActivity
-import com.github.firenox89.shinobooru.utility.FileManager
-import com.github.firenox89.shinobooru.utility.PostLoader
-import com.github.kittinunf.fuel.core.ResponseDeserializable
-import com.github.kittinunf.fuel.httpGet
-import com.google.gson.Gson
-import org.jetbrains.anko.doAsync
-import java.io.InputStream
-import java.util.concurrent.Executors
 import java.util.regex.Pattern
 
 /**
@@ -54,135 +42,20 @@ open class Post(
         val firstName: String = "",
         val lastName: String = "") {
 
-    private val TAG = "Post"
-
     /**
      * konachan removed the 'http:' part from their links so we have to add it if it is missing.
      */
     var preview_url: String = ""
-        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
+        get() = "${if (field.startsWith("//")) "https:" else ""}$field"
     var file_url: String = ""
-        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
+        get() = "${if (field.startsWith("//")) "https:" else ""}$field"
     var sample_url: String = ""
-        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
+        get() = "${if (field.startsWith("//")) "https:" else ""}$field"
     var jpeg_url: String = ""
-        get() = "${if (field.startsWith("//")) "http:" else ""}$field"
-
-    /**
-     * Class to turn a JSON array into an array of posts using [Gson].
-     */
-    class PostDeserializer : ResponseDeserializable<Array<Post>> {
-        override fun deserialize(content: String) = Gson().fromJson(content, Array<Post>::class.java)
-    }
-
-    /**
-     * Class to turn an [InputStream] into a [Bitmap].
-     */
-    class BitmapDeserializer : ResponseDeserializable<Bitmap> {
-        override fun deserialize(inputStream: InputStream) = BitmapFactory.decodeStream(inputStream)
-    }
-
+        get() = "${if (field.startsWith("//")) "https:" else ""}$field"
     companion object {
         val boardPattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
     }
-
-    /**
-     * Returns a list of detailed tags.
-     * Must not be call from the ui thread since it loads the tag details via the [ApiWrapper].
-     *
-     * @return a list of [Tag]
-     */
-    fun getTagList(): List<Tag> {
-        Log.i(TAG, "tags = $tags")
-        return tags.split(" ").map { Tag(name = it, board = getBoard()) }
-    }
-
-    /**
-     * Not yet implemented.
-     */
-    fun loadPostFromID() {
-//        val wrapper = ApiWrapper("http://$fileSource")
-//        wrapper.request(limit = 1) {
-//            val currentId = it?.get(0)?.id
-//            if (currentId != null) {
-//                wrapper.request(limit = 1, page = ((currentId - id).toInt())) {
-//                    Log.e("load from id", "expected = $id got = ${it?.get(0)?.id}")
-//                }
-//            }
-//        }
-    }
-
-    /**
-     * Tries to load the preview image from the cache, if not found load it from the board and cache it.
-     * If the post was already downloaded a sub sampled version gets loaded.
-     *
-     * @param handler will be called after the image was loaded.
-     */
-    open fun loadPreview(handler: (Bitmap?) -> Unit): Unit {
-        doAsync(Throwable::printStackTrace) {
-            val bitmap = BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(getBoard(), id))
-            if (bitmap == null || SettingsActivity.disableCaching) {
-                loadBitmap(preview_url) {
-                    handler.invoke(it)
-                    FileManager.previewBitmapToCache(getBoard(), id, it)
-                }
-            } else {
-                handler.invoke(bitmap)
-            }
-        }
-    }
-
-    /**
-     * Loads the sample image.
-     *
-     * @param handler will be called after the image was loaded.
-     */
-    open fun loadSample(handler: (Bitmap?) -> Unit): Unit {
-        loadBitmap(url = sample_url, handler = handler)
-    }
-
-    /**
-     * Loads an image from the given url.
-     * On an error while downloading the method tries again as many times as retries specified.
-     *
-     * @param url the url to load from
-     * @param retries the number of retries in case of errors, default value is 2
-     * @param handler will be called after the image was loaded.
-     */
-    private fun loadBitmap(url: String, retries: Int = 2, handler: (Bitmap?) -> Unit): Unit {
-        url.httpGet().apply { callbackExecutor = Executors.newSingleThreadExecutor() }
-                .responseObject(BitmapDeserializer()) { req, res, result ->
-                    val (bitmap, err) = result
-                    if (err != null) {
-                        Log.e("Http request error", "$err")
-                        if (retries > 0) {
-                            //TODO: improve that
-                            //try again
-                            Thread.sleep(500)
-                            loadBitmap(url, retries - 1, handler)
-                        }
-                    } else {
-                        handler(bitmap)
-                    }
-                }
-    }
-
-    /**
-     * Downloads the original file to the storage using [FileManager.downloadFileToStorage]
-     */
-    fun downloadFile(): String? = FileManager.downloadFileToStorage(file_url, this)
-
-    /**
-     * Downloads the jpeg image to the storage using [FileManager.downloadFileToStorage]
-     */
-    fun downloadJpeg(): String? = FileManager.downloadFileToStorage(jpeg_url, this)
-
-    /**
-     * Returns if that post was viewed.
-     *
-     * @return if viewed true, false otherwise
-     */
-    fun wasViewed(): Boolean = PostLoader.postViewed(id)
 
     /**
      * Parse and return the board name from the file url.
@@ -207,7 +80,7 @@ open class Post(
                 " rating='$rating', has_children=$has_children, parent_id=$parent_id," +
                 " status='$status', width=$width, height=$height, is_held=$is_held," +
                 " frames_pending_string='$frames_pending_string', frames_string='$frames_string'," +
-                " firstName='$firstName', lastName='$lastName', TAG='$TAG')"
+                " firstName='$firstName', lastName='$lastName')"
     }
 
     override fun equals(other: Any?): Boolean = if (other is Post) other.id == id && other.getBoard() == getBoard() else false

@@ -1,7 +1,6 @@
 package com.github.firenox89.shinobooru.ui
 
 import android.app.Activity
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -9,12 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TextView
 import com.github.firenox89.shinobooru.cloud.GoogleDrive
-import com.github.firenox89.shinobooru.model.DownloadedPost
 import com.github.firenox89.shinobooru.utility.Constants
-import com.github.firenox89.shinobooru.utility.FileManager
-import org.jetbrains.anko.*
-import org.jetbrains.anko.constraint.layout.constraintLayout
-import org.jetbrains.anko.sdk25.listeners.onClick
 
 /**
  * Created by firenox on 1/21/17.
@@ -26,7 +20,7 @@ class SyncActivity : Activity() {
     lateinit var table: TableLayout
 
     fun updateTable() {
-        Log.i(TAG, "updateTable")
+        Log.i(TAG, "updateTable")/*
         runOnUiThread {
             try {
             cleanTable(table)
@@ -47,7 +41,7 @@ class SyncActivity : Activity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
+        }*/
     }
 
     private fun cleanTable(table: TableLayout) {
@@ -62,10 +56,7 @@ class SyncActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO check permissions
         super.onCreate(savedInstanceState)
-
-        constraintLayout(){
-
-        }
+/*
         verticalLayout {
             gravity = Gravity.CENTER
             table = tableLayout {
@@ -96,6 +87,6 @@ class SyncActivity : Activity() {
         }
         drive.fetchData {
             updateTable()
-        }
+        }*/
     }
 }

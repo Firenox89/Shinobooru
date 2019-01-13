@@ -19,7 +19,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.drive.Drive
-import org.jetbrains.anko.*
 
 class GoogleSignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
     lateinit var status: TextView
@@ -32,21 +31,22 @@ class GoogleSignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFa
         super.onCreate(savedInstanceState)
 
         setTheme(R.style.Theme_AppCompat)
-        verticalLayout {
-            gravity = Gravity.CENTER
-            status = textView("Connect to Google Drive")
-        }.applyRecursively { view ->
-            when (view) {
-                is TextView -> {
-                    view.padding = dip(10)
-                    view.gravity = Gravity.CENTER
-                    view.textSize = Constants.FONT_SIZE
-                }
-                is LinearLayout -> {
-                    view.gravity = Gravity.CENTER
-                }
-            }
-        }
+        TODO()
+//        verticalLayout {
+//            gravity = Gravity.CENTER
+//            status = textView("Connect to Google Drive")
+//        }.applyRecursively { view ->
+//            when (view) {
+//                is TextView -> {
+//                    view.padding = dip(10)
+//                    view.gravity = Gravity.CENTER
+//                    view.textSize = Constants.FONT_SIZE
+//                }
+//                is LinearLayout -> {
+//                    view.gravity = Gravity.CENTER
+//                }
+//            }
+//        }
 
         val mGoogleSignInClient = buildGoogleSignInClient()
         startActivityForResult(mGoogleSignInClient.signInIntent, REQUEST_CODE_SIGN_IN)

@@ -70,16 +70,15 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
         val fetchBoardsTask = fetchBoardsFromDrive(mDriveResourceClient)
         Tasks.whenAll(fetchBoardsTask)
                 .continueWith {
-                    val boardDriveId = fetchBoardsTask.result.find { it.title == parent }?.driveId?.asDriveFolder()
+                    val boardDriveId = fetchBoardsTask.result?.find { it.title == parent }?.driveId?.asDriveFolder()
                     if (boardDriveId != null) {
-                        posts.forEach {
-                            val post = it
+                        posts.forEach { post ->
                             val createContentsTask = mDriveResourceClient.createContents()
                             Tasks.whenAll(createContentsTask)
-                                    .continueWith {
+                                    .continueWith { task ->
                                         Log.e(TAG, "upload ${post.file.name} start")
                                         val contents = createContentsTask.result
-                                        val outputStream = contents.outputStream
+                                        val outputStream = contents?.outputStream
 
                                         val channelOut = Channels.newChannel(outputStream)
                                         val channelIn = post.file.inputStream().channel
@@ -156,8 +155,8 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
 
     fun fetchBoardsFromDrive(mDriveResourceClient: DriveResourceClient): Task<MetadataBuffer> {
         return mDriveResourceClient.rootFolder
-                .continueWithTask { mDriveResourceClient.listChildren(it.result) }
-                .continueWithTask { mDriveResourceClient.listChildren(it.result[0].driveId.asDriveFolder()) }//Shinobooru dir
+                .continueWithTask { mDriveResourceClient.listChildren(it.result!!) }
+                .continueWithTask { mDriveResourceClient.listChildren(it.result!![0].driveId.asDriveFolder()) }//Shinobooru dir
     }
 
     fun fetchData(callback: () -> Unit) {
@@ -166,14 +165,14 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
         fetchBoardsFromDrive(mDriveResourceClient)
                 .addOnCompleteListener {
                     Log.i(TAG, "app dir")
-                    val boardTasks = it.result.map { Pair(it.title, mDriveResourceClient.listChildren(it.driveId.asDriveFolder())) }
-                    Tasks.whenAll(boardTasks.map { it.second }).continueWith {
+                    val boardTasks = it.result?.map { Pair(it.title, mDriveResourceClient.listChildren(it.driveId.asDriveFolder())) }
+                    Tasks.whenAll(boardTasks?.map { it.second }).continueWith {
                         Log.i(TAG, "fetch boards")
                         Log.i(TAG, "${boardTasks} boards")
-                        boardTasks.forEach {
+                        boardTasks?.forEach {
                             val board = it.first
                             Log.i(TAG, "fetch boards")
-                            val posts = it.second.result.map { FileManager.postFromName(it.title, File(it.title)) }.toMutableList()
+                            val posts = it.second.result!!.map { FileManager.postFromName(it.title, File(it.title)) }.toMutableList()
                             Log.i(TAG, "fetch boards")
                             boards.add(Pair(board, posts))
                         }

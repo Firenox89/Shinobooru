@@ -1,187 +1,134 @@
 package com.github.firenox89.shinobooru.ui.thumbnail
 
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.os.Bundle
-import android.support.v4.widget.DrawerLayout
-import android.support.v4.widget.DrawerLayout.DrawerListener
+import android.support.v4.widget.SwipeRefreshLayout
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
-import android.util.Log
-import android.view.Gravity
-import android.view.View
-import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
-import android.widget.*
+
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.model.*
-import com.github.firenox89.shinobooru.openGL.OpenGLViewer
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.firenox89.shinobooru.ui.GoogleSignInActivity
+import com.github.firenox89.shinobooru.ui.base.RxActivity
 import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
-import com.github.firenox89.shinobooru.ui.SyncActivity
-import com.github.firenox89.shinobooru.utility.ApiWrapper
-import com.github.firenox89.shinobooru.utility.FileLoader
-import com.github.firenox89.shinobooru.utility.PostLoader
-import com.github.salomonbrys.kodein.KodeinInjected
-import com.github.salomonbrys.kodein.KodeinInjector
-import com.github.salomonbrys.kodein.android.appKodein
-import com.github.salomonbrys.kodein.instance
-import com.google.gson.Gson
+import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
+import com.github.firenox89.shinobooru.utility.Constants.FILE_LOADER_NAME
+import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
+import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import io.reactivex.subjects.PublishSubject
-import org.jetbrains.anko.*
-import org.jetbrains.anko.recyclerview.v7.recyclerView
-import org.jetbrains.anko.support.v4.drawerLayout
-import org.jetbrains.anko.support.v4.swipeRefreshLayout
+import kotlinx.android.synthetic.main.activity_thumbnail.*
+import org.koin.android.ext.android.inject
+import timber.log.Timber
 
-/**
- * Contains a [DrawerLayout] with a menu drawer on the left and a drawer for searching on the right,
- * in the middle the is a [RecyclerView] with thumbnails of posts.
- */
-class ThumbnailActivity : Activity(), KodeinInjected {
+class ThumbnailActivity : RxActivity() {
+    /**
+     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
+     */
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var recyclerAdapter: ThumbnailAdapter
 
-    val TAG = "ThumbnailActivity"
-    override val injector = KodeinInjector()
-
-    private val sharedPrefs: SharedPreferences by instance()
+    private val sharedPrefs: SharedPreferences by inject()
+    private val updateThumbnail: PublishSubject<Int> by inject("thumbnailUpdates")
 
     private val recyclerLayout = StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL)
-    lateinit private var recyclerAdapter: ThumbnailAdapter
-    lateinit private var recyclerView: RecyclerView
-    lateinit private var menuDrawerLayout: DrawerLayout
 
-    private val updateThumbnail: PublishSubject<Int> by instance("thumbnailUpdates")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //TODO: save and reload position
+        setContentView(R.layout.activity_thumbnail)
+        setSupportActionBar(findViewById(R.id.my_toolbar))
 
-        inject(appKodein())
+        setupDrawer()
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
+        recyclerView = findViewById(R.id.recycleView)
 
         //setup the RecyclerView adapter
-        val tags = intent.getStringExtra("tags") ?: ""
-        val board = intent.getStringExtra("board") ?: SettingsActivity.currentBoardURL
+        val tags = intent.getStringExtra(TAGS_INTENT_KEY) ?: ""
+        val board = intent.getStringExtra(BOARD_INTENT_KEY) ?: SettingsActivity.currentBoardURL
 
-        Log.i(TAG, "start $board $tags")
-        val postLoader = PostLoader.getLoader("${if (board.startsWith("http")) "" else "http://"}$board", tags)
-        recyclerAdapter = ThumbnailAdapter(postLoader)
+        title = "${board.replace("https://", "")} $tags"
 
+        Timber.i("start board '$board' tags '$tags'")
+        recyclerAdapter = ThumbnailAdapter(this, board, tags)
+
+        subscribe(recyclerAdapter.subscribeLoader())
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
-        recyclerAdapter.onImageClickStream.subscribe {
+        subscribe(recyclerAdapter.onImageClickStream.subscribe {
             val intent = Intent(this, PostPagerActivity::class.java)
-            intent.putExtra("board", recyclerAdapter.postLoader.board)
-            intent.putExtra("tags", recyclerAdapter.postLoader.tags)
-            intent.putExtra("posi", it)
+            intent.putExtra(BOARD_INTENT_KEY, board)
+            intent.putExtra(TAGS_INTENT_KEY, tags)
+            intent.putExtra(POSITION_INTENT_KEY, it)
             startActivityForResult(intent, 1)
-        }
+        })
+
+        recyclerView.layoutManager = recyclerLayout
+        recyclerView.adapter = recyclerAdapter
 
         //update the number of posts per row of the recycler layout
         updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3").toInt())
-        updateThumbnail.subscribe { updatePostPerRow(it) }
-
-        drawerLayout {
-            menuDrawerLayout = this
-            fitsSystemWindows = true
-            swipeRefreshLayout {
-                setOnRefreshListener {
-                    recyclerAdapter.postLoader.onRefresh()
-                    isRefreshing = false
-                }
-                recyclerView {
-                    recyclerView = this
-                    adapter = recyclerAdapter
-                    layoutManager = recyclerLayout
-                }
-            }
-            //left drawer
-            listView {
-                addHeaderView(buildHeader(ctx))
-                adapter = MenuDrawerAdapter()
-                descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-                backgroundColor = Color.parseColor("#111111")
-                alpha = 0.7F
-                dividerHeight = 0
-                divider.alpha = 0
-
-                onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
-                    when (position) {
-                        1 -> openSettings()
-                        2 -> openFileView()
-                        3 -> openGoogleDriveView()
-                        4 -> setYandere()
-                        5 -> setKonachan()
-                        6 -> openGL()
-                    }
-                }
-            }.lparams(width = 500, height = matchParent, gravity = Gravity.START)
-            //right drawer
-            linearLayout {
-                backgroundColor = Color.parseColor("#111111")
-                alpha = 0.7F
-                linearLayout {
-                    orientation = LinearLayout.VERTICAL
-                    autoCompleteTextView {
-                        setAdapter(TagSearchAutoCompleteAdapter(recyclerAdapter))
-                        //start autocomplete after the third letter
-                        threshold = 3
-                        hint = "Search..."
-                        singleLine = true
-                        setOnEditorActionListener { textView, i, keyEvent ->
-                            val intent = Intent(ctx, ThumbnailActivity::class.java)
-                            intent.putExtra("tags", textView.text.toString())
-                            intent.putExtra("board", recyclerAdapter.postLoader.board)
-                            ctx.startActivity(intent)
-
-                            //consume
-                            true
-                        }
-                    }
-                    listView {
-                        //TODO: add previous searches
-                    }
-                }
-            }.lparams(width = 500, height = matchParent, gravity = Gravity.END)
-        }.addDrawerListener(object : DrawerListener {
-            override fun onDrawerClosed(drawerView: View) {
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
-            }
-
-            override fun onDrawerStateChanged(newState: Int) {
-            }
-
-            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
-            }
-
-            override fun onDrawerOpened(drawerView: View) {
-            }
-
-        })
+        subscribe(updateThumbnail.subscribe { updatePostPerRow(it) })
     }
 
-    fun buildHeader(context: Context): View {
-        val header = LinearLayout(context)
-        val imageView = ImageView(header.context)
-        val image = BitmapFactory.decodeResource(resources, R.drawable.shinobu_header)
-        imageView.setImageBitmap(image)
-        header.addView(imageView)
-        imageView.layoutParams = LinearLayout.LayoutParams(500, 300)
-        //TODO this does not work as intended
-        header.isClickable = false
-        return header
+    val boards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
+    fun setupDrawer() {
+        boards.forEach {
+            nav_view.menu.add(it)
+        }
+        nav_view.setNavigationItemSelectedListener { item ->
+            when (item.title) {
+                "Settings" -> {
+                    drawer_layout.closeDrawers()
+                    openSettings()
+                }
+                "Sync" -> {
+                    drawer_layout.closeDrawers()
+                    openGoogleDriveView()
+                }
+                "Filemanager" -> {
+                    drawer_layout.closeDrawers()
+                    openBoard(FILE_LOADER_NAME)
+                }
+                else -> {
+                    drawer_layout.closeDrawers()
+                    openBoard(item.title.toString())
+                }
+            }
+            true
+        }
     }
 
     /**
-     * Removes the layout manager so it can be assigned again
+     * Starts the [SyncActivity].
      */
-    override fun onDestroy() {
-        PostLoader.discardLoader(recyclerAdapter.postLoader)
-        recyclerView.layoutManager = null
-        super.onDestroy()
+    private fun openGoogleDriveView() {
+        val intent = Intent(this, GoogleSignInActivity::class.java)
+        startActivity(intent)
+    }
+
+    /**
+     * Starts the [SyncActivity].
+     */
+    private fun openSettings() {
+        val intent = Intent(this, SettingsActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun openBoard(board: String) {
+        val intent = Intent(this, ThumbnailActivity::class.java)
+        intent.putExtra(BOARD_INTENT_KEY, board)
+        startActivity(intent)
+    }
+
+    /**
+     * Updates the span count of the layout manager.
+     * If the given value is 1 the [RecyclerView] will display sample instead of preview images.
+     * @param value that should be used as spanCount
+     */
+    fun updatePostPerRow(value: Int) {
+        recyclerLayout.spanCount = value
+        recyclerAdapter.usePreview = value != 1
     }
 
     /**
@@ -196,192 +143,5 @@ class ThumbnailActivity : Activity(), KodeinInjected {
         val post = data?.getIntExtra("position", -1)
         if (post != null && post != -1)
             recyclerView.scrollToPosition(post)
-    }
-
-    /**
-     * Updates the span count of the layout manager.
-     * If the given value is 1 the [RecyclerView] will display sample instead of preview images.
-     * @param value that should be used as spanCount
-     */
-    fun updatePostPerRow(value: Int) {
-        recyclerLayout.spanCount = value
-        recyclerAdapter.usePreview = value != 1
-    }
-
-    private fun setKonachan() {
-        menuDrawerLayout.closeDrawers()
-        recyclerView.scrollTo(0, 0)
-        recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.konachanURL))
-    }
-
-    /**
-     * Close drawers, scroll the [RecyclerView] to the beginning
-     * and sets [SettingsActivity#yandereURL] as Post Source.
-     */
-    private fun setYandere() {
-        menuDrawerLayout.closeDrawers()
-        recyclerView.scrollTo(0, 0)
-        recyclerAdapter.changePostLoader(PostLoader.getLoader(SettingsActivity.yandereURL))
-    }
-
-    /**
-     * Close drawers, scroll the [RecyclerView] to the beginning
-     * and sets [FileLoader] as Post Source.
-     */
-    private fun openFileView() {
-        PostLoader.getLoader("FileLoader").onRefresh()
-        //TODO: loading animation
-        menuDrawerLayout.closeDrawers()
-        recyclerView.scrollTo(0, 0)
-        recyclerAdapter.changePostLoader(PostLoader.getLoader("FileLoader"))
-    }
-
-    /**
-     * Starts the [SyncActivity].
-     */
-    private fun openGoogleDriveView() {
-        menuDrawerLayout.closeDrawers()
-        val intent = Intent(this, GoogleSignInActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun openGL() {
-        menuDrawerLayout.closeDrawers()
-        val intent = Intent(this, OpenGLViewer::class.java)
-        startActivity(intent)
-    }
-
-    /**
-     * Starts the [SettingsActivity].
-     */
-    private fun openSettings() {
-        menuDrawerLayout.closeDrawers()
-        startActivity<SettingsActivity>()
-    }
-
-    /**
-     * [ListAdapter] for the menu drawer.
-     */
-    class MenuDrawerAdapter : BaseAdapter() {
-        val items: Array<String> = arrayOf("Settings",
-                                           "FileView",
-                                           "Google Drive",
-                                           "yande.re",
-                                           "konachan.com",
-                                           "OpenGL")
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            return TextView(parent?.context).apply {
-                textSize = 24F
-                gravity = Gravity.CENTER
-                padding = 10
-                text = items[position]
-            }
-        }
-
-        override fun getItem(position: Int): Any {
-            return items[position]
-        }
-
-        override fun getItemId(position: Int): Long {
-            return position.toLong()
-        }
-
-        override fun getCount(): Int {
-            return items.size
-        }
-    }
-
-    /**
-     * [ListAdapter] for the auto complete search suggestions.
-     */
-    class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : BaseAdapter(), Filterable {
-        val tagList = mutableListOf<Tag>()
-
-        override fun getItem(position: Int): Any {
-            return tagList[position].name
-        }
-
-        override fun getItemId(position: Int): Long {
-            return position.toLong()
-        }
-
-        override fun getCount(): Int {
-            return tagList.size
-        }
-
-        override fun getFilter(): Filter {
-            return object : Filter() {
-                override fun performFiltering(constraint: CharSequence?): FilterResults {
-                    val results = FilterResults()
-                    val board = recyclerAdapter.postLoader.board
-
-                    //constraint can be null and FileLoader does not support tag search yet
-                    if (!constraint.isNullOrBlank() && recyclerAdapter.postLoader !is FileLoader) {
-                        //tags are always lower case
-                        val name = constraint.toString().toLowerCase().trim()
-                        //request tags
-                        val jsonResponse = ApiWrapper.requestTag(board, name)
-                        //and parse the result
-                        val tags = Gson().fromJson<Array<Tag>>(jsonResponse, Array<Tag>::class.java)
-
-                        //TODO: could be settable
-                        val numberOfResults = 10
-                        val sortedTagList = mutableListOf<Tag>()
-
-                        //first look if results start with the given search string
-                        val primaryMatches = tags.filter { it.name.startsWith(name) }
-                        //then look if the second word matches
-                        val secondaryMatches = tags.filter {
-                            //split into words, drop the first word since it is already covered in primaryMatches
-                            val words = it.name.split("_").drop(1)
-
-                            //true if at least one word matches
-                            words.filter { it.startsWith(name) }.any()
-                        }
-                        //then get the list of matches where the search string was only part of a word
-                        val restOfResults = tags.subtract(primaryMatches).subtract(secondaryMatches)
-                        //add primaryMatches
-                        sortedTagList.addAll(primaryMatches.take(numberOfResults))
-
-                        //if not enough results yet, try to fill the rest with secondaryMatches
-                        if (sortedTagList.size < numberOfResults)
-                            sortedTagList.addAll(secondaryMatches.take(numberOfResults - primaryMatches.size))
-
-                        //if still not enough matches, add the rest
-                        if (sortedTagList.size < numberOfResults) {
-                            val matchesLeft = numberOfResults - primaryMatches.size - secondaryMatches.size
-                            //remove primary and secondary matches to not add them twice
-                            sortedTagList.addAll(restOfResults.take(matchesLeft))
-                        }
-
-                        results.count = numberOfResults
-                        //take only the first entries
-                        results.values = sortedTagList
-                    }
-
-                    return results
-                }
-
-                override fun publishResults(constraint: CharSequence?, results: FilterResults) {
-                    if (results.values is List<*>) {
-                        val tags = results.values as List<Tag>
-                        tagList.clear()
-                        tagList.addAll(tags)
-                        notifyDataSetChanged()
-                    }
-                }
-            }
-        }
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            return TextView(parent.context).apply {
-                text = tagList[position].name
-                gravity = Gravity.CENTER
-                textSize = 20F
-                textColor = tagList[position].getTextColor()
-                backgroundColor = Color.BLACK
-            }
-        }
     }
 }

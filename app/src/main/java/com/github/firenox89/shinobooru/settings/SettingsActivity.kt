@@ -10,11 +10,8 @@ import android.preference.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.utility.PostLoader
-import com.github.salomonbrys.kodein.KodeinInjected
-import com.github.salomonbrys.kodein.KodeinInjector
-import com.github.salomonbrys.kodein.android.appKodein
-import com.github.salomonbrys.kodein.instance
 import io.reactivex.subjects.PublishSubject
+import org.koin.android.ext.android.inject
 
 /**
  * A [PreferenceActivity] that presents a set of application settings. On
@@ -85,14 +82,12 @@ class SettingsActivity : PreferenceActivity() {
      * activity is showing a two-pane settings UI.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class UIPreferenceFragment : PreferenceFragment(), KodeinInjected {
+    class UIPreferenceFragment : PreferenceFragment() {
 
-        override val injector = KodeinInjector()
-        val updateThumbnail : PublishSubject<Int> by instance("thumbnailUpdates")
+        val updateThumbnail : PublishSubject<Int> by inject("thumbnailUpdates")
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            inject(appKodein())
             addPreferencesFromResource(R.xml.pref_ui)
             setHasOptionsMenu(true)
 
