@@ -5,8 +5,8 @@ import android.graphics.Bitmap
 import android.os.Environment
 import android.util.Log
 import com.github.firenox89.shinobooru.app.Shinobooru
-import com.github.firenox89.shinobooru.model.DownloadedPost
-import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.kittinunf.fuel.httpDownload
 import timber.log.Timber
 import java.io.*

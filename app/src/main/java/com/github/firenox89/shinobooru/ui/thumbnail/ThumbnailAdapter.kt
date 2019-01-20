@@ -8,17 +8,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.utility.PostLoader
 import com.github.firenox89.shinobooru.ext.defaultSchedulers
+import com.github.firenox89.shinobooru.repo.model.DataSource
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
+import org.koin.android.ext.android.inject
 
 /**
  * [RecyclerView.Adapter] that provides the post images.
  */
 class ThumbnailAdapter(val context: Context, val board: String, val tags: String) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
-    val postLoader = PostLoader.getLoader(board, tags)
+    val dataSource: DataSource by inject()
+    val postLoader = dataSource.getPostLoader(board, tags)
 
     //emits click events for the clicked images
     val onImageClickStream = PublishSubject.create<Int>()

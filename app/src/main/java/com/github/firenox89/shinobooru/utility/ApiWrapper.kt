@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.util.Log
 import com.github.firenox89.shinobooru.app.Shinobooru
-import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.httpGet

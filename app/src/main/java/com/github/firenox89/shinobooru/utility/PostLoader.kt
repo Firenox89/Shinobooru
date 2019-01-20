@@ -5,9 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Point
 import com.github.firenox89.shinobooru.app.Shinobooru
-import com.github.firenox89.shinobooru.model.DownloadedPost
-import com.github.firenox89.shinobooru.model.Post
-import com.github.firenox89.shinobooru.model.Tag
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.Post
+import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.httpGet
@@ -25,13 +25,14 @@ import android.view.Display
 import android.content.Context.WINDOW_SERVICE
 import android.support.v4.content.ContextCompat.getSystemService
 import android.view.WindowManager
+import com.github.firenox89.shinobooru.repo.model.PostLoader
 
 
 /**
  * Class in charge of handling post loading.
  * Use [getLoader] to get an instance.
  */
-open class PostLoader {
+open class RemotePostLoader(override val board: String, override val tags: String): PostLoader {
 
     companion object {
         private val loaderList = mutableListOf<PostLoader>().apply { add(FileLoader()) }
@@ -49,16 +50,10 @@ open class PostLoader {
         fun getLoader(board: String, tags: String = ""): PostLoader {
             var loader = loaderList.find { it.board.equals(board) && it.tags.equals(tags) }
             if (loader == null) {
-                loader = PostLoader(board, tags)
+                loader = RemotePostLoader(board, tags)
                 loaderList.add(loader)
             }
             return loader
-        }
-
-        //TODO turn list into weakhashmap instead of discarding by hand
-        fun discardLoader(loader: PostLoader) {
-            if (!loader.board.equals("FileLoader"))
-                loaderList.remove(loader)
         }
 
         /**
@@ -88,12 +83,10 @@ open class PostLoader {
          */
         fun ratingChanged() {
             //TODO: set a flag for currently not used loader instead of reloading them all
-            loaderList.forEach { it.onRefresh() }
+            loaderList.forEach { it.onRefresh(-1) }
         }
     }
 
-    val board: String
-    val tags: String
     private val initLoadSize = 40
     private val posts = mutableListOf<Post>()
     private val rangeChangeEventStream = PublishSubject.create<Pair<Int, Int>>()
@@ -101,23 +94,12 @@ open class PostLoader {
     private var currentPage = 1
 
     /**
-     * Protected so that only [getLoader] and [FileLoader] can create an instance.
-     */
-    protected constructor(board: String, tags: String = "") {
-        this.board = board
-        this.tags = tags
-
-        //fill the post list
-        requestNextPosts(initLoadSize)
-    }
-
-    /**
      * Get a [Post] for a given index.
      *
      * @param index of a post
      * @return [Post] for the given index or null
      */
-    open fun getPostAt(index: Int): Post {
+    override fun getPostAt(index: Int): Post {
         return posts[index]
     }
 
@@ -223,7 +205,7 @@ open class PostLoader {
      *
      * @param quantity of post that should be loaded
      */
-    open fun requestNextPosts(quantity: Int = 20) {
+    override fun requestNextPosts(quantity: Int) {
         ApiWrapper.request(board, currentPage++, tags) {
             //TODO: order results before adding
             val currentSize = posts.size
@@ -250,7 +232,7 @@ open class PostLoader {
      *
      * @return the size of the post list
      */
-    open fun getCount(): Int {
+    override fun getCount(): Int {
         return posts.size
     }
 
@@ -260,7 +242,7 @@ open class PostLoader {
      * @param post to get the index of
      * @return index of the given post
      */
-    open fun getIndexOf(post: Post): Int {
+    override fun getIndexOf(post: Post): Int {
         return posts.indexOf(post)
     }
 
@@ -282,7 +264,7 @@ open class PostLoader {
      *
      * @param quantity of posts to load, default value is -1
      */
-    open fun onRefresh(quantity: Int = -1) {
+    override fun onRefresh(quantity: Int) {
         //TODO: insert new images on top instead of reload everything
         val currentCount = getCount()
         posts.clear()

@@ -6,8 +6,6 @@ import com.github.firenox89.shinobooru.di.appModules
 import org.koin.android.ext.android.startKoin
 import timber.log.Timber
 
-
-
 /**
  * Application class, provide the [appContext] for convenience, initialize [Kodein].
  */

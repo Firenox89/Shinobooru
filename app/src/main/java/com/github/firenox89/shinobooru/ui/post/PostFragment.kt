@@ -12,14 +12,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.model.Post
-import com.github.firenox89.shinobooru.utility.PostLoader
+import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ext.defaultSchedulers
-import com.github.firenox89.shinobooru.model.Tag
+import com.github.firenox89.shinobooru.repo.model.DataSource
+import com.github.firenox89.shinobooru.repo.model.PostLoader
+import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
+import org.koin.android.ext.android.inject
 import timber.log.Timber
 import kotlin.math.roundToInt
 
@@ -27,13 +29,14 @@ import kotlin.math.roundToInt
  * Contains the two child fragments.
  */
 class PostFragment : Fragment() {
+    val dataSource: DataSource by inject()
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val board = arguments!!.getString("board")
         val tags = arguments!!.getString("tags")
         val posi = arguments!!.getInt("posi")
 
         val layout = inflater.inflate(R.layout.fragment_post, null)
-        val postLoader = PostLoader.getLoader(board, tags)
+        val postLoader = dataSource.getPostLoader(board, tags)
         val post: Post = postLoader.getPostAt(posi)
 
         val imageview = layout.findViewById<ImageView>(R.id.postimage)

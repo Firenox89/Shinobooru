@@ -3,8 +3,8 @@ package com.github.firenox89.shinobooru.cloud
 import android.os.Bundle
 import android.util.Log
 import com.github.firenox89.shinobooru.utility.FileManager
-import com.github.firenox89.shinobooru.model.DownloadedPost
-import com.github.firenox89.shinobooru.model.Post
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ui.SyncActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.GoogleApiClient

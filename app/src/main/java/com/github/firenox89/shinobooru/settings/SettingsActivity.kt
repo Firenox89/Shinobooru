@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.preference.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
-import com.github.firenox89.shinobooru.utility.PostLoader
 import io.reactivex.subjects.PublishSubject
 import org.koin.android.ext.android.inject
 
@@ -70,10 +69,11 @@ class SettingsActivity : PreferenceActivity() {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_rating)
 
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.ratingChanged(); true }
-            findPreference("rating_safe").onPreferenceChangeListener = changeListener
-            findPreference("rating_questionable").onPreferenceChangeListener = changeListener
-            findPreference("rating_explicit").onPreferenceChangeListener = changeListener
+            //todo
+//            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.ratingChanged(); true }
+//            findPreference("rating_safe").onPreferenceChangeListener = changeListener
+//            findPreference("rating_questionable").onPreferenceChangeListener = changeListener
+//            findPreference("rating_explicit").onPreferenceChangeListener = changeListener
         }
     }
 

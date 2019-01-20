@@ -1,14 +1,44 @@
 package com.github.firenox89.shinobooru.utility
 
-import com.github.firenox89.shinobooru.model.DownloadedPost
-import com.github.firenox89.shinobooru.model.Post
+import android.graphics.Bitmap
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.Post
+import com.github.firenox89.shinobooru.repo.model.PostLoader
+import com.github.firenox89.shinobooru.repo.model.Tag
+import io.reactivex.Flowable
+import io.reactivex.Single
 import java.util.*
 
 /**
  * Sub-classes the [PostLoader] to use the downloaded post images as a source for posts.
  * Does not refresh the post list when new images are downloaded.
  */
-internal class FileLoader : PostLoader("FileLoader", "") {
+class FileLoader : PostLoader {
+    override val board: String
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val tags: String
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
+    override fun downloadPost(currentItem: Int) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun loadPreview(post: Post): Single<Bitmap> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun loadSample(post: Post): Single<Bitmap> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun getTagList(post: Post): Single<List<Tag>> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun getRangeChangeEventStream(): Flowable<Nothing> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     private val newestDownloadedPostComparator = Comparator<DownloadedPost> { post1, post2 ->
         val date1 = post1.file.lastModified()
         val date2 = post2.file.lastModified()

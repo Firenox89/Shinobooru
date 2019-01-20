@@ -6,6 +6,9 @@ import android.os.Bundle
 import android.support.v4.widget.SwipeRefreshLayout
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.settings.SettingsActivity
@@ -131,6 +134,25 @@ class ThumbnailActivity : RxActivity() {
         recyclerAdapter.usePreview = value != 1
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.thumbnail_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
+        when (id) {
+            R.id.open_drawer -> {
+                return true
+            }
+            R.id.search_tags -> {
+                finish()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
     /**
      * Gets called when a [PostPagerActivity] returns.
      * Scrolls the [RecyclerView] to the post position of the last view post of [PostPagerActivity].

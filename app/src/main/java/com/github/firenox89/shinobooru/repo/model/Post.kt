@@ -1,4 +1,4 @@
-package com.github.firenox89.shinobooru.model
+package com.github.firenox89.shinobooru.repo.model
 
 import java.util.regex.Pattern
 

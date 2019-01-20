@@ -7,7 +7,7 @@ import android.service.wallpaper.WallpaperService
 import android.util.Size
 import android.view.MotionEvent
 import android.view.SurfaceHolder
-import com.github.firenox89.shinobooru.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.utility.FileManager
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
