@@ -10,8 +10,8 @@ import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
-import com.github.firenox89.shinobooru.repo.model.DataSource
-import com.github.firenox89.shinobooru.repo.model.PostLoader
+import com.github.firenox89.shinobooru.repo.DataSource
+import com.github.firenox89.shinobooru.repo.PostLoader
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import kotlinx.android.synthetic.main.activity_post_pager.*
 import org.koin.android.ext.android.inject

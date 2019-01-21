@@ -1,4 +1,4 @@
-package com.github.firenox89.shinobooru.utility
+package com.github.firenox89.shinobooru.repo
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,7 +12,6 @@ import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.rx.rx_object
-import com.google.gson.Gson
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.Observable
@@ -21,11 +20,7 @@ import io.reactivex.subjects.PublishSubject
 import timber.log.Timber
 import java.io.File
 import java.io.InputStream
-import android.view.Display
-import android.content.Context.WINDOW_SERVICE
-import android.support.v4.content.ContextCompat.getSystemService
 import android.view.WindowManager
-import com.github.firenox89.shinobooru.repo.model.PostLoader
 
 
 /**
@@ -34,65 +29,15 @@ import com.github.firenox89.shinobooru.repo.model.PostLoader
  */
 open class RemotePostLoader(override val board: String, override val tags: String): PostLoader {
 
-    companion object {
-        private val loaderList = mutableListOf<PostLoader>().apply { add(FileLoader()) }
-        private val viewedList = FileManager.loadViewedList() ?: mutableListOf()
-
-        /**
-         * Returns a [PostLoader] instance for the given arguments.
-         * Cache create instances and return them on the same arguments.
-         * To obtain an instance of the [FileLoader] use 'FileLoader' as board name
-         *
-         * @param board that this loader should load from
-         * @param tags this loader should add for requests
-         * @return a cached or newly created instance of a [PostLoader]
-         */
-        fun getLoader(board: String, tags: String = ""): PostLoader {
-            var loader = loaderList.find { it.board.equals(board) && it.tags.equals(tags) }
-            if (loader == null) {
-                loader = RemotePostLoader(board, tags)
-                loaderList.add(loader)
-            }
-            return loader
-        }
-
-        /**
-         * Add a post id to the list of viewed posts
-         *
-         * @param id to add
-         */
-        fun addPostIdToViewedList(id: Long) {
-            //TODO implement run-length encoding
-            viewedList.add(id)
-            //TODO: hook this to app closing event
-            FileManager.saveViewedList(viewedList)
-        }
-
-        /**
-         * Returns true if post id was viewed.
-         *
-         * @param id the post id
-         * @return true if post was viewed, false otherwise
-         */
-        fun postViewed(id: Long): Boolean {
-            return id in viewedList
-        }
-
-        /**
-         * Reloads the posts for all stored loader instances
-         */
-        fun ratingChanged() {
-            //TODO: set a flag for currently not used loader instead of reloading them all
-            loaderList.forEach { it.onRefresh(-1) }
-        }
-    }
-
     private val initLoadSize = 40
     private val posts = mutableListOf<Post>()
     private val rangeChangeEventStream = PublishSubject.create<Pair<Int, Int>>()
 
     private var currentPage = 1
 
+    init {
+        requestNextPosts(initLoadSize)
+    }
     /**
      * Get a [Post] for a given index.
      *
@@ -103,7 +48,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
         return posts[index]
     }
 
-    fun downloadPost(index: Int) {
+    override fun downloadPost(index: Int) {
         FileManager.downloadFileToStorage(posts[index].file_url, posts[index])
     }
 
@@ -129,7 +74,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @return a list of [Tag]
      */
-    fun getTagList(post: Post): Flowable<List<Tag>> =
+    override fun getTagList(post: Post): Flowable<List<Tag>> =
             Flowable.create({ emitter ->
                                 Timber.i("tags = $tags")
                                 val tags = post.tags.split(" ").map { Tag(name = it, board = post.getBoard()) }
@@ -143,7 +88,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @param handler will be called after the image was loaded.
      */
-    fun loadPreview(post: Post): Single<Bitmap> =
+    override fun loadPreview(post: Post): Single<Bitmap> =
             if (post is DownloadedPost) {
                 loadPreview(post)
             } else if (!FileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
@@ -161,7 +106,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @param handler will be called after the image was loaded.
      */
-    fun loadSample(post: Post) =
+    override fun loadSample(post: Post) =
             if (post is DownloadedPost) {
                 loadSample(post)
             } else {
@@ -206,6 +151,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      * @param quantity of post that should be loaded
      */
     override fun requestNextPosts(quantity: Int) {
+        Timber.i("Request $quantity posts from $board")
         ApiWrapper.request(board, currentPage++, tags) {
             //TODO: order results before adding
             val currentSize = posts.size
@@ -254,7 +200,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @return the [rangeChangeEventStream]
      */
-    fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> {
+    override fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> {
         return rangeChangeEventStream.hide()
     }
 

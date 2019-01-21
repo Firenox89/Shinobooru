@@ -1,4 +1,4 @@
-package com.github.firenox89.shinobooru.utility
+package com.github.firenox89.shinobooru.repo
 
 import android.content.Context
 import android.net.ConnectivityManager

@@ -1,13 +1,12 @@
-package com.github.firenox89.shinobooru.utility
+package com.github.firenox89.shinobooru.repo
 
 import android.graphics.Bitmap
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
-import com.github.firenox89.shinobooru.repo.model.PostLoader
 import com.github.firenox89.shinobooru.repo.model.Tag
 import io.reactivex.Flowable
+import io.reactivex.Observable
 import io.reactivex.Single
-import java.util.*
 
 /**
  * Sub-classes the [PostLoader] to use the downloaded post images as a source for posts.
@@ -15,9 +14,9 @@ import java.util.*
  */
 class FileLoader : PostLoader {
     override val board: String
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = "FileLoader"
     override val tags: String
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = ""
 
     override fun downloadPost(currentItem: Int) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -31,11 +30,11 @@ class FileLoader : PostLoader {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getTagList(post: Post): Single<List<Tag>> {
+    override fun getTagList(post: Post): Flowable<List<Tag>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getRangeChangeEventStream(): Flowable<Nothing> {
+    override fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

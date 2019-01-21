@@ -21,6 +21,7 @@ import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_thumbnail.*
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import timber.log.Timber
 
@@ -28,8 +29,6 @@ class ThumbnailActivity : RxActivity() {
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
-    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
-    private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerAdapter: ThumbnailAdapter
 
     private val sharedPrefs: SharedPreferences by inject()
@@ -44,8 +43,6 @@ class ThumbnailActivity : RxActivity() {
         setSupportActionBar(findViewById(R.id.my_toolbar))
 
         setupDrawer()
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
-        recyclerView = findViewById(R.id.recycleView)
 
         //setup the RecyclerView adapter
         val tags = intent.getStringExtra(TAGS_INTENT_KEY) ?: ""
@@ -54,7 +51,7 @@ class ThumbnailActivity : RxActivity() {
         title = "${board.replace("https://", "")} $tags"
 
         Timber.i("start board '$board' tags '$tags'")
-        recyclerAdapter = ThumbnailAdapter(this, board, tags)
+        recyclerAdapter = ThumbnailAdapter(get(), board, tags)
 
         subscribe(recyclerAdapter.subscribeLoader())
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked

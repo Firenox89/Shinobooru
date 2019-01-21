@@ -2,7 +2,7 @@ package com.github.firenox89.shinobooru.cloud
 
 import android.os.Bundle
 import android.util.Log
-import com.github.firenox89.shinobooru.utility.FileManager
+import com.github.firenox89.shinobooru.repo.FileManager
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ui.SyncActivity

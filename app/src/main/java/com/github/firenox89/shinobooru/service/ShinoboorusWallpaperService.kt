@@ -8,7 +8,7 @@ import android.util.Size
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
-import com.github.firenox89.shinobooru.utility.FileManager
+import com.github.firenox89.shinobooru.repo.FileManager
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import org.koin.android.ext.android.inject

@@ -14,15 +14,13 @@ import android.widget.*
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ext.defaultSchedulers
-import com.github.firenox89.shinobooru.repo.model.DataSource
-import com.github.firenox89.shinobooru.repo.model.PostLoader
+import com.github.firenox89.shinobooru.repo.DataSource
+import com.github.firenox89.shinobooru.repo.PostLoader
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
-import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import org.koin.android.ext.android.inject
-import timber.log.Timber
 import kotlin.math.roundToInt
 
 /**

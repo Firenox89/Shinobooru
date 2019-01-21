@@ -1,7 +1,10 @@
-package com.github.firenox89.shinobooru.repo.model
+package com.github.firenox89.shinobooru.repo
 
 import android.graphics.Bitmap
+import com.github.firenox89.shinobooru.repo.model.Post
+import com.github.firenox89.shinobooru.repo.model.Tag
 import io.reactivex.Flowable
+import io.reactivex.Observable
 import io.reactivex.Single
 
 interface PostLoader {
@@ -16,6 +19,6 @@ interface PostLoader {
     fun downloadPost(currentItem: Int)
     fun loadPreview(post: Post): Single<Bitmap>
     fun loadSample(post: Post): Single<Bitmap>
-    fun getTagList(post: Post): Single<List<Tag>>
-    fun getRangeChangeEventStream(): Flowable<Nothing>
+    fun getTagList(post: Post): Flowable<List<Tag>>
+    fun getRangeChangeEventStream(): Observable<Pair<Int, Int>>
 }
