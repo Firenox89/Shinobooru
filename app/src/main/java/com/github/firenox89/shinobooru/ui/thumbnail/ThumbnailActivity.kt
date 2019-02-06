@@ -3,7 +3,8 @@ package com.github.firenox89.shinobooru.ui.thumbnail
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.support.v4.widget.SwipeRefreshLayout
+import android.support.v4.view.GravityCompat
+import android.support.v7.app.ActionBar
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.view.Menu
@@ -36,11 +37,17 @@ class ThumbnailActivity : RxActivity() {
 
     private val recyclerLayout = StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL)
 
+    val boards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_thumbnail)
         setSupportActionBar(findViewById(R.id.my_toolbar))
+        val actionbar: ActionBar? = supportActionBar
+        actionbar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
+        }
 
         setupDrawer()
 
@@ -71,7 +78,6 @@ class ThumbnailActivity : RxActivity() {
         subscribe(updateThumbnail.subscribe { updatePostPerRow(it) })
     }
 
-    val boards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
     fun setupDrawer() {
         boards.forEach {
             nav_view.menu.add(it)
@@ -140,7 +146,11 @@ class ThumbnailActivity : RxActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         when (id) {
-            R.id.open_drawer -> {
+            android.R.id.home -> {
+                drawer_layout.openDrawer(GravityCompat.START)
+                return true
+            }
+            R.id.settings -> {
                 return true
             }
             R.id.search_tags -> {
