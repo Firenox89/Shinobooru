@@ -1,9 +1,15 @@
 package com.github.firenox89.shinobooru.repo
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Point
+import android.view.WindowManager
+import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
+import com.github.firenox89.shinobooru.utility.Constants
+import com.github.firenox89.shinobooru.utility.UI.loadSubsampledImage
 import io.reactivex.Flowable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -14,29 +20,9 @@ import io.reactivex.Single
  */
 class FileLoader : PostLoader {
     override val board: String
-        get() = "FileLoader"
+        get() = Constants.FILE_LOADER_NAME
     override val tags: String
         get() = ""
-
-    override fun downloadPost(currentItem: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun loadPreview(post: Post): Single<Bitmap> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun loadSample(post: Post): Single<Bitmap> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun getTagList(post: Post): Flowable<List<Tag>> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 
     private val newestDownloadedPostComparator = Comparator<DownloadedPost> { post1, post2 ->
         val date1 = post1.file.lastModified()
@@ -50,6 +36,32 @@ class FileLoader : PostLoader {
     }
 
     private var posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
+
+    override fun downloadPost(currentItem: Int) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun loadPreview(post: Post): Single<Bitmap> = loadSubsampledImage((post as DownloadedPost).file, 250, 400)
+
+
+    override fun loadSample(post: Post): Single<Bitmap> {
+
+        val wm = Shinobooru.appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val display = wm.defaultDisplay
+        val size = Point()
+        display.getSize(size)
+        //sample huge images=
+        return loadSubsampledImage((post as DownloadedPost).file, size.x, size.y)
+    }
+
+    override fun getTagList(post: Post): Flowable<List<Tag>> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> =
+        Flowable.just(Pair(0, posts.size)).toObservable()
+
+
 
     /**
      * Return a post from the postlist for the given number
@@ -81,4 +93,5 @@ class FileLoader : PostLoader {
     override fun onRefresh(quantity: Int) {
         posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
     }
+
 }

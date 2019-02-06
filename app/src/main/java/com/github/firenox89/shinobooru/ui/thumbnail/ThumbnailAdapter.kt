@@ -1,6 +1,5 @@
 package com.github.firenox89.shinobooru.ui.thumbnail
 
-import android.content.Context
 import android.graphics.*
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -12,7 +11,6 @@ import com.github.firenox89.shinobooru.ext.defaultSchedulers
 import com.github.firenox89.shinobooru.repo.DataSource
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
-import org.koin.android.ext.android.inject
 
 /**
  * [RecyclerView.Adapter] that provides the post images.

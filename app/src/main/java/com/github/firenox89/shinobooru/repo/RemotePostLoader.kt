@@ -1,11 +1,7 @@
 package com.github.firenox89.shinobooru.repo
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Point
-import com.github.firenox89.shinobooru.app.Shinobooru
-import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.settings.SettingsActivity
@@ -18,10 +14,7 @@ import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.PublishSubject
 import timber.log.Timber
-import java.io.File
 import java.io.InputStream
-import android.view.WindowManager
-
 
 /**
  * Class in charge of handling post loading.
@@ -67,7 +60,6 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
 //        }
     }
 
-
     /**
      * Returns a list of detailed tags.
      * Must not be call from the ui thread since it loads the tag details via the [ApiWrapper].
@@ -89,9 +81,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      * @param handler will be called after the image was loaded.
      */
     override fun loadPreview(post: Post): Single<Bitmap> =
-            if (post is DownloadedPost) {
-                loadPreview(post)
-            } else if (!FileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
+            if (!FileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
                 loadBitmap(post.preview_url)
                         .map { bitmap ->
                             FileManager.previewBitmapToCache(post.getBoard(), post.id, bitmap)
@@ -106,12 +96,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @param handler will be called after the image was loaded.
      */
-    override fun loadSample(post: Post) =
-            if (post is DownloadedPost) {
-                loadSample(post)
-            } else {
-                loadBitmap(post.sample_url)
-            }
+    override fun loadSample(post: Post) = loadBitmap(post.sample_url)
 
     /**
      * Loads an image from the given url.
@@ -123,17 +108,6 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      */
     private fun loadBitmap(url: String) = url.httpGet().rx_object(BitmapDeserializer()).map { it.get() }
 
-
-    fun loadSample(downloadedPost: DownloadedPost): Single<Bitmap> {
-        val wm = Shinobooru.appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val display = wm.defaultDisplay
-        val size = Point()
-        display.getSize(size)
-        //sample huge images=
-        return loadSubsampledImage(downloadedPost.file, size.x, size.y)
-    }
-
-    fun loadPreview(downloadedPost: DownloadedPost): Single<Bitmap> = loadSubsampledImage(downloadedPost.file, 250, 400)
     /**
      * Class to turn an [InputStream] into a [Bitmap].
      */
@@ -217,39 +191,4 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
         currentPage = 1
         requestNextPosts(if (quantity < 0) currentCount else quantity)
     }
-
-    /**
-     * Loads a sub sampled imaae from a given file.
-     * The sample rate gets determined by the given width and height and the image size.
-     */
-    private fun loadSubsampledImage(file: File, reqWidth: Int, reqHeight: Int): Single<Bitmap> =
-            Single.create { emitter ->
-                val options = BitmapFactory.Options()
-                options.inJustDecodeBounds = true
-                BitmapFactory.decodeFile(file.path, options)
-                // Raw height and width of image
-                val height = options.outHeight
-                val width = options.outWidth
-                var inSampleSize = 1
-
-                if (height > reqWidth || width > reqHeight) {
-
-                    val halfHeight = height / 2
-                    val halfWidth = width / 2
-
-                    // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-                    // height and width larger than the requested height and width.
-                    while (halfHeight / inSampleSize >= reqWidth && halfWidth / inSampleSize >= reqHeight) {
-                        inSampleSize *= 2
-                    }
-                }
-                options.inJustDecodeBounds = false
-                options.inSampleSize = inSampleSize
-                options.inDither = true
-                options.inPreferQualityOverSpeed = true
-
-                emitter.onSuccess(BitmapFactory.decodeFile(file.path, options))
-            }
-
-
 }
