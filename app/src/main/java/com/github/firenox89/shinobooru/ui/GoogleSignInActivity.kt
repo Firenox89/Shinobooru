@@ -3,14 +3,9 @@ package com.github.firenox89.shinobooru.ui
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
-import android.view.Gravity
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.cloud.GoogleDrive
-
-import com.github.firenox89.shinobooru.utility.Constants
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -26,13 +21,10 @@ class GoogleSignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFa
     private var mGoogleApiClient: GoogleApiClient? = null
     private val REQUEST_CODE_SIGN_IN = 0
     val RC_RESOLUTION: Int = 2
-    val TAG = "GoogleSignInActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setTheme(R.style.Theme_AppCompat)
-        TODO()
+        setContentView(R.layout.activity_google_sign_in)
 //        verticalLayout {
 //            gravity = Gravity.CENTER
 //            status = textView("Connect to Google Drive")

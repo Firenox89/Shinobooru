@@ -2,17 +2,17 @@ package com.github.firenox89.shinobooru.ui.post
 
 import android.os.Bundle
 import android.view.Menu
-import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.repo.model.Post
-import com.github.firenox89.shinobooru.ui.base.RxActivity
-import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
-import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
+import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.PostLoader
+import com.github.firenox89.shinobooru.repo.model.Post
+import com.github.firenox89.shinobooru.ui.base.RxActivity
+import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
+import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import kotlinx.android.synthetic.main.activity_post_pager.*
 import org.koin.android.ext.android.inject
 
@@ -22,8 +22,7 @@ import org.koin.android.ext.android.inject
  */
 class PostPagerActivity : RxActivity() {
 
-    val dataSource: DataSource by inject()
-    lateinit private var postLoader: PostLoader
+    private lateinit var postLoader: PostLoader
     lateinit var board: String
     lateinit var tags: String
     /**

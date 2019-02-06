@@ -2,7 +2,6 @@ package com.github.firenox89.shinobooru.repo
 
 import android.content.Context
 import android.net.ConnectivityManager
-import android.util.Log
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.kittinunf.fuel.core.FuelManager

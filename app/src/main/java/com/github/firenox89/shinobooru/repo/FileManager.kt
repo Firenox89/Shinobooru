@@ -8,7 +8,9 @@ import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.kittinunf.fuel.httpDownload
 import timber.log.Timber
-import java.io.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.util.regex.Pattern
 
 /**

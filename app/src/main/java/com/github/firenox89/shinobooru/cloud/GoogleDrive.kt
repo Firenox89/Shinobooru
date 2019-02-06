@@ -1,16 +1,20 @@
 package com.github.firenox89.shinobooru.cloud
 
+import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import com.github.firenox89.shinobooru.repo.FileManager
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ui.SyncActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.drive.*
+import com.google.android.gms.drive.Drive
+import com.google.android.gms.drive.DriveResourceClient
+import com.google.android.gms.drive.MetadataBuffer
+import com.google.android.gms.drive.MetadataChangeSet
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
+import io.reactivex.Flowable
 import timber.log.Timber
 import java.io.File
 import java.nio.channels.Channels
@@ -19,14 +23,23 @@ import java.nio.channels.Channels
 /**
  * Created by firenox on 02.11.16.
  */
-class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbacks {
+class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCallbacks {
+    override fun upload(posts: List<DownloadedPost>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun download(): Flowable<DownloadedPost> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun fetchData(): Flowable<Map<String, List<DownloadedPost>>> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     companion object {
         var googleApiClient: GoogleApiClient? = null
-        val TAG = "GoogleDrive"
         val appRootDir = "Shinobooru"
         fun delete(downloadedPost: DownloadedPost) {
-
         }
     }
 
@@ -67,38 +80,38 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
 
     private fun upload(posts: List<DownloadedPost>, parent: String) {
         Timber.e("upload $parent $posts")
-        val mDriveResourceClient = Drive.getDriveResourceClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
-        val fetchBoardsTask = fetchBoardsFromDrive(mDriveResourceClient)
-        Tasks.whenAll(fetchBoardsTask)
-                .continueWith {
-                    val boardDriveId = fetchBoardsTask.result?.find { it.title == parent }?.driveId?.asDriveFolder()
-                    if (boardDriveId != null) {
-                        posts.forEach { post ->
-                            val createContentsTask = mDriveResourceClient.createContents()
-                            Tasks.whenAll(createContentsTask)
-                                    .continueWith { task ->
-                                        Timber.e("upload ${post.file.name} start")
-                                        val contents = createContentsTask.result
-                                        val outputStream = contents?.outputStream
-
-                                        val channelOut = Channels.newChannel(outputStream)
-                                        val channelIn = post.file.inputStream().channel
-                                        channelIn.transferTo(0, channelIn.size(), channelOut)
-                                        channelIn.close()
-                                        channelOut.close()
-                                        val changeSet = MetadataChangeSet.Builder()
-                                                .setTitle(post.file.name)
-                                                .setMimeType("image/jpeg")
-                                                .build()
-
-                                        mDriveResourceClient.createFile(boardDriveId, changeSet, contents);
-                                        Timber.e("upload ${post.file.name} done")
-                                        boards.find { it.first == parent }?.second?.add(post)
-                                        activity.updateTable()
-                                    }
-                        }
-                    }
-                }
+//        val mDriveResourceClient = Drive.getDriveResourceClient(activity, GoogleSignIn.getLastSignedInAccount(context)!!)
+//        val fetchBoardsTask = fetchBoardsFromDrive(mDriveResourceClient)
+//        Tasks.whenAll(fetchBoardsTask)
+//                .continueWith {
+//                    val boardDriveId = fetchBoardsTask.result?.find { it.title == parent }?.driveId?.asDriveFolder()
+//                    if (boardDriveId != null) {
+//                        posts.forEach { post ->
+//                            val createContentsTask = mDriveResourceClient.createContents()
+//                            Tasks.whenAll(createContentsTask)
+//                                    .continueWith { task ->
+//                                        Timber.e("upload ${post.file.name} start")
+//                                        val contents = createContentsTask.result
+//                                        val outputStream = contents?.outputStream
+//
+//                                        val channelOut = Channels.newChannel(outputStream)
+//                                        val channelIn = post.file.inputStream().channel
+//                                        channelIn.transferTo(0, channelIn.size(), channelOut)
+//                                        channelIn.close()
+//                                        channelOut.close()
+//                                        val changeSet = MetadataChangeSet.Builder()
+//                                                .setTitle(post.file.name)
+//                                                .setMimeType("image/jpeg")
+//                                                .build()
+//
+//                                        mDriveResourceClient.createFile(boardDriveId, changeSet, contents);
+//                                        Timber.e("upload ${post.file.name} done")
+//                                        boards.find { it.first == parent }?.second?.add(post)
+////                                        activity.updateTable()
+//                                    }
+//                        }
+//                    }
+//                }
     }
 
     fun getPostOnlyOnDevice(board: String, posts: List<DownloadedPost>): List<DownloadedPost>? {
@@ -162,23 +175,23 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
 
     fun fetchData(callback: () -> Unit) {
         Timber.i("fetch data")
-        val mDriveResourceClient = Drive.getDriveResourceClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
-        fetchBoardsFromDrive(mDriveResourceClient)
-                .addOnCompleteListener {
-                    Timber.i("app dir")
-                    val boardTasks = it.result?.map { Pair(it.title, mDriveResourceClient.listChildren(it.driveId.asDriveFolder())) }
-                    Tasks.whenAll(boardTasks?.map { it.second }).continueWith {
-                        Timber.i("fetch boards")
-                        Timber.i("${boardTasks} boards")
-                        boardTasks?.forEach {
-                            val board = it.first
-                            Timber.i("fetch boards")
-                            val posts = it.second.result!!.map { FileManager.postFromName(it.title, File(it.title)) }.toMutableList()
-                            Timber.i("fetch boards")
-                            boards.add(Pair(board, posts))
-                        }
-                        callback.invoke()
-                    }
-                }
+//        val mDriveResourceClient = Drive.getDriveResourceClient(activity, GoogleSignIn.getLastSignedInAccount(context)!!)
+//        fetchBoardsFromDrive(mDriveResourceClient)
+//                .addOnCompleteListener {
+//                    Timber.i("app dir")
+//                    val boardTasks = it.result?.map { Pair(it.title, mDriveResourceClient.listChildren(it.driveId.asDriveFolder())) }
+//                    Tasks.whenAll(boardTasks?.map { it.second }).continueWith {
+//                        Timber.i("fetch boards")
+//                        Timber.i("${boardTasks} boards")
+//                        boardTasks?.forEach {
+//                            val board = it.first
+//                            Timber.i("fetch boards")
+//                            val posts = it.second.result!!.map { FileManager.postFromName(it.title, File(it.title)) }.toMutableList()
+//                            Timber.i("fetch boards")
+//                            boards.add(Pair(board, posts))
+//                        }
+//                        callback.invoke()
+//                    }
+//                }
     }
 }

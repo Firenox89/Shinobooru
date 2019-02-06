@@ -13,16 +13,13 @@ import android.view.MenuItem
 
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.settings.SettingsActivity
-import com.github.firenox89.shinobooru.ui.GoogleSignInActivity
 import com.github.firenox89.shinobooru.ui.base.RxActivity
 import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
-import com.github.firenox89.shinobooru.utility.Constants.FILE_LOADER_NAME
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_thumbnail.*
-import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import timber.log.Timber
 
@@ -37,7 +34,6 @@ class ThumbnailActivity : RxActivity() {
 
     private val recyclerLayout = StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL)
 
-    val boards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,7 +45,7 @@ class ThumbnailActivity : RxActivity() {
             setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
         }
 
-        setupDrawer()
+        setupDrawer(nav_view, drawer_layout)
 
         //setup the RecyclerView adapter
         val tags = intent.getStringExtra(TAGS_INTENT_KEY) ?: ""
@@ -58,7 +54,7 @@ class ThumbnailActivity : RxActivity() {
         title = "${board.replace("https://", "")} $tags"
 
         Timber.i("start board '$board' tags '$tags'")
-        recyclerAdapter = ThumbnailAdapter(get(), board, tags)
+        recyclerAdapter = ThumbnailAdapter(dataSource, board, tags)
 
         subscribe(recyclerAdapter.subscribeLoader())
         //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
@@ -76,55 +72,6 @@ class ThumbnailActivity : RxActivity() {
         //update the number of posts per row of the recycler layout
         updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3").toInt())
         subscribe(updateThumbnail.subscribe { updatePostPerRow(it) })
-    }
-
-    fun setupDrawer() {
-        boards.forEach {
-            nav_view.menu.add(it)
-        }
-        nav_view.setNavigationItemSelectedListener { item ->
-            when (item.title) {
-                "Settings" -> {
-                    drawer_layout.closeDrawers()
-                    openSettings()
-                }
-                "Sync" -> {
-                    drawer_layout.closeDrawers()
-                    openGoogleDriveView()
-                }
-                "Filemanager" -> {
-                    drawer_layout.closeDrawers()
-                    openBoard(FILE_LOADER_NAME)
-                }
-                else -> {
-                    drawer_layout.closeDrawers()
-                    openBoard(item.title.toString())
-                }
-            }
-            true
-        }
-    }
-
-    /**
-     * Starts the [SyncActivity].
-     */
-    private fun openGoogleDriveView() {
-        val intent = Intent(this, GoogleSignInActivity::class.java)
-        startActivity(intent)
-    }
-
-    /**
-     * Starts the [SyncActivity].
-     */
-    private fun openSettings() {
-        val intent = Intent(this, SettingsActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun openBoard(board: String) {
-        val intent = Intent(this, ThumbnailActivity::class.java)
-        intent.putExtra(BOARD_INTENT_KEY, board)
-        startActivity(intent)
     }
 
     /**
@@ -148,10 +95,6 @@ class ThumbnailActivity : RxActivity() {
         when (id) {
             android.R.id.home -> {
                 drawer_layout.openDrawer(GravityCompat.START)
-                return true
-            }
-            R.id.settings -> {
-                openSettings()
                 return true
             }
             R.id.search_tags -> {

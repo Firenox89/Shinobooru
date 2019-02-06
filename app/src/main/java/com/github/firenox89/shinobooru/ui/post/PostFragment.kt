@@ -10,12 +10,14 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ImageView
+import android.widget.ListAdapter
+import android.widget.TextView
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ext.defaultSchedulers
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.PostLoader
+import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY

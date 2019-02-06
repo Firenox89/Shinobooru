@@ -7,9 +7,9 @@ import android.widget.BaseAdapter
 import android.widget.Filter
 import android.widget.Filterable
 import android.widget.TextView
-import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.repo.ApiWrapper
 import com.github.firenox89.shinobooru.repo.FileLoader
+import com.github.firenox89.shinobooru.repo.model.Tag
 import com.google.gson.Gson
 
 /**

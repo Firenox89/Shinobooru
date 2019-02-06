@@ -3,12 +3,12 @@ package com.github.firenox89.shinobooru.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.os.Build
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import com.github.firenox89.shinobooru.R
 import android.widget.TextView
+import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import timber.log.Timber
 

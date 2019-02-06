@@ -6,10 +6,10 @@ android {
     buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "com.github.firenox89.shinobooru"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 28
-        versionCode 2
-        versionName "0.3.0"
+        versionCode 3
+        versionName "0.4.0"
     }
     buildTypes {
         debug {

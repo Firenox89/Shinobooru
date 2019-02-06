@@ -35,15 +35,17 @@
             android:name=".ui.post.PostPagerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_view_pager"
-            android:theme="@style/Theme.AppCompat">
-        </activity>
+            android:theme="@style/Theme.AppCompat"/>
         <activity
             android:name=".ui.SyncActivity"
-            android:label="@string/title_activity_sync"/>
+            android:label="@string/title_activity_sync"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity
             android:name=".settings.SettingsActivity"
             android:label="@string/title_activity_settings"/>
-        <activity android:name=".ui.GoogleSignInActivity"/>
+        <activity
+            android:name=".ui.GoogleSignInActivity"
+            android:theme="@style/Theme.AppCompat"/>
         <service
             android:name=".service.ShinoboorusWallpaperService"
             android:enabled="true"

@@ -1,12 +1,17 @@
 package com.github.firenox89.shinobooru.repo
 
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+
 interface DataSource {
+    fun getBoards(): List<String>
     fun getPostLoader(board: String, tags: String?): PostLoader
+    fun getAllPosts(): Map<String, List<DownloadedPost>>
 }
 
 class DefaultDataSource : DataSource {
     private val loaderList = mutableListOf<PostLoader>().apply { add(FileLoader()) }
 
+    val tmpBoards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
     /**
      * Returns a [PostLoader] instance for the given arguments.
      * Cache create instances and return them on the same arguments.
@@ -24,6 +29,11 @@ class DefaultDataSource : DataSource {
         }
         return loader
     }
+
+    override fun getBoards(): List<String> = tmpBoards
+
+    override fun getAllPosts(): Map<String, List<DownloadedPost>> = FileManager.boards
+
 
     /**
      * Reloads the posts for all stored loader instances

@@ -7,12 +7,11 @@ import android.service.wallpaper.WallpaperService
 import android.util.Size
 import android.view.MotionEvent
 import android.view.SurfaceHolder
-import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.FileManager
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import org.koin.android.ext.android.inject
-import java.lang.IllegalArgumentException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
