@@ -11,6 +11,7 @@ import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.drive.*
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
+import timber.log.Timber
 import java.io.File
 import java.nio.channels.Channels
 
@@ -37,15 +38,15 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
     }
 
     override fun onConnected(p0: Bundle?) {
-        Log.e(TAG, "CONNECTED $p0")
+        Timber.e("CONNECTED $p0")
     }
 
     override fun onConnectionSuspended(p0: Int) {
-        Log.e(TAG, "SUSPENDED $p0")
+        Timber.e("SUSPENDED $p0")
     }
 
     fun syncDevice2Drive() {
-        Log.e(TAG, "sync")
+        Timber.e("sync")
 
         fetchData {
             FileManager.boards.forEach {
@@ -54,7 +55,7 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
                 if (boardOnDrive != null) {
                     val unsyncedFiles = getPostOnlyOnDevice(boardName, boardOnDrive.second)
                     if (unsyncedFiles != null) {
-                        Log.e(TAG, "unsynced $boardName posts ${unsyncedFiles.count()}")
+                        Timber.e("unsynced $boardName posts ${unsyncedFiles.count()}")
                         upload(unsyncedFiles, boardName)
                     }
                 } else {
@@ -65,7 +66,7 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
     }
 
     private fun upload(posts: List<DownloadedPost>, parent: String) {
-        Log.e(TAG, "upload $parent $posts")
+        Timber.e("upload $parent $posts")
         val mDriveResourceClient = Drive.getDriveResourceClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
         val fetchBoardsTask = fetchBoardsFromDrive(mDriveResourceClient)
         Tasks.whenAll(fetchBoardsTask)
@@ -76,7 +77,7 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
                             val createContentsTask = mDriveResourceClient.createContents()
                             Tasks.whenAll(createContentsTask)
                                     .continueWith { task ->
-                                        Log.e(TAG, "upload ${post.file.name} start")
+                                        Timber.e("upload ${post.file.name} start")
                                         val contents = createContentsTask.result
                                         val outputStream = contents?.outputStream
 
@@ -91,7 +92,7 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
                                                 .build()
 
                                         mDriveResourceClient.createFile(boardDriveId, changeSet, contents);
-                                        Log.e(TAG, "upload ${post.file.name} done")
+                                        Timber.e("upload ${post.file.name} done")
                                         boards.find { it.first == parent }?.second?.add(post)
                                         activity.updateTable()
                                     }
@@ -129,25 +130,25 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
             list.forEach {
                 val id = it.id
                 val dlist = FileManager.boards[board]?.filter { it.id == id }!!
-                Log.e(TAG, "delete")
+                Timber.e("delete")
                 if (dlist[0].file_size != dlist[1].file_size) {
                     if (dlist[0].file_size > dlist[1].file_size) {
                         FileManager.deleteDownloadedPost(dlist[1])
-                        Log.e(TAG, "${dlist[1]}")
+                        Timber.e("${dlist[1]}")
                     } else {
                         FileManager.deleteDownloadedPost(dlist[0])
-                        Log.e(TAG, "${dlist[0]}")
+                        Timber.e("${dlist[0]}")
                     }
                 } else if (dlist[0].tags != dlist[1].tags) {
                     if (dlist[0].file.lastModified() > dlist[1].file.lastModified()) {
                         FileManager.deleteDownloadedPost(dlist[1])
-                        Log.e(TAG, "${dlist[1]}")
+                        Timber.e("${dlist[1]}")
                     } else {
                         FileManager.deleteDownloadedPost(dlist[0])
-                        Log.e(TAG, "${dlist[0]}")
+                        Timber.e("${dlist[0]}")
                     }
                 } else {
-                    Log.e(TAG, "Wut?")
+                    Timber.e("Wut?")
                 }
             }
         }
@@ -160,20 +161,20 @@ class GoogleDrive(val activity: SyncActivity): GoogleApiClient.ConnectionCallbac
     }
 
     fun fetchData(callback: () -> Unit) {
-        Log.i(TAG, "fetch data")
+        Timber.i("fetch data")
         val mDriveResourceClient = Drive.getDriveResourceClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
         fetchBoardsFromDrive(mDriveResourceClient)
                 .addOnCompleteListener {
-                    Log.i(TAG, "app dir")
+                    Timber.i("app dir")
                     val boardTasks = it.result?.map { Pair(it.title, mDriveResourceClient.listChildren(it.driveId.asDriveFolder())) }
                     Tasks.whenAll(boardTasks?.map { it.second }).continueWith {
-                        Log.i(TAG, "fetch boards")
-                        Log.i(TAG, "${boardTasks} boards")
+                        Timber.i("fetch boards")
+                        Timber.i("${boardTasks} boards")
                         boardTasks?.forEach {
                             val board = it.first
-                            Log.i(TAG, "fetch boards")
+                            Timber.i("fetch boards")
                             val posts = it.second.result!!.map { FileManager.postFromName(it.title, File(it.title)) }.toMutableList()
-                            Log.i(TAG, "fetch boards")
+                            Timber.i("fetch boards")
                             boards.add(Pair(board, posts))
                         }
                         callback.invoke()

@@ -7,10 +7,10 @@ import android.os.Build
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import com.github.firenox89.shinobooru.R
 import android.widget.TextView
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
+import timber.log.Timber
 
 
 /**
@@ -55,12 +55,12 @@ class SplashScreenActivity : Activity() {
         grantResults?.forEach {
             if (it == PackageManager.PERMISSION_DENIED) {
                 allGranted = false
-                Log.e(TAG, "File Permission denied")
+                Timber.e("File Permission denied")
             }
         }
         //TODO show something when permission was denied
         if (allGranted) {
-            Log.d(TAG, "File Permission granted")
+            Timber.d("File Permission granted")
             startThumbnailActivity()
             finish()
         } else {

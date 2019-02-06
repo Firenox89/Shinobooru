@@ -3,7 +3,6 @@ package com.github.firenox89.shinobooru.repo
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Environment
-import android.util.Log
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
@@ -29,8 +28,6 @@ object FileManager {
 
     //TODO into the settings with you
     private val maxCachedSize = 1000
-
-    val TAG = "FileManager"
 
     @Volatile private var checkingCache = false
 
@@ -179,7 +176,7 @@ object FileManager {
             return
         if (cachedFiles.size > maxCachedSize) {
             checkingCache = true
-            Log.i(TAG, "clean up cache")
+            Timber.i("clean up cache")
             val list = Shinobooru.appContext.filesDir.list().filter { it.endsWith(".jpeg") }
             list.sortedBy { File(it).lastModified() }
             list.drop(500).forEach { File(Shinobooru.appContext.filesDir, it).delete() }
@@ -188,31 +185,6 @@ object FileManager {
             cachedFiles.addAll(Shinobooru.appContext.fileList())
             checkingCache = false
         }
-    }
-
-    /**
-     * Save the given list of id from viewed posts to the storage.
-     *
-     * @param viewedList to save
-     */
-    fun saveViewedList(viewedList: MutableList<Long>) {
-        val outputStream = Shinobooru.appContext.openFileOutput("ViewList", Context.MODE_PRIVATE)
-        ObjectOutputStream(outputStream).apply { writeObject(viewedList) }.close()
-    }
-
-    /**
-     * Load the list of viewed posts from the storage.
-     *
-     * @return the list or null if no list was stored yet
-     */
-    fun loadViewedList(): MutableList<Long>? {
-        if (Shinobooru.appContext.fileList().filter { it.equals("ViewList") }.isNotEmpty()) {
-            val inputStream = Shinobooru.appContext.openFileInput("ViewList")
-            var list: MutableList<Long>? = null
-            ObjectInputStream(inputStream).apply { list = readObject() as MutableList<Long> }.close()
-            return list
-        }
-        return null
     }
 
     fun deleteDownloadedPost(post: DownloadedPost) {

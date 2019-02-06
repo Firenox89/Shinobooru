@@ -19,6 +19,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.drive.Drive
+import timber.log.Timber
 
 class GoogleSignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener {
     lateinit var status: TextView
@@ -59,32 +60,32 @@ class GoogleSignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFa
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
             handleSignInResult(result)
         } else if (requestCode == RC_RESOLUTION) {
-            Log.e(TAG, "RES RES")
+            Timber.e("RES RES")
         }
     }
 
     private fun handleSignInResult(result: GoogleSignInResult) {
-        Log.d(TAG, "handleSignInResult:" + result.isSuccess)
-        Log.e(TAG, "status ${result.status}")
-        Log.e(TAG, "status ${result.status.statusMessage}")
-        Log.e(TAG, "status ${result.status.statusCode}")
+        Timber.d("handleSignInResult:" + result.isSuccess)
+        Timber.e("status ${result.status}")
+        Timber.e("status ${result.status.statusMessage}")
+        Timber.e("status ${result.status.statusCode}")
         if (result.isSuccess) {
-            Log.e(TAG, "Login successful")
+            Timber.e("Timber.n successful")
             GoogleDrive.googleApiClient = mGoogleApiClient
             runOnUiThread {
                 startSyncActivity()
                 finish()
             }
         } else if (result.status.hasResolution()){
-            Log.e(TAG, "has res")
+            Timber.e("has res")
             result.status.startResolutionForResult(this, RC_RESOLUTION)
         }
     }
 
     override fun onConnectionFailed(result: ConnectionResult) {
-        Log.e(TAG, "status ${result.errorMessage}")
-        Log.e(TAG, "status res ${result.hasResolution()}")
-        Log.e(TAG, "status ${result}")
+        Timber.e("status ${result.errorMessage}")
+        Timber.e("status res ${result.hasResolution()}")
+        Timber.e("status ${result}")
         runOnUiThread {
             status.text = result.toString()
         }

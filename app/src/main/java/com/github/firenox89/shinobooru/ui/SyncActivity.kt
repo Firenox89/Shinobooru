@@ -9,6 +9,7 @@ import android.widget.TableLayout
 import android.widget.TextView
 import com.github.firenox89.shinobooru.cloud.GoogleDrive
 import com.github.firenox89.shinobooru.utility.Constants
+import timber.log.Timber
 
 /**
  * Created by firenox on 1/21/17.
@@ -20,7 +21,7 @@ class SyncActivity : Activity() {
     lateinit var table: TableLayout
 
     fun updateTable() {
-        Log.i(TAG, "updateTable")/*
+        Timber.i("updateTable")/*
         runOnUiThread {
             try {
             cleanTable(table)

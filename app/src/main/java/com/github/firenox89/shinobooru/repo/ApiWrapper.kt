@@ -37,12 +37,12 @@ object ApiWrapper {
                     getR.responseObject(PostDeserializer()) { req, res, result ->
                         val (post, err) = result
                         if (err != null) {
-                            Log.e(TAG, "Http request error $err", err.exception)
-                            Log.e(TAG, "Http response ${String(err.response.data)}")
+                            Timber.e("Http request error $err", err.exception)
+                            Timber.e("Http response ${String(err.response.data)}")
                         } else if (post != null) {
                             it.handler(post)
                         } else {
-                            Log.e(TAG, "Something went wrong here")
+                            Timber.e("Something went wrong here")
                         }
                     }
                 }
@@ -98,7 +98,7 @@ object ApiWrapper {
         if (tag != null) {
             jsonResponse = tag
         } else {
-            Log.e(TAG, "Http request error $err")
+            Timber.e("Http request error $err")
         }
         return jsonResponse
     }
