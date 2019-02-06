@@ -1,11 +1,11 @@
 package com.github.firenox89.shinobooru.repo.model
 
 import android.graphics.Color
-import android.util.Log
 import com.github.firenox89.shinobooru.repo.ApiWrapper
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import timber.log.Timber
 import java.io.Serializable
 
 /**
@@ -24,6 +24,7 @@ data class Tag(
     companion object {
         private val boardTagLists = mutableMapOf<String, MutableMap<String, Tag>>()
     }
+
     /**
      * If object was created only by board and name load tag info.
      * Do nothing otherwise.
@@ -54,9 +55,9 @@ data class Tag(
                         jsonRespone = jsonArray.getJSONObject(0)
                     } else {
                         //on multiple matches take the one with the exact name
-                        for (i: Int in 0..jsonArray.length()-1) {
+                        for (i: Int in 0 until jsonArray.length()) {
                             jsonRespone = jsonArray.getJSONObject(i)
-                            if (jsonRespone.getString("name").equals(name))
+                            if (jsonRespone.getString("name") == name)
                                 break
                         }
                     }
@@ -71,7 +72,7 @@ data class Tag(
                     }
                 } catch (e: JSONException) {
                     //catch parsing errors just in case...
-                    Log.e("Tag", e.message, e)
+                    Timber.e(e.message, e)
                 }
             }
         }
@@ -82,16 +83,15 @@ data class Tag(
      *
      * @return an Int value representing the color.
      */
-    fun getTextColor(): Int {
-        var textColor: Int = Color.parseColor("#EE8887")
-        when (type) {
-            0 -> textColor = Color.parseColor("#EE8887")
-            1 -> textColor = Color.parseColor("#CCCC00")
-            3 -> textColor = Color.parseColor("#DD00DD")
-            4 -> textColor = Color.parseColor("#00AA00")
-            5 -> textColor = Color.parseColor("#00BBBB")
-            6 -> textColor = Color.parseColor("#FF2020")
-        }
-        return textColor
-    }
+    fun getTextColor(): Int =
+            when (type) {
+                0 -> Color.parseColor("#EE8887")
+                1 -> Color.parseColor("#CCCC00")
+                3 -> Color.parseColor("#DD00DD")
+                4 -> Color.parseColor("#00AA00")
+                5 -> Color.parseColor("#00BBBB")
+                6 -> Color.parseColor("#FF2020")
+                else -> Color.parseColor("#EE8887")
+            }
+
 }

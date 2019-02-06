@@ -1,8 +1,6 @@
 package com.github.firenox89.shinobooru.repo.model
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import io.reactivex.Single
 import java.io.File
 
 /**

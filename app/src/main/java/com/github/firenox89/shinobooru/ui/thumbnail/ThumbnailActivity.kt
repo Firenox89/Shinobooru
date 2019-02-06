@@ -151,10 +151,10 @@ class ThumbnailActivity : RxActivity() {
                 return true
             }
             R.id.settings -> {
+                openSettings()
                 return true
             }
             R.id.search_tags -> {
-                finish()
                 return true
             }
         }

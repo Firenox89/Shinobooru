@@ -38,7 +38,7 @@ class FileLoader : PostLoader {
     private var posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
 
     override fun downloadPost(currentItem: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        throw IllegalStateException("Post ")
     }
 
     override fun loadPreview(post: Post): Single<Bitmap> = loadSubsampledImage((post as DownloadedPost).file, 250, 400)
@@ -54,9 +54,8 @@ class FileLoader : PostLoader {
         return loadSubsampledImage((post as DownloadedPost).file, size.x, size.y)
     }
 
-    override fun getTagList(post: Post): Flowable<List<Tag>> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun getTagList(post: Post): Flowable<List<Tag>> = Flowable.just(post.tags.split(" ").map { Tag(it, post.getBoard()) })
+
 
     override fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> =
         Flowable.just(Pair(0, posts.size)).toObservable()
