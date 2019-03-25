@@ -1,7 +1,7 @@
 package com.github.firenox89.shinobooru.ui
 
 import android.os.Bundle
-import android.support.v7.app.ActionBar
+import androidx.appcompat.app.ActionBar
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.cloud.CloudSync
 import com.github.firenox89.shinobooru.ext.defaultSchedulers

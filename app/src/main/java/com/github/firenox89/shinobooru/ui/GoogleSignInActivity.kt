@@ -2,7 +2,7 @@ package com.github.firenox89.shinobooru.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.widget.TextView
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.cloud.GoogleDrive

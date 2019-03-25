@@ -3,9 +3,9 @@ package com.github.firenox89.shinobooru.ui.post
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.RecyclerView
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
 /**
  * Contains the two child fragments.
  */
-class PostFragment : Fragment() {
+class PostFragment : androidx.fragment.app.Fragment() {
     val dataSource: DataSource by inject()
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val board = arguments!!.getString("board")
@@ -44,9 +44,9 @@ class PostFragment : Fragment() {
         val sourceText = layout.findViewById<TextView>(R.id.sourceText)
         val postText = layout.findViewById<TextView>(R.id.postInfoText)
 
-        val tagListView = layout.findViewById<RecyclerView>(R.id.tagList)
+        val tagListView = layout.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tagList)
         tagListView.adapter = TagListAdapter(postLoader, post)
-        tagListView.layoutManager = GridLayoutManager(context, 2)
+        tagListView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(context, 2)
 
         authorText.text = String.format(resources.getText(R.string.author_s).toString(), post.author)
         sourceText.text = String.format(resources.getText(R.string.source_s).toString(), post.source)
@@ -72,7 +72,7 @@ class PostFragment : Fragment() {
      *
      * @param post to get the tags for
      */
-    class TagListAdapter(postLoader: PostLoader, val post: Post) : RecyclerView.Adapter<TagListAdapter.TagViewHolder>() {
+    class TagListAdapter(postLoader: PostLoader, val post: Post) : androidx.recyclerview.widget.RecyclerView.Adapter<TagListAdapter.TagViewHolder>() {
         private var tagList = mutableListOf<Tag>()
 
         /**
@@ -130,7 +130,7 @@ class PostFragment : Fragment() {
          */
         override fun getItemCount(): Int = tagList.size
 
-        inner class TagViewHolder(val textView: TextView): RecyclerView.ViewHolder(textView) {
+        inner class TagViewHolder(val textView: TextView): androidx.recyclerview.widget.RecyclerView.ViewHolder(textView) {
 
             fun bindTag(tag: Tag)  {
                 textView.text = tag.name

@@ -1,7 +1,7 @@
 package com.github.firenox89.shinobooru.ui.thumbnail
 
 import android.graphics.*
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +15,7 @@ import io.reactivex.subjects.PublishSubject
 /**
  * [RecyclerView.Adapter] that provides the post images.
  */
-class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: String) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
+class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: String) : androidx.recyclerview.widget.RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
     val postLoader = dataSource.getPostLoader(board, tags)
 
@@ -90,7 +90,7 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
     /**
      * A [RecyclerView.ViewHolder] containing the post image and to icons.
      */
-    class PostViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
+    class PostViewHolder(parent: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(parent) {
         var postImage: ImageView = parent.findViewById(R.id.thumbnailView)
     }
 }

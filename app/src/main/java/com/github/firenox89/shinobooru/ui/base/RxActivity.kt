@@ -2,9 +2,9 @@ package com.github.firenox89.shinobooru.ui.base
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.support.design.widget.NavigationView
-import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.AppCompatActivity
+import com.google.android.material.navigation.NavigationView
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.appcompat.app.AppCompatActivity
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.firenox89.shinobooru.ui.GoogleSignInActivity
@@ -29,7 +29,7 @@ open class RxActivity: AppCompatActivity() {
         super.onDestroy()
     }
 
-    fun setupDrawer(navigation: NavigationView, drawer: DrawerLayout) {
+    fun setupDrawer(navigation: NavigationView, drawer: androidx.drawerlayout.widget.DrawerLayout) {
         dataSource.getBoards().forEach {
             navigation.menu.add(it)
         }

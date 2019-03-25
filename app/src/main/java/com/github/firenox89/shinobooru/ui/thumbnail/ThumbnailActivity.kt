@@ -3,10 +3,10 @@ package com.github.firenox89.shinobooru.ui.thumbnail
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.support.v4.view.GravityCompat
-import android.support.v7.app.ActionBar
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.StaggeredGridLayoutManager
+import androidx.core.view.GravityCompat
+import androidx.appcompat.app.ActionBar
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -32,7 +32,7 @@ class ThumbnailActivity : RxActivity() {
     private val sharedPrefs: SharedPreferences by inject()
     private val updateThumbnail: PublishSubject<Int> by inject("thumbnailUpdates")
 
-    private val recyclerLayout = StaggeredGridLayoutManager(4, StaggeredGridLayoutManager.VERTICAL)
+    private val recyclerLayout = androidx.recyclerview.widget.StaggeredGridLayoutManager(4, androidx.recyclerview.widget.StaggeredGridLayoutManager.VERTICAL)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
