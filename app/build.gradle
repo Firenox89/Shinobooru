@@ -26,21 +26,11 @@ android {
             useProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable false
-            applicationVariants.all { variant ->
-                variant.outputs.each { output ->
-                    project.ext { appName = 'Shinobooru' }
-                    output.outputFile.name.replace("release-", "Shinobooru")
-                }
-            }
         }
-    }
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
     }
 }
 
 dependencies {
-    implementation 'com.google.firebase:firebase-core:16.0.8'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
 
     implementation 'androidx.appcompat:appcompat:1.1.0-alpha03'
@@ -53,13 +43,13 @@ dependencies {
     implementation "com.github.kittinunf.fuel:fuel-rxjava:$fuel_version"
     implementation 'com.jakewharton.timber:timber:4.7.1'
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
-    implementation 'com.google.android.gms:play-services-drive:16.0.0'
+    implementation 'com.google.android.gms:play-services-drive:16.1.0'
+    implementation 'com.google.firebase:firebase-core:16.0.8'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation "io.reactivex.rxjava2:rxjava:2.2.6"
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     testImplementation 'junit:junit:4.12'
-
 
     // Koin
     implementation "org.koin:koin-android:$koin_version"

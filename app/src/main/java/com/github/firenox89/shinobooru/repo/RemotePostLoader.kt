@@ -7,6 +7,7 @@ import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.rx.rxObject
 import com.github.kittinunf.fuel.rx.rx_object
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
@@ -106,7 +107,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      * @param retries the number of retries in case of errors, default value is 2
      * @param handler will be called after the image was loaded.
      */
-    private fun loadBitmap(url: String) = url.httpGet().rx_object(BitmapDeserializer()).map { it.get() }
+    private fun loadBitmap(url: String) = url.httpGet().rxObject(BitmapDeserializer()).map { it.get() }
 
     /**
      * Class to turn an [InputStream] into a [Bitmap].
