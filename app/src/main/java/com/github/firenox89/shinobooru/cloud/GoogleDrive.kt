@@ -14,7 +14,6 @@ import com.google.android.gms.drive.MetadataBuffer
 import com.google.android.gms.drive.MetadataChangeSet
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
-import io.reactivex.Flowable
 import timber.log.Timber
 import java.io.File
 import java.nio.channels.Channels
@@ -28,11 +27,11 @@ class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCa
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun download(): Flowable<DownloadedPost> {
+    override suspend fun download(): DownloadedPost {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun fetchData(): Flowable<Map<String, List<DownloadedPost>>> {
+    override suspend fun fetchData(): Map<String, List<DownloadedPost>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

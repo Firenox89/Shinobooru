@@ -7,10 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.ext.defaultSchedulers
 import com.github.firenox89.shinobooru.repo.DataSource
-import io.reactivex.disposables.Disposable
-import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * [RecyclerView.Adapter] that provides the post images.
@@ -20,7 +22,7 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
     val postLoader = dataSource.getPostLoader(board, tags)
 
     //emits click events for the clicked images
-    val onImageClickStream = PublishSubject.create<Int>()
+    val onImageClickStream = Channel<Int>()
 
     var usePreview = true
 
@@ -38,9 +40,9 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
     /**
      * Subscribe for newly loaded posts.
      */
-    fun subscribeLoader(): Disposable {
-        return postLoader.getRangeChangeEventStream().subscribe {
-            val (posi, count) = it
+    suspend fun subscribeLoader() {
+        for (update in postLoader.getRangeChangeEventStream()) {
+            val (posi, count) = update
             //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
             if (posi != 0) {
                 notifyItemRangeChanged(posi, count)
@@ -55,26 +57,26 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
      * Also requests new posts if there a less than 5 left to load.
      */
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        val post = postLoader.getPostAt(position)
-        if (itemCount - position < 5) postLoader.requestNextPosts()
+        GlobalScope.launch {
+            val post = postLoader.getPostAt(position)
+            if (itemCount - position < 5) postLoader.requestNextPosts()
 
-        holder.postImage.setImageBitmap(createPlaceholderBitmap(post.preview_width, post.preview_height))
+            holder.postImage.setImageBitmap(createPlaceholderBitmap(post.preview_width, post.preview_height))
 
-        //if the recyclerView is set to one image per row use the sample image for quality reasons
-        if (usePreview)
-            postLoader.loadPreview(post)
-                    .defaultSchedulers()
-                    .subscribe { bitmap ->
-                        holder.postImage.setImageBitmap(bitmap)
-                    }
-        else
-            postLoader.loadSample(post)
-                    .defaultSchedulers()
-                    .subscribe { bitmap ->
-                        holder.postImage.setImageBitmap(bitmap)
-                    }
+            //if the recyclerView is set to one image per row use the sample image for quality reasons
+            if (usePreview)
+                postLoader.loadPreview(post)
+                        .let { bitmap ->
+                            holder.postImage.setImageBitmap(bitmap)
+                        }
+            else
+                postLoader.loadSample(post)
+                        .let { bitmap ->
+                            holder.postImage.setImageBitmap(bitmap)
+                        }
 
-        holder.itemView.setOnClickListener { onImageClickStream.onNext(position) }
+            holder.itemView.setOnClickListener { GlobalScope.launch { onImageClickStream.send(position) }}
+        }
     }
 
     override fun getItemCount(): Int {

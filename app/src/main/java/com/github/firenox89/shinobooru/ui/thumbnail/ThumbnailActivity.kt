@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.core.view.GravityCompat
 import androidx.appcompat.app.ActionBar
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -18,8 +17,9 @@ import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
-import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_thumbnail.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import timber.log.Timber
 
@@ -30,7 +30,6 @@ class ThumbnailActivity : RxActivity() {
     private lateinit var recyclerAdapter: ThumbnailAdapter
 
     private val sharedPrefs: SharedPreferences by inject()
-    private val updateThumbnail: PublishSubject<Int> by inject("thumbnailUpdates")
 
     private val recyclerLayout = androidx.recyclerview.widget.StaggeredGridLayoutManager(4, androidx.recyclerview.widget.StaggeredGridLayoutManager.VERTICAL)
 
@@ -56,22 +55,23 @@ class ThumbnailActivity : RxActivity() {
         Timber.i("start board '$board' tags '$tags'")
         recyclerAdapter = ThumbnailAdapter(dataSource, board, tags)
 
-        subscribe(recyclerAdapter.subscribeLoader())
-        //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
-        subscribe(recyclerAdapter.onImageClickStream.subscribe {
-            val intent = Intent(this, PostPagerActivity::class.java)
-            intent.putExtra(BOARD_INTENT_KEY, board)
-            intent.putExtra(TAGS_INTENT_KEY, tags)
-            intent.putExtra(POSITION_INTENT_KEY, it)
-            startActivityForResult(intent, 1)
-        })
+        GlobalScope.launch {
+            recyclerAdapter.subscribeLoader()
+            //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
+            for (imageID in recyclerAdapter.onImageClickStream) {
+                val intent = Intent(this@ThumbnailActivity, PostPagerActivity::class.java)
+                intent.putExtra(BOARD_INTENT_KEY, board)
+                intent.putExtra(TAGS_INTENT_KEY, tags)
+                intent.putExtra(POSITION_INTENT_KEY, imageID)
+                startActivityForResult(intent, 1)
+            }
+        }
 
         recyclerView.layoutManager = recyclerLayout
         recyclerView.adapter = recyclerAdapter
 
         //update the number of posts per row of the recycler layout
         updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3").toInt())
-        subscribe(updateThumbnail.subscribe { updatePostPerRow(it) })
     }
 
     /**
@@ -112,6 +112,7 @@ class ThumbnailActivity : RxActivity() {
      * @param data if an Int value for position is stored there it will be used to scroll
      */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         val post = data?.getIntExtra("position", -1)
         if (post != null && post != -1)
             recyclerView.scrollToPosition(post)

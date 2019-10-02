@@ -3,7 +3,6 @@ package com.github.firenox89.shinobooru.ui.base
 import android.annotation.SuppressLint
 import android.content.Intent
 import com.google.android.material.navigation.NavigationView
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.settings.SettingsActivity
@@ -11,23 +10,11 @@ import com.github.firenox89.shinobooru.ui.GoogleSignInActivity
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.FILE_LOADER_NAME
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
 import org.koin.android.ext.android.inject
 
 @SuppressLint("Registered")
 open class RxActivity: AppCompatActivity() {
-    private  val disposeables = CompositeDisposable()
     protected val dataSource: DataSource by inject()
-
-    fun subscribe(disposable: Disposable) {
-        disposeables.add(disposable)
-    }
-
-    override fun onDestroy() {
-        disposeables.dispose()
-        super.onDestroy()
-    }
 
     fun setupDrawer(navigation: NavigationView, drawer: androidx.drawerlayout.widget.DrawerLayout) {
         dataSource.getBoards().forEach {

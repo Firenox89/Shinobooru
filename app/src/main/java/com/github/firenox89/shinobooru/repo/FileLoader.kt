@@ -10,9 +10,7 @@ import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.UI.loadSubsampledImage
-import io.reactivex.Flowable
-import io.reactivex.Observable
-import io.reactivex.Single
+import kotlinx.coroutines.channels.Channel
 
 /**
  * Sub-classes the [PostLoader] to use the downloaded post images as a source for posts.
@@ -41,11 +39,10 @@ class FileLoader : PostLoader {
         throw IllegalStateException("Post ")
     }
 
-    override fun loadPreview(post: Post): Single<Bitmap> = loadSubsampledImage((post as DownloadedPost).file, 250, 400)
+    override suspend fun loadPreview(post: Post): Bitmap = loadSubsampledImage((post as DownloadedPost).file, 250, 400)
 
 
-    override fun loadSample(post: Post): Single<Bitmap> {
-
+    override suspend fun loadSample(post: Post): Bitmap {
         val wm = Shinobooru.appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val display = wm.defaultDisplay
         val size = Point()
@@ -54,13 +51,12 @@ class FileLoader : PostLoader {
         return loadSubsampledImage((post as DownloadedPost).file, size.x, size.y)
     }
 
-    override fun getTagList(post: Post): Flowable<List<Tag>> = Flowable.just(post.tags.split(" ").map { Tag(it, post.getBoard()) })
+    override suspend fun getTagList(post: Post): List<Tag> =
+            post.tags.split(" ").map { Tag(it, post.getBoard()) }
 
 
-    override fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> =
-        Flowable.just(Pair(0, posts.size)).toObservable()
-
-
+    override suspend fun getRangeChangeEventStream(): Channel<Pair<Int, Int>> =
+        Channel<Pair<Int, Int>>().apply{ send(Pair(0, posts.size))}
 
     /**
      * Return a post from the postlist for the given number
@@ -70,7 +66,7 @@ class FileLoader : PostLoader {
     }
 
     /** Does nothing */
-    override fun requestNextPosts(quantity: Int) {
+    override suspend fun requestNextPosts(quantity: Int) {
         //nothing to request in file mode
     }
 
@@ -89,7 +85,7 @@ class FileLoader : PostLoader {
     }
 
     /** Does nothing */
-    override fun onRefresh(quantity: Int) {
+    override suspend fun onRefresh(quantity: Int) {
         posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
     }
 

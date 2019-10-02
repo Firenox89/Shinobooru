@@ -1,6 +1,8 @@
 package com.github.firenox89.shinobooru.repo
 
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 interface DataSource {
     fun getBoards(): List<String>
@@ -40,6 +42,8 @@ class DefaultDataSource : DataSource {
      */
     fun ratingChanged() {
         //TODO: set a flag for currently not used loader instead of reloading them all
-        loaderList.forEach { it.onRefresh(-1) }
+        GlobalScope.launch {
+            loaderList.forEach { it.onRefresh(-1) }
+        }
     }
 }

@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.appcompat.app.ActionBar
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.cloud.CloudSync
-import com.github.firenox89.shinobooru.ext.defaultSchedulers
 import com.github.firenox89.shinobooru.ui.base.RxActivity
 import kotlinx.android.synthetic.main.activity_sync.*
 import org.koin.android.ext.android.inject
@@ -28,10 +27,6 @@ class SyncActivity : RxActivity() {
         }
 
         setupDrawer(nav_sync, drawer_sync)
-
-        subscribe(cloud.fetchData().defaultSchedulers().subscribe { cloudBoards ->
-
-        })
 
         dataSource.getAllPosts().forEach { board, posts ->
 

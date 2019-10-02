@@ -5,46 +5,38 @@ import android.net.ConnectivityManager
 import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.ResponseDeserializable
+import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.httpGet
 import com.google.gson.Gson
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 /** Singleton class for handling API requests, currently only post and tag requests */
 object ApiWrapper {
     private val TAG = "ApiWrapper"
-    /** Scheduler to run post requests */
-    private val requestScheduler = Schedulers.from(Executors.newCachedThreadPool())
     /** Post request queue */
-    private val requestQueue = PublishSubject.create<Request>()
+    private val requestQueue = Channel<Request>()
     /** Time in ms to wait between api calls */
     private var throttle = 10L
 
     /** Main constructor to set the request queue */
     init {
-        //TODO: check if internet is available
-        //yande.re does not talk to android user agents...
-        FuelManager.instance.baseHeaders = mapOf("User-Agent" to "Java/1.8.0_112")
-        requestQueue.throttleFirst(throttle, TimeUnit.MILLISECONDS, requestScheduler).
-                subscribe {
-                    val getR = it.request.httpGet()
-                    // PostDeserializer will convert Inputstreams to an array of posts
-                    getR.responseObject(PostDeserializer()) { req, res, result ->
-                        val (post, err) = result
-                        if (err != null) {
-                            Timber.e("Http request error $err", err.exception)
-                            Timber.e("Http response ${String(err.response.data)}")
-                        } else if (post != null) {
-                            it.handler(post)
-                        } else {
-                            Timber.e("Something went wrong here")
-                        }
-                    }
-                }
+        GlobalScope.launch {
+            //TODO: check if internet is available
+            //yande.re does not talk to android user agents...
+            FuelManager.instance.baseHeaders = mapOf("User-Agent" to "Java/1.8.0_112")
+            for (queuedRequest in requestQueue) {
+                val getR = queuedRequest.request.httpGet()
+                // PostDeserializer will convert Inputstreams to an array of posts
+                val post = getR.awaitObject(PostDeserializer())
+                queuedRequest.handler(post)
+            }
+        }
     }
 
     /** Check for Network availability */
@@ -64,17 +56,17 @@ object ApiWrapper {
      * @param handler that will be called when the request was turned into an array of posts
      *
      */
-    fun request(board: String,
-                page: Int,
-                tags: String = "",
-                limit: Int = 20,
-                handler: (Array<Post>) -> Unit) {
+    suspend fun request(board: String,
+                        page: Int,
+                        tags: String = "",
+                        limit: Int = 20,
+                        handler: suspend (Array<Post>) -> Unit) {
         //TODO: add board dependent request limits, so that we can stop before the board will stop us
         val params = "?limit=$limit${if (page > 1) "&page=$page" else ""}" +
                 if (tags != "") "&tags=$tags" else ""
         val request = "${if (board.startsWith("http")) "" else "https://"}$board/post.json$params"
 
-        requestQueue.onNext(Request(request, handler))
+        requestQueue.send(Request(request, handler))
     }
 
     /**
@@ -108,7 +100,7 @@ object ApiWrapper {
      * @param request the request string, including all parameters
      * @param handler will be called when request was successfully loaded
      */
-    data class Request(val request: String, val handler: (Array<Post>) -> Unit)
+    data class Request(val request: String, val handler: suspend (Array<Post>) -> Unit)
 
     /**
      * Class to turn a JSON array into an array of posts using [Gson].

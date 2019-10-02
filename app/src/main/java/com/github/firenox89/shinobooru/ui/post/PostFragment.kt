@@ -3,9 +3,6 @@ package com.github.firenox89.shinobooru.ui.post
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +11,6 @@ import android.widget.ImageView
 import android.widget.ListAdapter
 import android.widget.TextView
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.ext.defaultSchedulers
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.PostLoader
 import com.github.firenox89.shinobooru.repo.model.Post
@@ -22,6 +18,8 @@ import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import kotlin.math.roundToInt
 
@@ -51,18 +49,18 @@ class PostFragment : androidx.fragment.app.Fragment() {
         authorText.text = String.format(resources.getText(R.string.author_s).toString(), post.author)
         sourceText.text = String.format(resources.getText(R.string.source_s).toString(), post.source)
         postText.text = String.format(resources.getText(R.string.board_s_id_s).toString(), post.getBoard(), post.id)
-        //display preview image first for faster response
-        val disposable = postLoader.loadPreview(post)
-                .defaultSchedulers()
-                .subscribe { bitmap ->
-                    imageview.setImageBitmap(bitmap)
-                }
-        val disposable2 = postLoader.loadSample(post)
-                .defaultSchedulers()
-                .subscribe { bitmap ->
-                    disposable.dispose()
-                    imageview.setImageBitmap(bitmap)
-                }
+
+        GlobalScope.launch {
+            //display preview image first for faster response
+            postLoader.loadPreview(post).let { bitmap ->
+                imageview.setImageBitmap(bitmap)
+            }
+            postLoader.loadSample(post)
+                    .let { bitmap ->
+                        //TODO cancel loadPreview
+                        imageview.setImageBitmap(bitmap)
+                    }
+        }
 
         return layout
     }
@@ -79,12 +77,14 @@ class PostFragment : androidx.fragment.app.Fragment() {
          * Asynchronously loads the tag information.
          */
         init {
-            postLoader.getTagList(post).defaultSchedulers()
-                    .subscribe { tags ->
-                        tagList.clear()
-                        tagList.addAll(tags)
-                        notifyDataSetChanged()
-                    }
+            GlobalScope.launch {
+                postLoader.getTagList(post)
+                        .let { tags ->
+                            tagList.clear()
+                            tagList.addAll(tags)
+                            notifyDataSetChanged()
+                        }
+            }
         }
 
         /**
@@ -130,9 +130,9 @@ class PostFragment : androidx.fragment.app.Fragment() {
          */
         override fun getItemCount(): Int = tagList.size
 
-        inner class TagViewHolder(val textView: TextView): androidx.recyclerview.widget.RecyclerView.ViewHolder(textView) {
+        inner class TagViewHolder(val textView: TextView) : androidx.recyclerview.widget.RecyclerView.ViewHolder(textView) {
 
-            fun bindTag(tag: Tag)  {
+            fun bindTag(tag: Tag) {
                 textView.text = tag.name
                 tag.getTextColor()
                 textView.setTextColor(tag.getTextColor())

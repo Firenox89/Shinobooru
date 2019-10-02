@@ -9,11 +9,11 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import com.github.firenox89.shinobooru.repo.FileManager
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import timber.log.Timber
 
 /**
  * Creates a live wallpaper that uses the downloaded posts as homescreen backgrounds.
@@ -21,8 +21,6 @@ import java.util.concurrent.TimeUnit
  * Also landscape and portray mode get a different set of wallpapers.
  */
 class ShinoboorusWallpaperService : WallpaperService() {
-
-    val TAG = "WallpaperService"
 
     override fun onCreateEngine(): Engine = ShinoboorusWallpaperEngine()
 
@@ -49,18 +47,17 @@ class ShinoboorusWallpaperService : WallpaperService() {
         private var displayWidth: Int = 0
         private var displayHeight: Int = 0
 
-        private val clickEventStream = PublishSubject.create<MotionEvent>()
-        private val drawRequestQueue = PublishSubject.create<() -> Unit>()
-        private val drawScheduler = Schedulers.from(Executors.newSingleThreadExecutor())
+        private val drawRequestQueue = Channel<() -> Unit>()
 
         /**
          * Sets up the event handler for double clicks und the event queue for drawing request.
          */
         init {
-            clickEventStream.buffer(clickEventStream.debounce(300, TimeUnit.MILLISECONDS))
-                            .forEach { if (it.size == 2) draw() }
-
-            drawRequestQueue.throttleFirst(500, TimeUnit.MILLISECONDS, drawScheduler).subscribe { it.invoke() }
+            GlobalScope.launch {
+                for (drawCall in drawRequestQueue) {
+                    drawCall.invoke()
+                }
+            }
         }
 
         /**
@@ -70,7 +67,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         override fun onVisibilityChanged(visible: Boolean) {
             //hide drawing through doing it when invisible
-            if (!visible) draw()
+            if (!visible) GlobalScope.launch { draw() }
         }
 
         /**
@@ -80,9 +77,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * @param event filter and put on [clickEventStream]
          */
         override fun onTouchEvent(event: MotionEvent?) {
-            if (event?.action == MotionEvent.ACTION_UP) {
-                clickEventStream.onNext(event)
-            }
+            Timber.w("TODO Implement double click listener")
             super.onTouchEvent(event)
         }
 
@@ -98,31 +93,31 @@ class ShinoboorusWallpaperService : WallpaperService() {
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
             displayWidth = width
             displayHeight = height
-            draw()
+            GlobalScope.launch { draw() }
             super.onSurfaceChanged(holder, format, width, height)
         }
 
         /**
          * Draws an image fitting the current rotation and draws it to the canvas obtained from the surface.
          */
-        private fun draw() {
-            drawRequestQueue.onNext {
+        private suspend fun draw() {
+            drawRequestQueue.send {
                 try {
                     //stop if surface got invalid
-                    if (isSurfaceInvalid()) return@onNext
-                    val canvas = surfaceHolder.lockCanvas() ?: return@onNext
+                    if (isSurfaceInvalid()) return@send
+                    val canvas = surfaceHolder.lockCanvas() ?: return@send
                     //clear previous drawing
                     canvas.drawPaint(black)
                     val image = pickImage()
                     val transformationInfo = calcTransformation(image)
-                    if (isSurfaceInvalid()) return@onNext
+                    if (isSurfaceInvalid()) return@send
                     //scales image
                     canvas.translate(transformationInfo.second.width.toFloat() / 2,
                                      transformationInfo.second.height.toFloat() / 2)
-                    if (isSurfaceInvalid()) return@onNext
+                    if (isSurfaceInvalid()) return@send
                     //draws scaled image
                     canvas.drawBitmap(image, transformationInfo.first, filter)
-                    if (isSurfaceInvalid()) return@onNext
+                    if (isSurfaceInvalid()) return@send
                     //TODO this sometimes crashes when setting this as lockscreen
                     surfaceHolder.unlockCanvasAndPost(canvas)
                     image.recycle()

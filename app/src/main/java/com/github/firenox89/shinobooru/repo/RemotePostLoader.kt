@@ -6,14 +6,11 @@ import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.kittinunf.fuel.core.ResponseDeserializable
+import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.httpGet
-import com.github.kittinunf.fuel.rx.rxObject
-import com.github.kittinunf.fuel.rx.rx_object
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Flowable
-import io.reactivex.Observable
-import io.reactivex.Single
-import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.InputStream
 
@@ -21,17 +18,20 @@ import java.io.InputStream
  * Class in charge of handling post loading.
  * Use [getLoader] to get an instance.
  */
-open class RemotePostLoader(override val board: String, override val tags: String): PostLoader {
+open class RemotePostLoader(override val board: String, override val tags: String) : PostLoader {
 
     private val initLoadSize = 40
     private val posts = mutableListOf<Post>()
-    private val rangeChangeEventStream = PublishSubject.create<Pair<Int, Int>>()
+    private val rangeChangeEventStream = Channel<Pair<Int, Int>>()
 
     private var currentPage = 1
 
     init {
-        requestNextPosts(initLoadSize)
+        GlobalScope.launch {
+            requestNextPosts(initLoadSize)
+        }
     }
+
     /**
      * Get a [Post] for a given index.
      *
@@ -67,13 +67,12 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @return a list of [Tag]
      */
-    override fun getTagList(post: Post): Flowable<List<Tag>> =
-            Flowable.create({ emitter ->
-                                Timber.i("tags = $tags")
-                                val tags = post.tags.split(" ").map { Tag(name = it, board = post.getBoard()) }
-                                emitter.onNext(tags)
-                                emitter.onNext(tags.map { it.loadColor(); it })
-                            }, BackpressureStrategy.DROP)
+    override suspend fun getTagList(post: Post): List<Tag> {
+        Timber.i("tags = $tags")
+        val tags = post.tags.split(" ").map { Tag(name = it, board = post.getBoard()) }
+        return tags
+//        emitter.onNext(tags.map { it.loadColor(); it })
+    }
 
     /**
      * Tries to load the preview image from the cache, if not found load it from the board and cache it.
@@ -81,15 +80,14 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @param handler will be called after the image was loaded.
      */
-    override fun loadPreview(post: Post): Single<Bitmap> =
+    override suspend fun loadPreview(post: Post): Bitmap =
             if (!FileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
                 loadBitmap(post.preview_url)
-                        .map { bitmap ->
+                        .also { bitmap ->
                             FileManager.previewBitmapToCache(post.getBoard(), post.id, bitmap)
-                            bitmap
                         }
             } else {
-                Single.just(BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(post.getBoard(), post.id)))
+                BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(post.getBoard(), post.id))
             }
 
     /**
@@ -97,7 +95,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @param handler will be called after the image was loaded.
      */
-    override fun loadSample(post: Post) = loadBitmap(post.sample_url)
+    override suspend fun loadSample(post: Post) = loadBitmap(post.sample_url)
 
     /**
      * Loads an image from the given url.
@@ -107,7 +105,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      * @param retries the number of retries in case of errors, default value is 2
      * @param handler will be called after the image was loaded.
      */
-    private fun loadBitmap(url: String) = url.httpGet().rxObject(BitmapDeserializer()).map { it.get() }
+    private suspend fun loadBitmap(url: String) = url.httpGet().awaitObject(BitmapDeserializer())
 
     /**
      * Class to turn an [InputStream] into a [Bitmap].
@@ -125,7 +123,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @param quantity of post that should be loaded
      */
-    override fun requestNextPosts(quantity: Int) {
+    override suspend fun requestNextPosts(quantity: Int) {
         Timber.i("Request $quantity posts from $board")
         ApiWrapper.request(board, currentPage++, tags) {
             //TODO: order results before adding
@@ -139,7 +137,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
             }
             val count = tmpList.size
             posts.addAll(tmpList)
-            rangeChangeEventStream.onNext(Pair(currentSize, count))
+            rangeChangeEventStream.send(Pair(currentSize, count))
 
             // an empty result means that all posts are loaded
             if (count < quantity && it.isNotEmpty()) {
@@ -175,9 +173,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @return the [rangeChangeEventStream]
      */
-    override fun getRangeChangeEventStream(): Observable<Pair<Int, Int>> {
-        return rangeChangeEventStream.hide()
-    }
+    override suspend fun getRangeChangeEventStream() = rangeChangeEventStream
 
     /**
      * Will clear the list and reload every post in it.
@@ -185,7 +181,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      *
      * @param quantity of posts to load, default value is -1
      */
-    override fun onRefresh(quantity: Int) {
+    override suspend fun onRefresh(quantity: Int) {
         //TODO: insert new images on top instead of reload everything
         val currentCount = getCount()
         posts.clear()

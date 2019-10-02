@@ -12,7 +12,6 @@ import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
-import io.reactivex.subjects.PublishSubject
 import org.koin.android.ext.android.inject
 
 /**
@@ -86,18 +85,15 @@ class SettingsActivity : PreferenceActivity() {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     class UIPreferenceFragment : PreferenceFragment() {
-
-        val updateThumbnail : PublishSubject<Int> by inject("thumbnailUpdates")
-
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_ui)
             setHasOptionsMenu(true)
 
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
-                updateThumbnail.onNext(any.toString().toInt()); true
-            }
-            findPreference("post_per_row_list").onPreferenceChangeListener = changeListener
+//            val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
+//                updateThumbnail.onNext(any.toString().toInt()); true
+//            }
+//            findPreference("post_per_row_list").onPreferenceChangeListener = changeListener
         }
     }
 
