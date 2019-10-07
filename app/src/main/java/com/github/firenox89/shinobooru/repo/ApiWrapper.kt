@@ -8,17 +8,16 @@ import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.coroutines.awaitObject
+import com.github.kittinunf.fuel.coroutines.awaitObjectResult
 import com.github.kittinunf.fuel.httpGet
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.lang.IllegalStateException
 
 /** Singleton class for handling API requests, currently only post and tag requests */
 object ApiWrapper {
-    private val TAG = "ApiWrapper"
     /** Post request queue */
     private val requestQueue = Channel<Request>()
     /** Time in ms to wait between api calls */
@@ -26,16 +25,19 @@ object ApiWrapper {
 
     /** Main constructor to set the request queue */
     init {
+        //TODO: check if internet is available
+        //yande.re does not talk to android user agents...
+        FuelManager.instance.baseHeaders = mapOf("User-Agent" to "Java/1.8.0_112")
         GlobalScope.launch {
-            //TODO: check if internet is available
-            //yande.re does not talk to android user agents...
-            FuelManager.instance.baseHeaders = mapOf("User-Agent" to "Java/1.8.0_112")
             for (queuedRequest in requestQueue) {
-                val getR = queuedRequest.request.httpGet()
-                // PostDeserializer will convert Inputstreams to an array of posts
-                val post = getR.awaitObject(PostDeserializer())
-                queuedRequest.handler(post)
+                queuedRequest.request.httpGet()
+                        .awaitObjectResult(PostDeserializer())
+                        .fold(
+                                { postList -> async(Dispatchers.IO) { queuedRequest.handler(postList) } },
+                                { error -> Timber.e(error) }
+                        )
             }
+            Timber.d("Finished request queue")
         }
     }
 

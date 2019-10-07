@@ -125,7 +125,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      */
     override suspend fun requestNextPosts(quantity: Int) {
         Timber.i("Request $quantity posts from $board")
-        ApiWrapper.request(board, currentPage++, tags) {
+        ApiWrapper.request(board, currentPage++, tags) { it ->
             //TODO: order results before adding
             val currentSize = posts.size
             val tmpList = mutableListOf<Post>()
@@ -136,6 +136,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
                 }
             }
             val count = tmpList.size
+            Timber.d("$count posts left after rating filtering, $quantity needed")
             posts.addAll(tmpList)
             rangeChangeEventStream.send(Pair(currentSize, count))
 

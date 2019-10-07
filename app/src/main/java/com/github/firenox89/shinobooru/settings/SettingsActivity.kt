@@ -109,11 +109,11 @@ class SettingsActivity : PreferenceActivity() {
         val pref = PreferenceManager.getDefaultSharedPreferences(Shinobooru.appContext)
 
         fun filterRating(rating: String): Boolean {
-            if (rating.equals("s"))
+            if (rating == "s")
                 return pref.getBoolean("rating_safe", true)
-            if (rating.equals("q"))
+            if (rating == "q")
                 return pref.getBoolean("rating_questionable", false)
-            if (rating.equals("e"))
+            if (rating == "e")
                 return pref.getBoolean("rating_explicit", false)
             throw IllegalArgumentException("Unknown rating: $rating")
         }

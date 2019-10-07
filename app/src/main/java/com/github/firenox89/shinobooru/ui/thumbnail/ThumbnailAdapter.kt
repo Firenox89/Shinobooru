@@ -13,11 +13,12 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * [RecyclerView.Adapter] that provides the post images.
  */
-class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: String) : androidx.recyclerview.widget.RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
+class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: String) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
     val postLoader = dataSource.getPostLoader(board, tags)
 
@@ -26,7 +27,7 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
 
     var usePreview = true
 
-    fun createPlaceholderBitmap(width: Int, height: Int): Bitmap {
+    private suspend fun createPlaceholderBitmap(width: Int, height: Int): Bitmap = withContext(Dispatchers.IO) {
         val rect = Rect(0, 0, width, height)
         val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
         val canvas = Canvas(image)
@@ -34,7 +35,7 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
         val paint = Paint()
         paint.color = color
         canvas.drawRect(rect, paint)
-        return image
+        image
     }
 
     /**
@@ -42,13 +43,18 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
      */
     suspend fun subscribeLoader() {
         for (update in postLoader.getRangeChangeEventStream()) {
-            val (posi, count) = update
-            //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
-            if (posi != 0) {
-                notifyItemRangeChanged(posi, count)
-            } else {
-                notifyDataSetChanged()
-            }
+            Timber.d("post loader update $update")
+            notify(update)
+        }
+    }
+
+    suspend fun notify(update: Pair<Int, Int>) = withContext(Dispatchers.Main) {
+        val (posi, count) = update
+        //if range starts with 0 send a dataChangedEvent instead of a rangeChangedEvent
+        if (posi != 0) {
+            notifyItemRangeChanged(posi, count)
+        } else {
+            notifyDataSetChanged()
         }
     }
 
@@ -59,23 +65,23 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         GlobalScope.launch {
             val post = postLoader.getPostAt(position)
-            if (itemCount - position < 5) postLoader.requestNextPosts()
+            holder.updateImage(createPlaceholderBitmap(post.preview_width, post.preview_height))
 
-            holder.postImage.setImageBitmap(createPlaceholderBitmap(post.preview_width, post.preview_height))
+            if (itemCount - position < 5) postLoader.requestNextPosts()
 
             //if the recyclerView is set to one image per row use the sample image for quality reasons
             if (usePreview)
                 postLoader.loadPreview(post)
                         .let { bitmap ->
-                            holder.postImage.setImageBitmap(bitmap)
+                            holder.updateImage(bitmap)
                         }
             else
                 postLoader.loadSample(post)
                         .let { bitmap ->
-                            holder.postImage.setImageBitmap(bitmap)
+                            holder.updateImage(bitmap)
                         }
 
-            holder.itemView.setOnClickListener { GlobalScope.launch { onImageClickStream.send(position) }}
+            holder.setListener { GlobalScope.launch { onImageClickStream.send(position) } }
         }
     }
 
@@ -92,7 +98,15 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
     /**
      * A [RecyclerView.ViewHolder] containing the post image and to icons.
      */
-    class PostViewHolder(parent: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(parent) {
+    class PostViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
         var postImage: ImageView = parent.findViewById(R.id.thumbnailView)
+
+        suspend fun updateImage(image: Bitmap) = withContext(Dispatchers.Main) {
+            postImage.setImageBitmap(image)
+        }
+
+        suspend fun setListener(listener: () -> Unit) = withContext(Dispatchers.Main) {
+            itemView.setOnClickListener { listener.invoke() }
+        }
     }
 }
