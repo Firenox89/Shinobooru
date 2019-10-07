@@ -11,12 +11,16 @@ import com.github.firenox89.shinobooru.repo.ApiWrapper
 import com.github.firenox89.shinobooru.repo.FileLoader
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.google.gson.Gson
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 /**
  * [ListAdapter] for the auto complete search suggestions.
  */
-class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : BaseAdapter(), Filterable {
+class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : BaseAdapter(), Filterable, KoinComponent {
     val tagList = mutableListOf<Tag>()
+
+    val apiWrapper: ApiWrapper by inject()
 
     override fun getItem(position: Int): Any {
         return tagList[position].name
@@ -41,7 +45,7 @@ class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : Base
                     //tags are always lower case
                     val name = constraint.toString().toLowerCase().trim()
                     //request tags
-                    val jsonResponse = ApiWrapper.requestTag(board, name)
+                    val jsonResponse = apiWrapper.requestTag(board, name)
                     //and parse the result
                     val tags = Gson().fromJson<Array<Tag>>(jsonResponse, Array<Tag>::class.java)
 

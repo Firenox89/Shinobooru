@@ -13,7 +13,7 @@ import com.github.firenox89.shinobooru.utility.Constants.FILE_LOADER_NAME
 import org.koin.android.ext.android.inject
 
 @SuppressLint("Registered")
-open class RxActivity: AppCompatActivity() {
+open class BaseActivity: AppCompatActivity() {
     protected val dataSource: DataSource by inject()
 
     fun setupDrawer(navigation: NavigationView, drawer: androidx.drawerlayout.widget.DrawerLayout) {

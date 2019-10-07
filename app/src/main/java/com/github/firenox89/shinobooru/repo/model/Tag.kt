@@ -5,6 +5,8 @@ import com.github.firenox89.shinobooru.repo.ApiWrapper
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 import timber.log.Timber
 import java.io.Serializable
 
@@ -18,13 +20,14 @@ data class Tag(
         var id: Long = 0L,
         var count: Int = 0,
         var type: Int = -1,
-        var ambiguous: Boolean = false) : Serializable {
+        var ambiguous: Boolean = false) : Serializable, KoinComponent {
 
 
     companion object {
         private val boardTagLists = mutableMapOf<String, MutableMap<String, Tag>>()
     }
 
+    val apiWrapper: ApiWrapper by inject()
     /**
      * If object was created only by board and name load tag info.
      * Do nothing otherwise.
@@ -47,7 +50,7 @@ data class Tag(
                 ambiguous = tag.ambiguous
             } else {
                 try {
-                    val jsonArray = JSONArray(ApiWrapper.requestTag(board, name))
+                    val jsonArray = JSONArray(apiWrapper.requestTag(board, name))
                     var jsonRespone: JSONObject? = null
 
                     //if only one tag was return that has to be the right one

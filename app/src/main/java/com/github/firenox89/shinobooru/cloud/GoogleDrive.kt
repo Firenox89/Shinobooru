@@ -22,7 +22,7 @@ import java.nio.channels.Channels
 /**
  * Created by firenox on 02.11.16.
  */
-class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCallbacks {
+class GoogleDrive(val context: Context, val fileManager: FileManager): CloudSync, GoogleApiClient.ConnectionCallbacks {
     override fun upload(posts: List<DownloadedPost>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -61,7 +61,7 @@ class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCa
         Timber.e("sync")
 
         fetchData {
-            FileManager.boards.forEach {
+            fileManager.boards.forEach {
                 val boardName = it.key
                 val boardOnDrive = boards.find { it.first == boardName }
                 if (boardOnDrive != null) {
@@ -114,7 +114,7 @@ class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCa
     }
 
     fun getPostOnlyOnDevice(board: String, posts: List<DownloadedPost>): List<DownloadedPost>? {
-        val deviceList = FileManager.boards[board]
+        val deviceList = fileManager.boards[board]
 
         val drivePostIdList = posts.map(DownloadedPost::id)
 
@@ -122,7 +122,7 @@ class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCa
     }
 
     fun getPostOnlyOnDrive(board: String, posts: List<DownloadedPost>): List<DownloadedPost> {
-        val deviceList = FileManager.boards[board]
+        val deviceList = fileManager.boards[board]
 
         val devicePostIdList = deviceList?.map(DownloadedPost::id) ?: emptyList()
 
@@ -130,7 +130,7 @@ class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCa
     }
 
     fun findDoubleID() {
-        FileManager.boards.forEach {
+        fileManager.boards.forEach {
             val set: MutableSet<Long> = mutableSetOf()
             val list: MutableList<Post> = mutableListOf()
             it.value.forEach {
@@ -141,22 +141,22 @@ class GoogleDrive(val context: Context): CloudSync, GoogleApiClient.ConnectionCa
             val board = it.key
             list.forEach {
                 val id = it.id
-                val dlist = FileManager.boards[board]?.filter { it.id == id }!!
+                val dlist = fileManager.boards[board]?.filter { it.id == id }!!
                 Timber.e("delete")
                 if (dlist[0].file_size != dlist[1].file_size) {
                     if (dlist[0].file_size > dlist[1].file_size) {
-                        FileManager.deleteDownloadedPost(dlist[1])
+                        fileManager.deleteDownloadedPost(dlist[1])
                         Timber.e("${dlist[1]}")
                     } else {
-                        FileManager.deleteDownloadedPost(dlist[0])
+                        fileManager.deleteDownloadedPost(dlist[0])
                         Timber.e("${dlist[0]}")
                     }
                 } else if (dlist[0].tags != dlist[1].tags) {
                     if (dlist[0].file.lastModified() > dlist[1].file.lastModified()) {
-                        FileManager.deleteDownloadedPost(dlist[1])
+                        fileManager.deleteDownloadedPost(dlist[1])
                         Timber.e("${dlist[1]}")
                     } else {
-                        FileManager.deleteDownloadedPost(dlist[0])
+                        fileManager.deleteDownloadedPost(dlist[0])
                         Timber.e("${dlist[0]}")
                     }
                 } else {

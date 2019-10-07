@@ -17,7 +17,7 @@ import timber.log.Timber
 import java.lang.IllegalStateException
 
 /** Singleton class for handling API requests, currently only post and tag requests */
-object ApiWrapper {
+class ApiWrapper(val appContext: Context) {
     /** Post request queue */
     private val requestQueue = Channel<Request>()
     /** Time in ms to wait between api calls */
@@ -43,7 +43,7 @@ object ApiWrapper {
 
     /** Check for Network availability */
     fun isOnline(): Boolean {
-        val cm = Shinobooru.appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val cm = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val netInfo = cm.activeNetworkInfo
         return netInfo.isConnectedOrConnecting
     }

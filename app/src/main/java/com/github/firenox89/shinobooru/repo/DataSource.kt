@@ -10,8 +10,8 @@ interface DataSource {
     fun getAllPosts(): Map<String, List<DownloadedPost>>
 }
 
-class DefaultDataSource : DataSource {
-    private val loaderList = mutableListOf<PostLoader>().apply { add(FileLoader()) }
+class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager, fileLoader: FileLoader) : DataSource {
+    private val loaderList = mutableListOf<PostLoader>(fileLoader)
 
     val tmpBoards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
     /**
@@ -26,7 +26,7 @@ class DefaultDataSource : DataSource {
     override fun getPostLoader(board: String, tags: String?): PostLoader {
         var loader = loaderList.find { it.board == board && it.tags == tags }
         if (loader == null) {
-            loader = RemotePostLoader(board, tags ?: "")
+            loader = RemotePostLoader(board, tags ?: "", apiWrapper, fileManager)
             loaderList.add(loader)
         }
         return loader
@@ -34,7 +34,7 @@ class DefaultDataSource : DataSource {
 
     override fun getBoards(): List<String> = tmpBoards
 
-    override fun getAllPosts(): Map<String, List<DownloadedPost>> = FileManager.boards
+    override fun getAllPosts(): Map<String, List<DownloadedPost>> = fileManager.boards
 
 
     /**

@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.view.WindowManager
-import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
@@ -16,7 +15,7 @@ import kotlinx.coroutines.channels.Channel
  * Sub-classes the [PostLoader] to use the downloaded post images as a source for posts.
  * Does not refresh the post list when new images are downloaded.
  */
-class FileLoader : PostLoader {
+class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLoader {
     override val board: String
         get() = Constants.FILE_LOADER_NAME
     override val tags: String
@@ -33,17 +32,17 @@ class FileLoader : PostLoader {
         result
     }
 
-    private var posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
+    private var posts = fileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
 
     override fun downloadPost(currentItem: Int) {
-        throw IllegalStateException("Post ")
+        throw IllegalStateException("FileLoader does not download")
     }
 
     override suspend fun loadPreview(post: Post): Bitmap = loadSubsampledImage((post as DownloadedPost).file, 250, 400)
 
 
     override suspend fun loadSample(post: Post): Bitmap {
-        val wm = Shinobooru.appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val wm = appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val display = wm.defaultDisplay
         val size = Point()
         display.getSize(size)
@@ -86,7 +85,7 @@ class FileLoader : PostLoader {
 
     /** Does nothing */
     override suspend fun onRefresh(quantity: Int) {
-        posts = FileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
+        posts = fileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
     }
 
 }

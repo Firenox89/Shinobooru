@@ -13,6 +13,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import org.koin.core.KoinComponent
 import timber.log.Timber
 
 /**
@@ -40,7 +41,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
     /**
      * The engine drawing on te live wallpaper.
      */
-    inner class ShinoboorusWallpaperEngine : Engine() {
+    inner class ShinoboorusWallpaperEngine : Engine(), KoinComponent {
         val pref: SharedPreferences by inject()
         //TODO: make the wallpaperService more configurable
 
@@ -49,6 +50,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
 
         private val drawRequestQueue = Channel<() -> Unit>()
 
+        private val fileManager: FileManager by inject()
         /**
          * Sets up the event handler for double clicks und the event queue for drawing request.
          */
@@ -190,7 +192,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          * @return a loaded [Bitmap] fitting for the display ratio.
          */
         private fun pickImage(): Bitmap {
-            if (FileManager.getAllDownloadedPosts().isEmpty())
+            if (fileManager.getAllDownloadedPosts().isEmpty())
                 return genNoImagesBitmap()
             //TODO stop looping when no image with a fitting ration is present
             //picks random image
@@ -224,7 +226,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         private fun pickRandomPost(): DownloadedPost {
             //TODO handle 0 images case
-            val postList = FileManager.getAllDownloadedPosts()
+            val postList = fileManager.getAllDownloadedPosts()
             var i = (Math.random() * postList.size).toInt()
             return postList[i]
         }

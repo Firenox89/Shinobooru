@@ -16,7 +16,7 @@ import java.util.regex.Pattern
 /**
  * In charge of handling file system tasks.
  */
-object FileManager {
+class FileManager(val appContext: Context) {
 
     /** The image directory inside androids picture dir. */
     val shinobooruImageDir = File(Environment.getExternalStoragePublicDirectory(
@@ -40,7 +40,7 @@ object FileManager {
         shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadDownloadedPostListFromFile(it)) }
 
         // load list of files from cache
-        cachedFiles.addAll(Shinobooru.appContext.fileList())
+        cachedFiles.addAll(appContext.fileList())
     }
 
     /**
@@ -152,7 +152,7 @@ object FileManager {
      */
     fun previewBitmapFromCache(board: String, id: Long): FileInputStream? =
             if (isPreviewBitmapCached(board, id))
-                Shinobooru.appContext.openFileInput("$board $id.jpeg")
+                appContext.openFileInput("$board $id.jpeg")
             else
                 null
 
@@ -166,7 +166,7 @@ object FileManager {
      * @param bitmap to store
      */
     fun previewBitmapToCache(board: String, id: Long, bitmap: Bitmap?) {
-        val fos = Shinobooru.appContext.openFileOutput("$board $id.jpeg", Context.MODE_PRIVATE)
+        val fos = appContext.openFileOutput("$board $id.jpeg", Context.MODE_PRIVATE)
         bitmap?.compress(Bitmap.CompressFormat.JPEG, 85, fos)
         fos.close()
         cachedFiles.add("$id")
@@ -179,12 +179,12 @@ object FileManager {
         if (cachedFiles.size > maxCachedSize) {
             checkingCache = true
             Timber.i("clean up cache")
-            val list = Shinobooru.appContext.filesDir.list().filter { it.endsWith(".jpeg") }
+            val list = appContext.filesDir.list().filter { it.endsWith(".jpeg") }
             list.sortedBy { File(it).lastModified() }
-            list.drop(500).forEach { File(Shinobooru.appContext.filesDir, it).delete() }
+            list.drop(500).forEach { File(appContext.filesDir, it).delete() }
 
             cachedFiles.clear()
-            cachedFiles.addAll(Shinobooru.appContext.fileList())
+            cachedFiles.addAll(appContext.fileList())
             checkingCache = false
         }
     }

@@ -3,6 +3,7 @@ package com.github.firenox89.shinobooru.settings
 
 import android.annotation.TargetApi
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -13,6 +14,8 @@ import android.preference.PreferenceManager
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
 import org.koin.android.ext.android.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 /**
  * A [PreferenceActivity] that presents a set of application settings. On
@@ -97,7 +100,7 @@ class SettingsActivity : PreferenceActivity() {
         }
     }
 
-    companion object {
+    companion object: KoinComponent {
         //boards
         var yandereURL = "https://yande.re"
         var konachanURL = "http://konachan.com"
@@ -106,7 +109,7 @@ class SettingsActivity : PreferenceActivity() {
 
         val imageBoards = mutableListOf(yandereURL, konachanURL)
 
-        val pref = PreferenceManager.getDefaultSharedPreferences(Shinobooru.appContext)
+        val pref: SharedPreferences by inject()
 
         fun filterRating(rating: String): Boolean {
             if (rating == "s")

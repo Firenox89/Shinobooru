@@ -18,7 +18,10 @@ import java.io.InputStream
  * Class in charge of handling post loading.
  * Use [getLoader] to get an instance.
  */
-open class RemotePostLoader(override val board: String, override val tags: String) : PostLoader {
+open class RemotePostLoader(override val board: String,
+                            override val tags: String,
+                            val apiWrapper: ApiWrapper,
+                            val fileManager: FileManager) : PostLoader {
 
     private val initLoadSize = 40
     private val posts = mutableListOf<Post>()
@@ -43,7 +46,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
     }
 
     override fun downloadPost(index: Int) {
-        FileManager.downloadFileToStorage(posts[index].file_url, posts[index])
+        fileManager.downloadFileToStorage(posts[index].file_url, posts[index])
     }
 
     /**
@@ -81,13 +84,13 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      * @param handler will be called after the image was loaded.
      */
     override suspend fun loadPreview(post: Post): Bitmap =
-            if (!FileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
+            if (!fileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
                 loadBitmap(post.preview_url)
                         .also { bitmap ->
-                            FileManager.previewBitmapToCache(post.getBoard(), post.id, bitmap)
+                            fileManager.previewBitmapToCache(post.getBoard(), post.id, bitmap)
                         }
             } else {
-                BitmapFactory.decodeStream(FileManager.previewBitmapFromCache(post.getBoard(), post.id))
+                BitmapFactory.decodeStream(fileManager.previewBitmapFromCache(post.getBoard(), post.id))
             }
 
     /**
@@ -125,7 +128,7 @@ open class RemotePostLoader(override val board: String, override val tags: Strin
      */
     override suspend fun requestNextPosts(quantity: Int) {
         Timber.i("Request $quantity posts from $board")
-        ApiWrapper.request(board, currentPage++, tags) { it ->
+        apiWrapper.request(board, currentPage++, tags) { it ->
             //TODO: order results before adding
             val currentSize = posts.size
             val tmpList = mutableListOf<Post>()

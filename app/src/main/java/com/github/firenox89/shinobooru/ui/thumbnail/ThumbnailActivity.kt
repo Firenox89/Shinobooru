@@ -12,7 +12,7 @@ import android.view.MenuItem
 
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.settings.SettingsActivity
-import com.github.firenox89.shinobooru.ui.base.RxActivity
+import com.github.firenox89.shinobooru.ui.base.BaseActivity
 import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import timber.log.Timber
 
-class ThumbnailActivity : RxActivity() {
+class ThumbnailActivity : BaseActivity() {
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
