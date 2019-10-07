@@ -41,10 +41,12 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
     /**
      * Subscribe for newly loaded posts.
      */
-    suspend fun subscribeLoader() {
-        for (update in postLoader.getRangeChangeEventStream()) {
-            Timber.d("post loader update $update")
-            notify(update)
+    fun subscribeLoader() {
+        GlobalScope.launch {
+            for (update in postLoader.getRangeChangeEventStream()) {
+                Timber.d("post loader update $update")
+                notify(update)
+            }
         }
     }
 
@@ -81,7 +83,7 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
                             holder.updateImage(bitmap)
                         }
 
-            holder.setListener { GlobalScope.launch { onImageClickStream.send(position) } }
+            holder.setListener { onImageClickStream.offer(position) }
         }
     }
 
@@ -106,7 +108,9 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
         }
 
         suspend fun setListener(listener: () -> Unit) = withContext(Dispatchers.Main) {
-            itemView.setOnClickListener { listener.invoke() }
+            postImage.setOnClickListener {
+                listener.invoke()
+            }
         }
     }
 }

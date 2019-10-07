@@ -18,9 +18,12 @@ import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import timber.log.Timber
 import kotlin.math.roundToInt
 
 /**
@@ -37,6 +40,7 @@ class PostFragment : androidx.fragment.app.Fragment() {
         val postLoader = dataSource.getPostLoader(board, tags)
         val post: Post = postLoader.getPostAt(posi)
 
+        Timber.d("Show post $posi")
         val imageview = layout.findViewById<ImageView>(R.id.postimage)
         val authorText = layout.findViewById<TextView>(R.id.authorText)
         val sourceText = layout.findViewById<TextView>(R.id.sourceText)
@@ -52,13 +56,13 @@ class PostFragment : androidx.fragment.app.Fragment() {
 
         GlobalScope.launch {
             //display preview image first for faster response
-            postLoader.loadPreview(post).let { bitmap ->
-                imageview.setImageBitmap(bitmap)
+            val loadPreviewJob = launch {
+                withContext(Dispatchers.Main) { imageview.setImageBitmap(postLoader.loadPreview(post)) }
             }
             postLoader.loadSample(post)
                     .let { bitmap ->
-                        //TODO cancel loadPreview
-                        imageview.setImageBitmap(bitmap)
+                        loadPreviewJob.cancel()
+                        withContext(Dispatchers.Main) { imageview.setImageBitmap(bitmap) }
                     }
         }
 

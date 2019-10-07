@@ -13,6 +13,7 @@ import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import kotlinx.android.synthetic.main.activity_post_pager.*
+import timber.log.Timber
 
 
 /**
@@ -39,14 +40,15 @@ class PostPagerActivity : BaseActivity() {
         postLoader = dataSource.getPostLoader(board, tags)
 
         val position = intent.getIntExtra(POSITION_INTENT_KEY, -1)
-        if (position == -1) throw IllegalArgumentException("Position must not be null")
+        require(position != -1) { "Position must not be null" }
 
+        Timber.i("Start post page on page $position")
         with(postviewpager) {
             adapter = PostPagerAdapter(supportFragmentManager, postLoader, this@PostPagerActivity)
             currentItem = position
         }
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true);
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeButtonEnabled(true)
     }
 

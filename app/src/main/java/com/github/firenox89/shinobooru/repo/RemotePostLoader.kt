@@ -8,9 +8,8 @@ import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.httpGet
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.InputStream
 
@@ -83,15 +82,16 @@ open class RemotePostLoader(override val board: String,
      *
      * @param handler will be called after the image was loaded.
      */
-    override suspend fun loadPreview(post: Post): Bitmap =
-            if (!fileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
-                loadBitmap(post.preview_url)
-                        .also { bitmap ->
-                            fileManager.previewBitmapToCache(post.getBoard(), post.id, bitmap)
-                        }
-            } else {
-                BitmapFactory.decodeStream(fileManager.previewBitmapFromCache(post.getBoard(), post.id))
-            }
+    override suspend fun loadPreview(post: Post): Bitmap = withContext(Dispatchers.IO) {
+        if (!fileManager.isPreviewBitmapCached(post.getBoard(), post.id) || SettingsActivity.disableCaching) {
+            loadBitmap(post.preview_url)
+                    .also { bitmap ->
+                        fileManager.previewBitmapToCache(post.getBoard(), post.id, bitmap)
+                    }
+        } else {
+            BitmapFactory.decodeStream(fileManager.previewBitmapFromCache(post.getBoard(), post.id))
+        }
+    }
 
     /**
      * Loads the sample image.
@@ -108,7 +108,7 @@ open class RemotePostLoader(override val board: String,
      * @param retries the number of retries in case of errors, default value is 2
      * @param handler will be called after the image was loaded.
      */
-    private suspend fun loadBitmap(url: String) = url.httpGet().awaitObject(BitmapDeserializer())
+    private suspend fun loadBitmap(url: String) = withContext(Dispatchers.IO) { url.httpGet().awaitObject(BitmapDeserializer()) }
 
     /**
      * Class to turn an [InputStream] into a [Bitmap].

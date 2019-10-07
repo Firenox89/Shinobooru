@@ -55,10 +55,12 @@ class ThumbnailActivity : BaseActivity() {
         Timber.i("start board '$board' tags '$tags'")
         recyclerAdapter = ThumbnailAdapter(dataSource, board, tags)
 
+        recyclerAdapter.subscribeLoader()
+
         GlobalScope.launch {
-            recyclerAdapter.subscribeLoader()
             //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
             for (imageID in recyclerAdapter.onImageClickStream) {
+                Timber.d("Click on post imageID")
                 val intent = Intent(this@ThumbnailActivity, PostPagerActivity::class.java)
                 intent.putExtra(BOARD_INTENT_KEY, board)
                 intent.putExtra(TAGS_INTENT_KEY, tags)
@@ -103,6 +105,7 @@ class ThumbnailActivity : BaseActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
     /**
      * Gets called when a [PostPagerActivity] returns.
      * Scrolls the [RecyclerView] to the post position of the last view post of [PostPagerActivity].

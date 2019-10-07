@@ -19,7 +19,7 @@ import java.lang.IllegalStateException
 /** Singleton class for handling API requests, currently only post and tag requests */
 class ApiWrapper(val appContext: Context) {
     /** Post request queue */
-    private val requestQueue = Channel<Request>()
+    private val requestQueue = Channel<Request>(1)
     /** Time in ms to wait between api calls */
     private var throttle = 10L
 
@@ -58,7 +58,7 @@ class ApiWrapper(val appContext: Context) {
      * @param handler that will be called when the request was turned into an array of posts
      *
      */
-    suspend fun request(board: String,
+    fun request(board: String,
                         page: Int,
                         tags: String = "",
                         limit: Int = 20,
@@ -68,7 +68,7 @@ class ApiWrapper(val appContext: Context) {
                 if (tags != "") "&tags=$tags" else ""
         val request = "${if (board.startsWith("http")) "" else "https://"}$board/post.json$params"
 
-        requestQueue.send(Request(request, handler))
+        requestQueue.offer(Request(request, handler))
     }
 
     /**
