@@ -32,7 +32,7 @@ data class Tag(
      * If object was created only by board and name load tag info.
      * Do nothing otherwise.
      */
-    fun loadColor() {
+    suspend fun loadColor() {
         if (id == 0L) {
             var tagList: MutableMap<String, Tag>
             var tag: Tag

@@ -128,25 +128,19 @@ open class RemotePostLoader(override val board: String,
      */
     override suspend fun requestNextPosts(quantity: Int) {
         Timber.i("Request $quantity posts from $board")
-        apiWrapper.request(board, currentPage++, tags) { it ->
-            //TODO: order results before adding
-            val currentSize = posts.size
-            val tmpList = mutableListOf<Post>()
-            it.forEach {
-                //TODO forbid to search with all ratings disabled
-                if (SettingsActivity.filterRating(it.rating)) {
-                    tmpList.add(it)
-                }
-            }
-            val count = tmpList.size
-            Timber.d("$count posts left after rating filtering, $quantity needed")
-            posts.addAll(tmpList)
-            rangeChangeEventStream.send(Pair(currentSize, count))
+        val posts = apiWrapper.request(board, currentPage++, tags)
+        //TODO: order results before adding
+        val currentSize = this.posts.size
+        //TODO forbid to search with all ratings disabled
+        val rateFilteredPosts = posts.filter { SettingsActivity.filterRating(it.rating) }
+        val postCount = rateFilteredPosts.size
+        Timber.d("$postCount posts left after rating filtering, $quantity needed")
+        this.posts.addAll(rateFilteredPosts)
+        rangeChangeEventStream.send(Pair(currentSize, postCount))
 
-            // an empty result means that all posts are loaded
-            if (count < quantity && it.isNotEmpty()) {
-                requestNextPosts(quantity - count)
-            }
+        // an empty result means that all posts are loaded
+        if (postCount < quantity && posts.isNotEmpty()) {
+            requestNextPosts(quantity - postCount)
         }
     }
 
