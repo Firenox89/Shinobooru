@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ListAdapter
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.PostLoader
@@ -54,7 +55,7 @@ class PostFragment : androidx.fragment.app.Fragment() {
         sourceText.text = String.format(resources.getText(R.string.source_s).toString(), post.source)
         postText.text = String.format(resources.getText(R.string.board_s_id_s).toString(), post.getBoard(), post.id)
 
-        GlobalScope.launch {
+        lifecycleScope.launch {
             //display preview image first for faster response
             val loadPreviewJob = launch {
                 withContext(Dispatchers.Main) { imageview.setImageBitmap(postLoader.loadPreview(post)) }

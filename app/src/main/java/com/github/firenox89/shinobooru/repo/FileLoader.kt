@@ -65,7 +65,7 @@ class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLo
     }
 
     /** Does nothing */
-    override suspend fun requestNextPosts(quantity: Int) {
+    override suspend fun requestNextPosts() {
         //nothing to request in file mode
     }
 
