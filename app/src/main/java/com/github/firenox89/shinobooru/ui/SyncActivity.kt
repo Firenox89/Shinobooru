@@ -26,8 +26,6 @@ class SyncActivity : BaseActivity() {
             setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
         }
 
-        setupDrawer(nav_sync, drawer_sync)
-
         dataSource.getAllPosts().forEach { board, posts ->
 
         }

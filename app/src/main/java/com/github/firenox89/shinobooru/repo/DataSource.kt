@@ -6,8 +6,9 @@ import kotlinx.coroutines.launch
 
 interface DataSource {
     fun getBoards(): List<String>
-    suspend fun getPostLoader(board: String, tags: String?): PostLoader
     fun getAllPosts(): Map<String, List<DownloadedPost>>
+    suspend fun getPostLoader(board: String, tags: String?): PostLoader
+    suspend fun requestTag(board: String, name: String): String
 }
 
 class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager, fileLoader: FileLoader) : DataSource {
@@ -37,6 +38,9 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
 
     override fun getAllPosts(): Map<String, List<DownloadedPost>> = fileManager.boards
 
+    override suspend fun requestTag(board: String, name: String): String {
+        return apiWrapper.requestTag(board, name)
+    }
 
     /**
      * Reloads the posts for all stored loader instances

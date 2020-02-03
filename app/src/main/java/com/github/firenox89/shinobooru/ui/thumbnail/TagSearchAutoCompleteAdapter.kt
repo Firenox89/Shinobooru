@@ -7,26 +7,23 @@ import android.widget.BaseAdapter
 import android.widget.Filter
 import android.widget.Filterable
 import android.widget.TextView
-import com.github.firenox89.shinobooru.repo.ApiWrapper
-import com.github.firenox89.shinobooru.repo.FileLoader
+import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.google.gson.Gson
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.core.KoinComponent
-import org.koin.core.context.GlobalContext
 import org.koin.core.inject
+import timber.log.Timber
+import java.util.*
 
-/**
- * [ListAdapter] for the auto complete search suggestions.
- */
-class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : BaseAdapter(), Filterable, KoinComponent {
+class TagSearchAutoCompleteAdapter(val board: String) : BaseAdapter(), Filterable, KoinComponent {
     val tagList = mutableListOf<Tag>()
 
-    val apiWrapper: ApiWrapper by inject()
+    val dataSource: DataSource by inject()
 
-    override fun getItem(position: Int): Any {
+    override fun getItem(position: Int): String {
         return tagList[position].name
     }
 
@@ -41,19 +38,18 @@ class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : Base
     override fun getFilter(): Filter {
         return object : Filter() {
             override fun performFiltering(constraint: CharSequence?): FilterResults {
-                val results = FilterResults()
-                GlobalScope.launch {
-                    val board = recyclerAdapter.postLoader.board
-
+                return runBlocking {
+                    val results = FilterResults()
                     //constraint can be null and FileLoader does not support tag search yet
-                    if (!constraint.isNullOrBlank() && recyclerAdapter.postLoader !is FileLoader) {
+                    if (!constraint.isNullOrBlank()) {
                         //tags are always lower case
                         val name = constraint.toString().toLowerCase().trim()
                         //request tags
-                        val jsonResponse = apiWrapper.requestTag(board, name)
+                        val jsonResponse = dataSource.requestTag(board, name)
                         //and parse the result
                         val tags = Gson().fromJson<Array<Tag>>(jsonResponse, Array<Tag>::class.java)
 
+                        Timber.d("Found tags ${Arrays.toString(tags)}")
                         //TODO: could be settable
                         val numberOfResults = 10
                         val sortedTagList = mutableListOf<Tag>()
@@ -88,8 +84,8 @@ class TagSearchAutoCompleteAdapter(val recyclerAdapter: ThumbnailAdapter) : Base
                         //take only the first entries
                         results.values = sortedTagList
                     }
+                    results
                 }
-                return results
             }
 
             override fun publishResults(constraint: CharSequence?, results: FilterResults) {

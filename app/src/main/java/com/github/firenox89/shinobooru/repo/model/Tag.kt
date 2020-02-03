@@ -96,5 +96,4 @@ data class Tag(
                 6 -> Color.parseColor("#FF2020")
                 else -> Color.parseColor("#EE8887")
             }
-
 }

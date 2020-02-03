@@ -7,19 +7,21 @@ import androidx.core.view.GravityCompat
 import androidx.appcompat.app.ActionBar
 import androidx.recyclerview.widget.RecyclerView
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
+import android.widget.AutoCompleteTextView
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.firenox89.shinobooru.ui.base.BaseActivity
 import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
+import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
+import com.google.android.material.navigation.NavigationView
 import kotlinx.android.synthetic.main.activity_thumbnail.*
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import timber.log.Timber
@@ -45,11 +47,12 @@ class ThumbnailActivity : BaseActivity() {
             setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
         }
 
-        setupDrawer(nav_view, drawer_layout)
 
         //setup the RecyclerView adapter
         val tags = intent.getStringExtra(TAGS_INTENT_KEY) ?: ""
         val board = intent.getStringExtra(BOARD_INTENT_KEY) ?: SettingsActivity.currentBoardURL
+
+        setupDrawer(nav_view, drawer_layout, board)
 
         title = "${board.replace("https://", "")} $tags"
 
@@ -85,14 +88,12 @@ class ThumbnailActivity : BaseActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val inflater: MenuInflater = menuInflater
-        inflater.inflate(R.menu.thumbnail_menu, menu)
+        menuInflater.inflate(R.menu.thumbnail_menu, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-        when (id) {
+        when (item.itemId) {
             android.R.id.home -> {
                 drawer_layout.openDrawer(GravityCompat.START)
                 return true
@@ -117,5 +118,45 @@ class ThumbnailActivity : BaseActivity() {
         val post = data?.getIntExtra("position", -1)
         if (post != null && post != -1)
             recyclerView.scrollToPosition(post)
+    }
+
+
+
+    fun setupDrawer(navigation: NavigationView, drawer: DrawerLayout, board: String) {
+        navigation.inflateHeaderView(R.layout.drawer_header).also { headerView ->
+            headerView.findViewById<AutoCompleteTextView>(R.id.tagSearchAutoCompletion).also { autoCompleteTextView ->
+                val autoCompleteAdapter = TagSearchAutoCompleteAdapter(board)
+
+                autoCompleteTextView.setAdapter(autoCompleteAdapter)
+                autoCompleteTextView.setOnItemClickListener { parent, view, position, id ->
+                    openBoard(board, autoCompleteAdapter.getItem(position))
+                }
+            }
+        }
+
+        dataSource.getBoards().forEach {
+            navigation.menu.add(it)
+        }
+        navigation.setNavigationItemSelectedListener { item ->
+            when (item.title) {
+                "Settings" -> {
+                    drawer.closeDrawers()
+                    navigateToSettings()
+                }
+                "Sync" -> {
+                    drawer.closeDrawers()
+                    navigateToSync()
+                }
+                "Filemanager" -> {
+                    drawer.closeDrawers()
+                    openBoard(Constants.FILE_LOADER_NAME)
+                }
+                else -> {
+                    drawer.closeDrawers()
+                    openBoard(item.title.toString())
+                }
+            }
+            true
+        }
     }
 }
