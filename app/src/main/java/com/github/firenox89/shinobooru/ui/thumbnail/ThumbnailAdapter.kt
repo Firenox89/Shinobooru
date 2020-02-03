@@ -8,22 +8,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.DataSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import com.github.firenox89.shinobooru.repo.PostLoader
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-/**
- * [RecyclerView.Adapter] that provides the post images.
- */
-class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: String) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
-
-    val postLoader = dataSource.getPostLoader(board, tags)
-
-    //emits click events for the clicked images
-    val onImageClickStream = Channel<Int>()
+class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostLoader, private val postClickCallback: (Int) -> Unit) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
     var usePreview = true
 
@@ -41,8 +31,10 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
     /**
      * Subscribe for newly loaded posts.
      */
-    fun subscribeLoader() {
-        GlobalScope.launch {
+    suspend fun subscribeLoader() {
+        Timber.d("Subscribe to $postLoader")
+
+        lifecycleScoop.launch {
             for (update in postLoader.getRangeChangeEventStream()) {
                 Timber.d("post loader update $update")
                 notify(update)
@@ -65,7 +57,7 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
      * Also requests new posts if there a less than 5 left to load.
      */
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        GlobalScope.launch {
+        lifecycleScoop.launch {
             val post = postLoader.getPostAt(position)
             holder.updateImage(createPlaceholderBitmap(post.preview_width, post.preview_height))
 
@@ -83,7 +75,7 @@ class ThumbnailAdapter(dataSource: DataSource, val board: String, val tags: Stri
                             holder.updateImage(bitmap)
                         }
 
-            holder.setListener { onImageClickStream.offer(position) }
+            holder.setListener { postClickCallback.invoke(position) }
         }
     }
 

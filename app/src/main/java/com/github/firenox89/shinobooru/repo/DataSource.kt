@@ -6,7 +6,7 @@ import kotlinx.coroutines.launch
 
 interface DataSource {
     fun getBoards(): List<String>
-    fun getPostLoader(board: String, tags: String?): PostLoader
+    suspend fun getPostLoader(board: String, tags: String?): PostLoader
     fun getAllPosts(): Map<String, List<DownloadedPost>>
 }
 
@@ -23,10 +23,11 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
      * @param tags this loader should add for requests
      * @return a cached or newly created instance of a [PostLoader]
      */
-    override fun getPostLoader(board: String, tags: String?): PostLoader {
+    override suspend fun getPostLoader(board: String, tags: String?): PostLoader {
         var loader = loaderList.find { it.board == board && it.tags == tags }
         if (loader == null) {
             loader = RemotePostLoader(board, tags ?: "", apiWrapper, fileManager)
+            loader.requestNextPosts()
             loaderList.add(loader)
         }
         return loader

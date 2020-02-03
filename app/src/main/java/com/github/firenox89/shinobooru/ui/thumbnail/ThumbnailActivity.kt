@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import androidx.lifecycle.lifecycleScope
 
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.settings.SettingsActivity
@@ -52,28 +53,25 @@ class ThumbnailActivity : BaseActivity() {
 
         title = "${board.replace("https://", "")} $tags"
 
-        Timber.i("start board '$board' tags '$tags'")
-        recyclerAdapter = ThumbnailAdapter(dataSource, board, tags)
-
-        recyclerAdapter.subscribeLoader()
-
-        GlobalScope.launch {
-            //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
-            for (imageID in recyclerAdapter.onImageClickStream) {
+        Timber.i("board '$board' tags '$tags'")
+        lifecycleScope.launch {
+            recyclerAdapter = ThumbnailAdapter(lifecycleScope, dataSource.getPostLoader(board, tags)) { clickedPostId ->
+                //when an image was clicked start a new PostPagerActivity that starts on Post that was clicked
                 Timber.d("Click on post imageID")
                 val intent = Intent(this@ThumbnailActivity, PostPagerActivity::class.java)
                 intent.putExtra(BOARD_INTENT_KEY, board)
                 intent.putExtra(TAGS_INTENT_KEY, tags)
-                intent.putExtra(POSITION_INTENT_KEY, imageID)
+                intent.putExtra(POSITION_INTENT_KEY, clickedPostId)
                 startActivityForResult(intent, 1)
             }
+            recyclerAdapter.subscribeLoader()
+            recyclerView.layoutManager = recyclerLayout
+            Timber.w("Set adapter")
+            recyclerView.adapter = recyclerAdapter
+
+            //update the number of posts per row of the recycler layout
+            updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3").toInt())
         }
-
-        recyclerView.layoutManager = recyclerLayout
-        recyclerView.adapter = recyclerAdapter
-
-        //update the number of posts per row of the recycler layout
-        updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3").toInt())
     }
 
     /**

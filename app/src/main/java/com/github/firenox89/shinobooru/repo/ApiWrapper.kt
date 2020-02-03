@@ -36,7 +36,7 @@ class ApiWrapper(private val appContext: Context) {
                         tags: String = "",
                         limit: Int = 20): Array<Post> =
             //TODO: add board dependent request limits, so that we can stop before the board will stop us
-            buildPostRequest(board, page, tags, limit).httpGet().awaitObject(PostDeserializer())
+            buildPostRequest(board, page, tags, limit).also { Timber.d("request '$it'") }.httpGet().awaitObject(PostDeserializer())
 
 
     suspend fun requestTag(board: String, name: String): String =
@@ -50,10 +50,9 @@ class ApiWrapper(private val appContext: Context) {
     private fun String.prepentHttp(): String = if (this.startsWith("http")) this else "https://$this"
 
     private fun buildPostRequest(board: String, page: Int, tags: String, limit: Int): String =
-            "${board.prepentHttp()}/post.json?" +
-                    "limit=$limit" +
-                    if (page > 1) "&page=$page" else "" +
-                            if (tags != "") "&tags=$tags" else ""
+            "${board.prepentHttp()}/post.json?limit=$limit" +
+                    (if (page > 1) "&page=$page" else "") +
+                    (if (tags != "") "&tags=$tags" else "")
 
 
     class PostDeserializer : ResponseDeserializable<Array<Post>> {

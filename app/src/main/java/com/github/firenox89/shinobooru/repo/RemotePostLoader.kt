@@ -14,6 +14,7 @@ import timber.log.Timber
 import java.io.InputStream
 
 private const val initLoadSize = 40
+
 /**
  * Class in charge of handling post loading.
  * Use [getLoader] to get an instance.
@@ -27,13 +28,6 @@ open class RemotePostLoader(override val board: String,
     private val rangeChangeEventStream = Channel<Pair<Int, Int>>()
 
     private var currentPage = 1
-
-    init {
-        Timber.d("PostLoader('$board','$tags') created ")
-        GlobalScope.launch {
-            loadMorePosts(initLoadSize)
-        }
-    }
 
     /**
      * Get a [Post] for a given index.
@@ -71,8 +65,8 @@ open class RemotePostLoader(override val board: String,
      * @return a list of [Tag]
      */
     override suspend fun getTagList(post: Post): List<Tag> {
-        Timber.i("tags = $tags")
         val tags = post.tags.split(" ").map { Tag(name = it, board = post.getBoard()) }
+        Timber.d("tags '$tags'")
         return tags
 //        emitter.onNext(tags.map { it.loadColor(); it })
     }
@@ -118,13 +112,14 @@ open class RemotePostLoader(override val board: String,
         override fun deserialize(inputStream: InputStream) = BitmapFactory.decodeStream(inputStream)
     }
 
-    override suspend fun requestNextPosts() {
-        if (!postAreLoading) {
+    override suspend fun requestNextPosts() = withContext(Dispatchers.IO) {
+        if (postLoadingJob?.isActive != true) {
             loadMorePosts(20)
         }
     }
 
-    var postAreLoading = false
+    var postLoadingJob: Job? = null
+
     /**
      * Requests new posts from the [ApiWrapper].
      * Results will be filtered according to the current rating settings,
@@ -135,23 +130,22 @@ open class RemotePostLoader(override val board: String,
      * @param quantity of post that should be loaded
      */
     private suspend fun loadMorePosts(quantity: Int) {
-        postAreLoading = true
-        Timber.i("Request $quantity posts from '$board' with tags '$tags'")
-        val posts = apiWrapper.request(board, currentPage++, tags)
-        //TODO: order results before adding
-        val currentSize = this.posts.size
-        //TODO forbid to search with all ratings disabled
-        val rateFilteredPosts = posts.filter { SettingsActivity.filterRating(it.rating) }
-        val postCount = rateFilteredPosts.size
-        Timber.d("$postCount posts left after rating filtering, $quantity needed")
-        this.posts.addAll(rateFilteredPosts)
-        rangeChangeEventStream.send(Pair(currentSize, postCount))
+        postLoadingJob = GlobalScope.launch {
+            Timber.d("Request $quantity posts from '$board' with tags '$tags'")
+            val loadedPosts = apiWrapper.request(board, currentPage++, tags)
+            //TODO: order results before adding
+            val currentSize = posts.size
+            //TODO forbid to search with all ratings disabled
+            val rateFilteredPosts = loadedPosts.filter { SettingsActivity.filterRating(it.rating) }
+            val postCount = rateFilteredPosts.size
+            Timber.d("$postCount posts left after rating filtering, $quantity needed")
+            posts.addAll(rateFilteredPosts)
+            rangeChangeEventStream.offer(Pair(currentSize, postCount))
 
-        // an empty result means that all posts are loaded
-        if (postCount < quantity && posts.isNotEmpty()) {
-            loadMorePosts(quantity - postCount)
-        } else {
-            postAreLoading = false
+            // an empty result means that all posts are loaded
+            if (postCount < quantity && loadedPosts.isNotEmpty()) {
+                loadMorePosts(quantity - postCount)
+            }
         }
     }
 
@@ -196,5 +190,9 @@ open class RemotePostLoader(override val board: String,
         posts.clear()
         currentPage = 1
         loadMorePosts(if (quantity < 0) currentCount else quantity)
+    }
+
+    override fun toString(): String {
+        return "RemotePostLoader(board='$board', tags='$tags', postCount=${posts.size})"
     }
 }

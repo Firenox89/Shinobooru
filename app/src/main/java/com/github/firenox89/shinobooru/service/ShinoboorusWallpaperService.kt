@@ -62,6 +62,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
             }
         }
 
+
         /**
          * Issue a draw call on a visibility change.
          *

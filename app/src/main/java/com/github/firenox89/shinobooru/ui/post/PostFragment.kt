@@ -38,24 +38,26 @@ class PostFragment : androidx.fragment.app.Fragment() {
         val posi = arguments!!.getInt("posi")
 
         val layout = inflater.inflate(R.layout.fragment_post, null)
-        val postLoader = dataSource.getPostLoader(board, tags)
-        val post: Post = postLoader.getPostAt(posi)
 
-        Timber.d("Show post $posi")
         val imageview = layout.findViewById<ImageView>(R.id.postimage)
         val authorText = layout.findViewById<TextView>(R.id.authorText)
         val sourceText = layout.findViewById<TextView>(R.id.sourceText)
         val postText = layout.findViewById<TextView>(R.id.postInfoText)
-
         val tagListView = layout.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tagList)
-        tagListView.adapter = TagListAdapter(postLoader, post)
-        tagListView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(context, 2)
-
-        authorText.text = String.format(resources.getText(R.string.author_s).toString(), post.author)
-        sourceText.text = String.format(resources.getText(R.string.source_s).toString(), post.source)
-        postText.text = String.format(resources.getText(R.string.board_s_id_s).toString(), post.getBoard(), post.id)
 
         lifecycleScope.launch {
+            val postLoader = dataSource.getPostLoader(board, tags)
+            val post: Post = postLoader.getPostAt(posi)
+
+            Timber.d("Show post $posi")
+
+            tagListView.adapter = TagListAdapter(postLoader, post)
+            tagListView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(context, 2)
+
+            authorText.text = String.format(resources.getText(R.string.author_s).toString(), post.author)
+            sourceText.text = String.format(resources.getText(R.string.source_s).toString(), post.source)
+            postText.text = String.format(resources.getText(R.string.board_s_id_s).toString(), post.getBoard(), post.id)
+
             //display preview image first for faster response
             val loadPreviewJob = launch {
                 withContext(Dispatchers.Main) { imageview.setImageBitmap(postLoader.loadPreview(post)) }
