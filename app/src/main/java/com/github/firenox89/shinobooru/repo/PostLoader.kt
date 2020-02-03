@@ -17,5 +17,5 @@ interface PostLoader {
     suspend fun requestNextPosts()
     suspend fun loadPreview(post: Post): Bitmap
     suspend fun loadSample(post: Post): Bitmap
-    suspend fun onRefresh(quantity: Int)
+    suspend fun onRefresh()
 }

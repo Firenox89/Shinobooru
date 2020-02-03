@@ -79,8 +79,7 @@ class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLo
         return posts.indexOf(post)
     }
 
-    /** Does nothing */
-    override suspend fun onRefresh(quantity: Int) {
+    override suspend fun onRefresh() {
         posts = fileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
     }
 

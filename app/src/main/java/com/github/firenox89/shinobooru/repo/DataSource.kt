@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 interface DataSource {
     fun getBoards(): List<String>
     fun getAllPosts(): Map<String, List<DownloadedPost>>
+    fun onRatingChanged()
     suspend fun getPostLoader(board: String, tags: String?): PostLoader
     suspend fun tagSearch(board: String, name: String): List<Tag>
     suspend fun loadTagColors(tags: List<Tag>): List<Tag>
@@ -63,10 +64,9 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
     /**
      * Reloads the posts for all stored loader instances
      */
-    fun ratingChanged() {
-        //TODO: set a flag for currently not used loader instead of reloading them all
+    override fun onRatingChanged() {
         GlobalScope.launch {
-            loaderList.forEach { it.onRefresh(-1) }
+            loaderList.forEach { it.onRefresh() }
         }
     }
 

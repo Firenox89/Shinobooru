@@ -30,7 +30,7 @@ class ThumbnailActivity : BaseActivity() {
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
-    private lateinit var recyclerAdapter: ThumbnailAdapter
+    private var recyclerAdapter: ThumbnailAdapter? = null
 
     private val sharedPrefs: SharedPreferences by inject()
     private val recyclerLayout = androidx.recyclerview.widget.StaggeredGridLayoutManager(4, androidx.recyclerview.widget.StaggeredGridLayoutManager.VERTICAL)
@@ -40,8 +40,8 @@ class ThumbnailActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_thumbnail)
         setSupportActionBar(findViewById(R.id.my_toolbar))
-        val actionbar: ActionBar? = supportActionBar
-        actionbar?.apply {
+
+        supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
         }
@@ -52,6 +52,12 @@ class ThumbnailActivity : BaseActivity() {
 
         setupDrawer(nav_view, drawer_layout, board)
 
+        swipeRefreshLayout.setOnRefreshListener {
+            lifecycleScope.launch {
+                dataSource.getPostLoader(board, tags).onRefresh()
+                swipeRefreshLayout.isRefreshing = false
+            }
+        }
         title = "${board.replace("https://", "")} $tags"
 
         Timber.i("board '$board' tags '$tags'")
@@ -65,14 +71,21 @@ class ThumbnailActivity : BaseActivity() {
                 intent.putExtra(POSITION_INTENT_KEY, clickedPostId)
                 startActivityForResult(intent, 1)
             }
-            recyclerAdapter.subscribeLoader()
+            recyclerAdapter?.subscribeLoader()
             recyclerView.layoutManager = recyclerLayout
             Timber.w("Set adapter")
             recyclerView.adapter = recyclerAdapter
 
             //update the number of posts per row of the recycler layout
-            updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3").toInt())
+            updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3")?.toInt() ?: 3)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        //update the number of posts per row of the recycler layout
+        updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3")?.toInt() ?: 3)
     }
 
     /**
@@ -82,7 +95,7 @@ class ThumbnailActivity : BaseActivity() {
      */
     private fun updatePostPerRow(value: Int) {
         recyclerLayout.spanCount = value
-        recyclerAdapter.usePreview = value != 1
+        recyclerAdapter?.usePreview = value != 1
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

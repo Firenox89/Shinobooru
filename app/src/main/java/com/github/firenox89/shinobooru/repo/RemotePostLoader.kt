@@ -171,12 +171,12 @@ open class RemotePostLoader(override val board: String,
      *
      * @param quantity of posts to load, default value is -1
      */
-    override suspend fun onRefresh(quantity: Int) {
+    override suspend fun onRefresh() {
         //TODO: insert new images on top instead of reload everything
         val currentCount = getCount()
         posts.clear()
         currentPage = 1
-        loadMorePosts(if (quantity < 0) currentCount else quantity)
+        loadMorePosts(if (currentCount > 20) currentCount else 20)
     }
 
     override fun toString(): String {

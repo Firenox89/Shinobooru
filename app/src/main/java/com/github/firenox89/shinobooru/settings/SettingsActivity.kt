@@ -10,10 +10,8 @@ import android.os.Bundle
 import android.preference.Preference
 import android.preference.PreferenceActivity
 import android.preference.PreferenceFragment
-import android.preference.PreferenceManager
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.app.Shinobooru
-import org.koin.android.ext.android.inject
+import com.github.firenox89.shinobooru.repo.DataSource
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 
@@ -69,16 +67,16 @@ class SettingsActivity : PreferenceActivity() {
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class RatingPreferenceFragment : PreferenceFragment() {
+    class RatingPreferenceFragment : PreferenceFragment(), KoinComponent {
+        val dataSource: DataSource by getKoin().inject()
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_rating)
 
-            //todo
-//            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.ratingChanged(); true }
-//            findPreference("rating_safe").onPreferenceChangeListener = changeListener
-//            findPreference("rating_questionable").onPreferenceChangeListener = changeListener
-//            findPreference("rating_explicit").onPreferenceChangeListener = changeListener
+            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> dataSource.onRatingChanged(); true }
+            findPreference("rating_safe").onPreferenceChangeListener = changeListener
+            findPreference("rating_questionable").onPreferenceChangeListener = changeListener
+            findPreference("rating_explicit").onPreferenceChangeListener = changeListener
         }
     }
 
@@ -92,11 +90,6 @@ class SettingsActivity : PreferenceActivity() {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_ui)
             setHasOptionsMenu(true)
-
-//            val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
-//                updateThumbnail.onNext(any.toString().toInt()); true
-//            }
-//            findPreference("post_per_row_list").onPreferenceChangeListener = changeListener
         }
     }
 
