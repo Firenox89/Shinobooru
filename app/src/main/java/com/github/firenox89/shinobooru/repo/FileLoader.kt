@@ -50,10 +50,6 @@ class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLo
         return loadSubsampledImage((post as DownloadedPost).file, size.x, size.y)
     }
 
-    override suspend fun getTagList(post: Post): List<Tag> =
-            post.tags.split(" ").map { Tag(it, post.getBoard()) }
-
-
     override suspend fun getRangeChangeEventStream(): Channel<Pair<Int, Int>> =
         Channel<Pair<Int, Int>>().apply{ send(Pair(0, posts.size))}
 

@@ -10,8 +10,6 @@ import android.widget.TextView
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -45,11 +43,9 @@ class TagSearchAutoCompleteAdapter(val board: String) : BaseAdapter(), Filterabl
                         //tags are always lower case
                         val name = constraint.toString().toLowerCase().trim()
                         //request tags
-                        val jsonResponse = dataSource.requestTag(board, name)
-                        //and parse the result
-                        val tags = Gson().fromJson<Array<Tag>>(jsonResponse, Array<Tag>::class.java)
+                        val tags = dataSource.tagSearch(board, name)
 
-                        Timber.d("Found tags ${Arrays.toString(tags)}")
+                        Timber.d("Found tags $tags")
                         //TODO: could be settable
                         val numberOfResults = 10
                         val sortedTagList = mutableListOf<Tag>()
@@ -104,7 +100,7 @@ class TagSearchAutoCompleteAdapter(val board: String) : BaseAdapter(), Filterabl
             text = tagList[position].name
             gravity = Gravity.CENTER
             textSize = 20F
-//                textColor = tagList[position].getTextColor()
+            this.setTextColor(tagList[position].getTextColor())
 //                backgroundColor = Color.BLACK
         }
     }

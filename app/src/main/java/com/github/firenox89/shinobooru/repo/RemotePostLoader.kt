@@ -59,19 +59,6 @@ open class RemotePostLoader(override val board: String,
     }
 
     /**
-     * Returns a list of detailed tags.
-     * Must not be call from the ui thread since it loads the tag details via the [ApiWrapper].
-     *
-     * @return a list of [Tag]
-     */
-    override suspend fun getTagList(post: Post): List<Tag> {
-        val tags = post.tags.split(" ").map { Tag(name = it, board = post.getBoard()) }
-        Timber.d("tags '$tags'")
-        return tags
-//        emitter.onNext(tags.map { it.loadColor(); it })
-    }
-
-    /**
      * Tries to load the preview image from the cache, if not found load it from the board and cache it.
      * If the post was already downloaded a sub sampled version gets loaded.
      *

@@ -33,7 +33,6 @@ class ThumbnailActivity : BaseActivity() {
     private lateinit var recyclerAdapter: ThumbnailAdapter
 
     private val sharedPrefs: SharedPreferences by inject()
-
     private val recyclerLayout = androidx.recyclerview.widget.StaggeredGridLayoutManager(4, androidx.recyclerview.widget.StaggeredGridLayoutManager.VERTICAL)
 
 
@@ -46,7 +45,6 @@ class ThumbnailActivity : BaseActivity() {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
         }
-
 
         //setup the RecyclerView adapter
         val tags = intent.getStringExtra(TAGS_INTENT_KEY) ?: ""
@@ -82,7 +80,7 @@ class ThumbnailActivity : BaseActivity() {
      * If the given value is 1 the [RecyclerView] will display sample instead of preview images.
      * @param value that should be used as spanCount
      */
-    fun updatePostPerRow(value: Int) {
+    private fun updatePostPerRow(value: Int) {
         recyclerLayout.spanCount = value
         recyclerAdapter.usePreview = value != 1
     }
@@ -122,7 +120,7 @@ class ThumbnailActivity : BaseActivity() {
 
 
 
-    fun setupDrawer(navigation: NavigationView, drawer: DrawerLayout, board: String) {
+    private fun setupDrawer(navigation: NavigationView, drawer: DrawerLayout, board: String) {
         navigation.inflateHeaderView(R.layout.drawer_header).also { headerView ->
             headerView.findViewById<AutoCompleteTextView>(R.id.tagSearchAutoCompletion).also { autoCompleteTextView ->
                 val autoCompleteAdapter = TagSearchAutoCompleteAdapter(board)

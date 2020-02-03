@@ -1,5 +1,6 @@
 package com.github.firenox89.shinobooru.repo.model
 
+import timber.log.Timber
 import java.util.regex.Pattern
 
 /**
@@ -53,6 +54,7 @@ open class Post(
         get() = "${if (field.startsWith("//")) "https:" else ""}$field"
     var jpeg_url: String = ""
         get() = "${if (field.startsWith("//")) "https:" else ""}$field"
+
     companion object {
         val boardPattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
     }
@@ -83,5 +85,13 @@ open class Post(
                 " firstName='$firstName', lastName='$lastName')"
     }
 
-    override fun equals(other: Any?): Boolean = if (other is Post) other.id == id && other.getBoard() == getBoard() else false
+
+    fun getTagList(): List<Tag> =
+            tags.split(" ").map { Tag(name = it, board = getBoard()) }
+
+    override fun equals(other: Any?): Boolean =
+            if (other is Post)
+                other.id == id && other.getBoard() == getBoard()
+            else
+                false
 }

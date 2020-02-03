@@ -13,7 +13,6 @@ interface PostLoader {
     fun getCount(): Int
     fun getIndexOf(post: Post): Int
     fun getPostAt(index: Int): Post
-    suspend fun getTagList(post: Post): List<Tag>
     suspend fun getRangeChangeEventStream(): Channel<Pair<Int, Int>>
     suspend fun requestNextPosts()
     suspend fun loadPreview(post: Post): Bitmap

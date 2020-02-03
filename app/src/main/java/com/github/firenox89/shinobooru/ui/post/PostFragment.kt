@@ -19,11 +19,10 @@ import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 import timber.log.Timber
 import kotlin.math.roundToInt
 
@@ -37,7 +36,7 @@ class PostFragment : androidx.fragment.app.Fragment() {
         val tags = arguments!!.getString("tags")
         val posi = arguments!!.getInt("posi")
 
-        val layout = inflater.inflate(R.layout.fragment_post, null)
+        val layout = inflater.inflate(R.layout.fragment_post, container, false)
 
         val imageview = layout.findViewById<ImageView>(R.id.postimage)
         val authorText = layout.findViewById<TextView>(R.id.authorText)
@@ -51,7 +50,7 @@ class PostFragment : androidx.fragment.app.Fragment() {
 
             Timber.d("Show post $posi")
 
-            tagListView.adapter = TagListAdapter(postLoader, post)
+            tagListView.adapter = TagListAdapter(lifecycleScope, post)
             tagListView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(context, 2)
 
             authorText.text = String.format(resources.getText(R.string.author_s).toString(), post.author)
@@ -77,18 +76,21 @@ class PostFragment : androidx.fragment.app.Fragment() {
      *
      * @param post to get the tags for
      */
-    class TagListAdapter(postLoader: PostLoader, val post: Post) : androidx.recyclerview.widget.RecyclerView.Adapter<TagListAdapter.TagViewHolder>() {
-        private var tagList = mutableListOf<Tag>()
+    class TagListAdapter(lifecycleScoop: CoroutineScope, val post: Post) : androidx.recyclerview.widget.RecyclerView.Adapter<TagListAdapter.TagViewHolder>(), KoinComponent {
+        private var tagList = emptyList<Tag>()
+
+        val dataSource: DataSource by inject()
 
         /**
          * Asynchronously loads the tag information.
          */
         init {
-            GlobalScope.launch {
-                postLoader.getTagList(post)
-                        .let { tags ->
-                            tagList.clear()
-                            tagList.addAll(tags)
+            tagList = post.getTagList()
+
+            lifecycleScoop.launch {
+                dataSource.loadTagColors(tagList)
+                        .run {
+                            tagList = this
                             notifyDataSetChanged()
                         }
             }

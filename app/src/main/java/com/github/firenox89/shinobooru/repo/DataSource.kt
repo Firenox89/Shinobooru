@@ -1,6 +1,10 @@
 package com.github.firenox89.shinobooru.repo
 
+import com.github.firenox89.shinobooru.repo.db.DBTag
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.Tag
+import com.google.gson.Gson
+import io.realm.Realm
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -8,7 +12,8 @@ interface DataSource {
     fun getBoards(): List<String>
     fun getAllPosts(): Map<String, List<DownloadedPost>>
     suspend fun getPostLoader(board: String, tags: String?): PostLoader
-    suspend fun requestTag(board: String, name: String): String
+    suspend fun tagSearch(board: String, name: String): List<Tag>
+    suspend fun loadTagColors(tags: List<Tag>): List<Tag>
 }
 
 class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager, fileLoader: FileLoader) : DataSource {
@@ -38,9 +43,22 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
 
     override fun getAllPosts(): Map<String, List<DownloadedPost>> = fileManager.boards
 
-    override suspend fun requestTag(board: String, name: String): String {
-        return apiWrapper.requestTag(board, name)
+    override suspend fun tagSearch(board: String, name: String): List<Tag> {
+        return Gson()
+                .fromJson<Array<Tag>>(apiWrapper.requestTag(board, name), Array<Tag>::class.java)
+                .toList()
+                .also { saveTagsInDB(it, board) }
     }
+
+    override suspend fun loadTagColors(tags: List<Tag>): List<Tag> =
+            tags.map { tag ->
+                loadTagFromDB(tag)?.toTag()
+                        ?: loadTagFromAPI(tag)
+                        ?: tag
+            }
+
+    private suspend fun loadTagFromAPI(tag: Tag): Tag? =
+            tagSearch(tag.board, tag.name).firstOrNull { it.name == tag.name }
 
     /**
      * Reloads the posts for all stored loader instances
@@ -51,4 +69,40 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
             loaderList.forEach { it.onRefresh(-1) }
         }
     }
+
+    private fun saveTagsInDB(tags: List<Tag>, board: String) {
+        tags.forEach { tag ->
+            if (Realm.getDefaultInstance()
+                            .where(DBTag::class.java)
+                            .equalTo("id", tag.id)
+                            .equalTo("board", board)
+                            .findFirst() == null) {
+
+                Realm.getDefaultInstance().executeTransaction { realm ->
+                    realm.createObject(DBTag::class.java).apply {
+                        this.id = tag.id
+                        this.board = board
+                        this.name = tag.name
+                        this.type = tag.type
+                    }
+                }
+            }
+        }
+    }
+
+    private fun DBTag.toTag(): Tag =
+            Tag(
+                    id = this.id,
+                    board = this.board,
+                    name = this.name,
+                    type = this.type
+            )
+
+    private fun loadTagFromDB(tag: Tag): DBTag? =
+            Realm.getDefaultInstance()
+                    .where(DBTag::class.java)
+                    .equalTo("id", tag.id)
+                    .and()
+                    .equalTo("board", tag.board)
+                    .findFirst()
 }
