@@ -1,101 +1,33 @@
 package com.github.firenox89.shinobooru.ui
 
-import android.app.Activity
-import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
-import android.view.Gravity
-import android.widget.LinearLayout
-import android.widget.TableLayout
-import android.widget.TextView
-import com.github.firenox89.shinobooru.cloud.GoogleDrive
-import com.github.firenox89.shinobooru.model.DownloadedPost
-import com.github.firenox89.shinobooru.utility.Constants
-import com.github.firenox89.shinobooru.utility.FileManager
-import org.jetbrains.anko.*
-import org.jetbrains.anko.constraint.layout.constraintLayout
-import org.jetbrains.anko.sdk25.listeners.onClick
+import androidx.appcompat.app.ActionBar
+import com.github.firenox89.shinobooru.R
+import com.github.firenox89.shinobooru.cloud.CloudSync
+import com.github.firenox89.shinobooru.ui.base.BaseActivity
+import kotlinx.android.synthetic.main.activity_sync.*
+import org.koin.android.ext.android.inject
 
 /**
  * Created by firenox on 1/21/17.
  */
 
-class SyncActivity : Activity() {
-    val TAG = "SyncActivity"
-    var drive = GoogleDrive(this)
-    lateinit var table: TableLayout
-
-    fun updateTable() {
-        Log.i(TAG, "updateTable")
-        runOnUiThread {
-            try {
-            cleanTable(table)
-            drive.boards.forEach {
-                table.tableRow {
-                    textView(it.first)
-                    textView(it.second.count().toString()) {
-                        gravity = Gravity.CENTER
-                    }
-                    textView(drive.getPostOnlyOnDrive(it.first, it.second).count().toString()) {
-                        gravity = Gravity.CENTER
-                    }
-                    textView(drive.getPostOnlyOnDevice(it.first, it.second)?.count().toString()) {
-                        gravity = Gravity.CENTER
-                    }
-                }
-            }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    private fun cleanTable(table: TableLayout) {
-        val childCount = table.childCount
-
-        // Remove all rows except the first one
-        if (childCount > 1) {
-            table.removeViews(1, childCount - 1)
-        }
-    }
+class SyncActivity : BaseActivity() {
+    private val cloud: CloudSync by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //TODO check permissions
         super.onCreate(savedInstanceState)
-
-        constraintLayout(){
-
+        setContentView(R.layout.activity_sync)
+        setSupportActionBar(findViewById(R.id.toolbar_sync))
+        val actionbar: ActionBar? = supportActionBar
+        actionbar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
         }
-        verticalLayout {
-            gravity = Gravity.CENTER
-            table = tableLayout {
-                tableRow {
-                    textView("On\n Drive")
-                    textView("Drive\n only")
-                    textView("Device\n only")
-                }
-            }
-            button("Sync") {
-                onClick {
-                    doAsync(Throwable::printStackTrace) {
-                        drive.syncDevice2Drive()
-                    }
-                }
-            }
-        }.applyRecursively { view ->
-            when (view) {
-                is TextView -> {
-                    view.padding = dip(10)
-                    view.gravity = Gravity.CENTER
-                    view.textSize = Constants.FONT_SIZE
-                }
-                is LinearLayout -> {
-                    view.gravity = Gravity.CENTER
-                }
-            }
-        }
-        drive.fetchData {
-            updateTable()
+
+        dataSource.getAllPosts().forEach { board, posts ->
+
         }
     }
 }

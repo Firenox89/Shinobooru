@@ -3,18 +3,19 @@ package com.github.firenox89.shinobooru.settings
 
 import android.annotation.TargetApi
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
-import android.preference.*
+import android.preference.Preference
+import android.preference.PreferenceActivity
+import android.preference.PreferenceFragment
+import android.preference.PreferenceManager
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.app.Shinobooru
-import com.github.firenox89.shinobooru.utility.PostLoader
-import com.github.salomonbrys.kodein.KodeinInjected
-import com.github.salomonbrys.kodein.KodeinInjector
-import com.github.salomonbrys.kodein.android.appKodein
-import com.github.salomonbrys.kodein.instance
-import io.reactivex.subjects.PublishSubject
+import org.koin.android.ext.android.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 /**
  * A [PreferenceActivity] that presents a set of application settings. On
@@ -73,10 +74,11 @@ class SettingsActivity : PreferenceActivity() {
             super.onCreate(savedInstanceState)
             addPreferencesFromResource(R.xml.pref_rating)
 
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.ratingChanged(); true }
-            findPreference("rating_safe").onPreferenceChangeListener = changeListener
-            findPreference("rating_questionable").onPreferenceChangeListener = changeListener
-            findPreference("rating_explicit").onPreferenceChangeListener = changeListener
+            //todo
+//            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> PostLoader.ratingChanged(); true }
+//            findPreference("rating_safe").onPreferenceChangeListener = changeListener
+//            findPreference("rating_questionable").onPreferenceChangeListener = changeListener
+//            findPreference("rating_explicit").onPreferenceChangeListener = changeListener
         }
     }
 
@@ -85,25 +87,20 @@ class SettingsActivity : PreferenceActivity() {
      * activity is showing a two-pane settings UI.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class UIPreferenceFragment : PreferenceFragment(), KodeinInjected {
-
-        override val injector = KodeinInjector()
-        val updateThumbnail : PublishSubject<Int> by instance("thumbnailUpdates")
-
+    class UIPreferenceFragment : PreferenceFragment() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            inject(appKodein())
             addPreferencesFromResource(R.xml.pref_ui)
             setHasOptionsMenu(true)
 
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
-                updateThumbnail.onNext(any.toString().toInt()); true
-            }
-            findPreference("post_per_row_list").onPreferenceChangeListener = changeListener
+//            val changeListener = Preference.OnPreferenceChangeListener { preference, any ->
+//                updateThumbnail.onNext(any.toString().toInt()); true
+//            }
+//            findPreference("post_per_row_list").onPreferenceChangeListener = changeListener
         }
     }
 
-    companion object {
+    companion object: KoinComponent {
         //boards
         var yandereURL = "https://yande.re"
         var konachanURL = "http://konachan.com"
@@ -112,14 +109,14 @@ class SettingsActivity : PreferenceActivity() {
 
         val imageBoards = mutableListOf(yandereURL, konachanURL)
 
-        val pref = PreferenceManager.getDefaultSharedPreferences(Shinobooru.appContext)
+        val pref: SharedPreferences by inject()
 
         fun filterRating(rating: String): Boolean {
-            if (rating.equals("s"))
+            if (rating == "s")
                 return pref.getBoolean("rating_safe", true)
-            if (rating.equals("q"))
+            if (rating == "q")
                 return pref.getBoolean("rating_questionable", false)
-            if (rating.equals("e"))
+            if (rating == "e")
                 return pref.getBoolean("rating_explicit", false)
             throw IllegalArgumentException("Unknown rating: $rating")
         }

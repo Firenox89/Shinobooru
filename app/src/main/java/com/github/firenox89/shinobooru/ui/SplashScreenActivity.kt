@@ -3,17 +3,14 @@ package com.github.firenox89.shinobooru.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.os.Build
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.Gravity
-import com.github.firenox89.shinobooru.R
-import org.jetbrains.anko.*
-import android.graphics.*
 import android.widget.TextView
+import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
+import timber.log.Timber
 
 
 /**
@@ -25,33 +22,8 @@ class SplashScreenActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_splashscreen)
 
-        verticalLayout {
-            gravity = Gravity.CENTER
-            imageView {
-                val roundImage = Bitmap.createBitmap(1024, 1024,  Bitmap.Config.ARGB_8888)
-                val avatar = BitmapFactory.decodeResource(resources, R.drawable.avatar)
-                val canvas = Canvas(roundImage)
-                val shader: BitmapShader = BitmapShader(avatar, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-
-                val paint = Paint()
-                paint.isAntiAlias = true
-                paint.shader = shader
-
-                val rect = RectF(0.0F, 0.0F, 1024F, 1024F)
-
-                // rect contains the bounds of the shape
-                // radius is the radius in pixels of the rounded corners
-                // paint contains the shader that will texture the shape
-                canvas.drawRoundRect(rect, 64F, 64F, paint)
-                imageBitmap = roundImage
-
-            }
-            loadingText = textView("Loading...") {
-                gravity = Gravity.CENTER
-                textSize = 24F
-            }
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkPermissions()) {
                 //no need to initialize without permissions
@@ -83,12 +55,12 @@ class SplashScreenActivity : Activity() {
         grantResults?.forEach {
             if (it == PackageManager.PERMISSION_DENIED) {
                 allGranted = false
-                Log.e(TAG, "File Permission denied")
+                Timber.e("File Permission denied")
             }
         }
         //TODO show something when permission was denied
         if (allGranted) {
-            Log.d(TAG, "File Permission granted")
+            Timber.d("File Permission granted")
             startThumbnailActivity()
             finish()
         } else {

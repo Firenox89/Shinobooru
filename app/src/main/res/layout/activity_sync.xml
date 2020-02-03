@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawer_sync"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:theme="@style/ThemeOverlay.AppCompat.Dark"
+                                            tools:context=".ui.thumbnail.ThumbnailActivity">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar_sync"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="#212121"
+                android:elevation="4dp"
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"/>
+
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipe_sync"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/richtigesGrau">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <LinearLayout
+                            android:id="@+id/google_drive_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/textView3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Google Drive"/>
+
+                            <Button
+                                android:id="@+id/download"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Download"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/local_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/textView4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Local"/>
+
+                            <Button
+                                android:id="@+id/upload"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Upload"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        </LinearLayout>
+
+        <!-- Container for contents of drawer - use NavigationView to make configuration easier -->
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/nav_sync"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:fitsSystemWindows="true"
+            app:menu="@menu/drawer_view"/>
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
