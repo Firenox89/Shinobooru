@@ -1,4 +1,4 @@
-package com.github.firenox89.shinobooru.app
+package com.github.firenox89.shinobooru
 
 import android.app.Application
 import com.github.firenox89.shinobooru.di.appModules

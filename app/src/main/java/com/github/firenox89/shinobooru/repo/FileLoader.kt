@@ -34,12 +34,8 @@ class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLo
 
     private var posts = fileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
 
-    override fun downloadPost(currentItem: Int) {
-        throw IllegalStateException("FileLoader does not download")
-    }
-
-    override suspend fun loadPreview(post: Post): Bitmap = loadSubsampledImage((post as DownloadedPost).file, 250, 400)
-
+    override suspend fun loadPreview(post: Post): Bitmap =
+            loadSubsampledImage((post as DownloadedPost).file, 250, 400)
 
     override suspend fun loadSample(post: Post): Bitmap {
         val wm = appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager

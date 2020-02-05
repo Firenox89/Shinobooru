@@ -2,19 +2,28 @@ package com.github.firenox89.shinobooru.repo
 
 import com.github.firenox89.shinobooru.repo.db.DBTag
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
-import com.google.gson.Gson
+import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.result.Result
+import com.github.kittinunf.result.flatMap
+import com.github.kittinunf.result.map
 import io.realm.Realm
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
+import java.lang.Exception
 
 interface DataSource {
     fun getBoards(): List<String>
     fun getAllPosts(): Map<String, List<DownloadedPost>>
     fun onRatingChanged()
     suspend fun getPostLoader(board: String, tags: String?): PostLoader
-    suspend fun tagSearch(board: String, name: String): List<Tag>
+    suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError>
     suspend fun loadTagColors(tags: List<Tag>): List<Tag>
+    suspend fun downloadPost(post: Post): Result<Unit, Exception>
 }
 
 class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager, fileLoader: FileLoader) : DataSource {
@@ -30,36 +39,48 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
      * @param tags this loader should add for requests
      * @return a cached or newly created instance of a [PostLoader]
      */
-    override suspend fun getPostLoader(board: String, tags: String?): PostLoader {
-        var loader = loaderList.find { it.board == board && it.tags == tags }
-        if (loader == null) {
-            loader = RemotePostLoader(board, tags ?: "", apiWrapper, fileManager)
-            loader.requestNextPosts()
-            loaderList.add(loader)
-        }
-        return loader
+    override suspend fun getPostLoader(board: String, tags: String?): PostLoader = withContext(Dispatchers.IO) {
+        loaderList.find { it.board == board && it.tags == tags }
+                ?: (RemotePostLoader(board, tags ?: "", apiWrapper, fileManager).apply {
+                    requestNextPosts()
+                    loaderList.add(this)
+                })
     }
 
     override fun getBoards(): List<String> = tmpBoards
 
     override fun getAllPosts(): Map<String, List<DownloadedPost>> = fileManager.boards
 
-    override suspend fun tagSearch(board: String, name: String): List<Tag> {
-        return Gson()
-                .fromJson<Array<Tag>>(apiWrapper.requestTag(board, name), Array<Tag>::class.java)
-                .toList()
-                .also { saveTagsInDB(it, board) }
-    }
+    override suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError> =
+            apiWrapper.requestTag(board, name).map { tags ->
+                saveTagsInDB(tags, board)
+                tags
+            }
+
 
     override suspend fun loadTagColors(tags: List<Tag>): List<Tag> =
             tags.map { tag ->
                 loadTagFromDB(tag)?.toTag()
-                        ?: loadTagFromAPI(tag)
+                        ?: loadTagFromAPI(tag).get()
                         ?: tag
             }
 
-    private suspend fun loadTagFromAPI(tag: Tag): Tag? =
-            tagSearch(tag.board, tag.name).firstOrNull { it.name == tag.name }
+    private suspend fun loadTagFromAPI(tag: Tag): Result<Tag, Exception> =
+            tagSearch(tag.board, tag.name).map { list ->
+                list.first { it.name == tag.name }
+            }
+
+    override suspend fun downloadPost(post: Post): Result<Unit, Exception> {
+        Timber.i("Download Post $post")
+
+        return fileManager.getDownloadDestinationFor(post).flatMap { destination ->
+            apiWrapper.downloadPost(post, destination).also {
+                if (it is Result.Success) {
+                    fileManager.addDownloadedPost(post, destination)
+                }
+            }
+        }
+    }
 
     /**
      * Reloads the posts for all stored loader instances

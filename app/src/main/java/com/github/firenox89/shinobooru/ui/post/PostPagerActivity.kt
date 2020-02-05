@@ -16,9 +16,11 @@ import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
 import kotlinx.android.synthetic.main.activity_post_pager.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
-
 
 /**
  * Creates a [VerticalViewPager] that starts on a given [Post] and load new posts from the given [PostLoader]
@@ -67,17 +69,21 @@ class PostPagerActivity : BaseActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val inflater: MenuInflater = menuInflater
-        inflater.inflate(R.menu.download, menu)
+        menuInflater.inflate(R.menu.download, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-        when (id) {
+        when (item.itemId) {
             R.id.action_download -> {
-                postLoader.downloadPost(postviewpager.currentItem)
                 Toast.makeText(this, "Downloading...", Toast.LENGTH_LONG).show()
+                GlobalScope.launch {
+                    dataSource.downloadPost(postLoader.getPostAt(postviewpager.currentItem)).fold({
+                        showToast("Download successful")
+                    }, {
+                        showToast("Download failed ${it.message}")
+                    })
+                }
                 return true
             }
             android.R.id.home -> {
@@ -86,5 +92,9 @@ class PostPagerActivity : BaseActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private suspend fun showToast(msg: String) = withContext(Dispatchers.Main) {
+        Toast.makeText(this@PostPagerActivity, msg, Toast.LENGTH_LONG).show()
     }
 }

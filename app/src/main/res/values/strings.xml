@@ -40,6 +40,6 @@
     <string name="loading">Loading…</string>
     <string name="author_s">Author %s</string>
     <string name="source_s">Source %s</string>
-    <string name="board_s_id_s">Board %s ID %s</string>
+    <string name="board_s_id_s">Board %1$s ID %2$s</string>
     <string name="tags">Tags</string>
 </resources>

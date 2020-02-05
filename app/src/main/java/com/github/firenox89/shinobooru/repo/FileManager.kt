@@ -3,15 +3,21 @@ package com.github.firenox89.shinobooru.repo
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Environment
-import com.github.firenox89.shinobooru.app.Shinobooru
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost.Companion.postFromName
 import com.github.firenox89.shinobooru.repo.model.Post
-import com.github.kittinunf.fuel.httpDownload
+import com.github.kittinunf.result.Result
+import com.github.kittinunf.result.flatMap
+import com.github.kittinunf.result.map
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import java.util.regex.Pattern
+import java.lang.Exception
+
+sealed class FileManagerExecptions {
+    class PostAlreadyDownloaded : Exception()
+}
 
 /**
  * In charge of handling file system tasks.
@@ -31,11 +37,13 @@ class FileManager(val appContext: Context) {
     //TODO into the settings with you
     private val maxCachedSize = 1000
 
-    @Volatile private var checkingCache = false
+    @Volatile
+    private var checkingCache = false
 
     /** Initialize the cached and downloaded post lists. */
     init {
-        checkExternalStorage()
+        //TODO don't throw this from the constructor
+        isExternalStorageMounted().component2()?.let { throw it }
         shinobooruImageDir.mkdirs()
         shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadDownloadedPostListFromFile(it)) }
 
@@ -52,71 +60,34 @@ class FileManager(val appContext: Context) {
     private fun loadDownloadedPostListFromFile(dir: File): MutableList<DownloadedPost> {
         val postList = mutableListOf<DownloadedPost>()
 
-        dir.listFiles().forEach { postList.add(postFromName(it.name, it)) }
+        dir.listFiles().forEach { postList.add(postFromName(it)) }
         return postList
     }
 
-    /**
-     * Load a post from a file by parsing the file name to get the post id
-     */
-    fun postFromName(postFileName: String, postFile: File): DownloadedPost {
-        //TODO: handle non posts
-        //compatibility with mbooru saved posts
-        val idIndex = if (postFileName.split(" ")[1] == "-") 2 else 1
+    fun getDownloadDestinationFor(post: Post): Result<File, Exception> =
+            isExternalStorageMounted().map {
+                val url = post.file_url
+                val board = post.getBoard()
 
-        val id = postFileName.split(" ")[idIndex].toLong()
-        val source = postFileName.split(" ")[0].toLowerCase()
+                if (boards[board]?.find { it.id == post.id } != null) {
+                    throw FileManagerExecptions.PostAlreadyDownloaded()
+                } else {
+                    val dataType = url.split(".").last()
+                    val fileName = "$board ${post.id} ${post.tags}.$dataType"
+                    val boardSubDir = File(shinobooruImageDir, board)
 
-        return DownloadedPost(id = id, file = postFile, boardName = source)
-    }
+                    boardSubDir.mkdirs()
 
-    /**
-     * Asynchronously downloads a given post from a given url into [shinobooruImageDir].
-     * The name of the file will be composed like:
-     * '<board>/<board> <postId> <tags>.<dataType>'
-     *
-     * @param url to load from
-     * @param post to get the id and tags from
-     */
-    fun downloadFileToStorage(url: String, post: Post): String? {
-        checkExternalStorage()
-        val pattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z.]*)")
-        val matcher = pattern.matcher(url)
-        matcher.find()
-        val board = matcher.group(1)
+                    File(boardSubDir, fileName)
+                }
+            }
 
-        if (boards[board]?.find { it.id == post.id } != null) {
-            return "Post already exists"
-        }
-
-        val dataType = url.split(".").last()
-        val fileName = "$board ${post.id} ${post.tags}.$dataType"
-        val boardSubDir = File(shinobooruImageDir, board)
-
-        boardSubDir.mkdirs()
-
-        url.httpDownload().destination { res, realUrl ->
-
-            Timber.i("dest = $boardSubDir/$fileName")
-
-            //next line will be used as destination file
-            File(boardSubDir, fileName)
-        }.response { request, response, result ->
-            if (result.component2() != null)
-                Timber.d("Error = ${result.component2()}")
-            else
-                boards[board]?.add(postFromName(fileName, File(boardSubDir, fileName)))
-        }
-
-        return null
-    }
-
-    /** Check for Storage availability */
-    private fun checkExternalStorage() {
-        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            throw IOException("External storage not mounted")
-        }
-    }
+    private fun isExternalStorageMounted(): Result<Unit, IOException> =
+            if (Environment.MEDIA_MOUNTED != Environment.getExternalStorageState()) {
+                Result.error(IOException("External storage not mounted"))
+            } else {
+                Result.success(Unit)
+            }
 
     /**
      * Returns a list of downloaded posts for a given board name
@@ -192,5 +163,9 @@ class FileManager(val appContext: Context) {
     fun deleteDownloadedPost(post: DownloadedPost) {
         val deleteResult = post.file.delete()
         boards[post.boardName]!!.remove(post)
+    }
+
+    fun addDownloadedPost(post: Post, file: File) {
+        boards[post.getBoard()]?.add(postFromName(file))
     }
 }

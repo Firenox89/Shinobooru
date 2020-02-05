@@ -2,6 +2,9 @@ package com.github.firenox89.shinobooru.utility
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
 
 object UI {
@@ -9,7 +12,8 @@ object UI {
      * Loads a sub sampled imaae from a given file.
      * The sample rate gets determined by the given width and height and the image size.
      */
-    fun loadSubsampledImage(file: File, reqWidth: Int, reqHeight: Int): Bitmap {
+    suspend fun loadSubsampledImage(file: File, reqWidth: Int, reqHeight: Int): Bitmap = withContext(Dispatchers.IO) {
+        Timber.v("Load image from '$file'")
         val options = BitmapFactory.Options()
         options.inJustDecodeBounds = true
         BitmapFactory.decodeFile(file.path, options)
@@ -34,6 +38,6 @@ object UI {
         options.inDither = true
         options.inPreferQualityOverSpeed = true
 
-        return BitmapFactory.decodeFile(file.path, options)
+        BitmapFactory.decodeFile(file.path, options)
     }
 }

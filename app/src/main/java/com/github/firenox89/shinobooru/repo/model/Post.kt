@@ -56,7 +56,7 @@ open class Post(
         get() = "${if (field.startsWith("//")) "https:" else ""}$field"
 
     companion object {
-        val boardPattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z\\.]*)")
+        val boardPattern = Pattern.compile("http[s]?://(?:files\\.)?([a-z.]*)")
     }
 
     /**

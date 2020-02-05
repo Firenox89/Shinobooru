@@ -9,7 +9,6 @@ interface PostLoader {
     val board: String
     val tags: String
 
-    fun downloadPost(currentItem: Int)
     fun getCount(): Int
     fun getIndexOf(post: Post): Int
     fun getPostAt(index: Int): Post

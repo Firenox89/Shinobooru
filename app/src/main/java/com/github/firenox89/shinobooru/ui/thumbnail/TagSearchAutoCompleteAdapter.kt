@@ -43,42 +43,42 @@ class TagSearchAutoCompleteAdapter(val board: String) : BaseAdapter(), Filterabl
                         //tags are always lower case
                         val name = constraint.toString().toLowerCase().trim()
                         //request tags
-                        val tags = dataSource.tagSearch(board, name)
+                        dataSource.tagSearch(board, name).fold({ tags ->
+                            Timber.d("Found tags $tags")
+                            //TODO: could be settable
+                            val numberOfResults = 10
+                            val sortedTagList = mutableListOf<Tag>()
 
-                        Timber.d("Found tags $tags")
-                        //TODO: could be settable
-                        val numberOfResults = 10
-                        val sortedTagList = mutableListOf<Tag>()
+                            //first look if results start with the given search string
+                            val primaryMatches = tags.filter { it.name.startsWith(name) }
+                            //then look if the second word matches
+                            val secondaryMatches = tags.filter {
+                                //split into words, drop the first word since it is already covered in primaryMatches
+                                val words = it.name.split("_").drop(1)
 
-                        //first look if results start with the given search string
-                        val primaryMatches = tags.filter { it.name.startsWith(name) }
-                        //then look if the second word matches
-                        val secondaryMatches = tags.filter {
-                            //split into words, drop the first word since it is already covered in primaryMatches
-                            val words = it.name.split("_").drop(1)
+                                //true if at least one word matches
+                                words.filter { it.startsWith(name) }.any()
+                            }
+                            //then get the list of matches where the search string was only part of a word
+                            val restOfResults = tags.subtract(primaryMatches).subtract(secondaryMatches)
+                            //add primaryMatches
+                            sortedTagList.addAll(primaryMatches.take(numberOfResults))
 
-                            //true if at least one word matches
-                            words.filter { it.startsWith(name) }.any()
-                        }
-                        //then get the list of matches where the search string was only part of a word
-                        val restOfResults = tags.subtract(primaryMatches).subtract(secondaryMatches)
-                        //add primaryMatches
-                        sortedTagList.addAll(primaryMatches.take(numberOfResults))
+                            //if not enough results yet, try to fill the rest with secondaryMatches
+                            if (sortedTagList.size < numberOfResults)
+                                sortedTagList.addAll(secondaryMatches.take(numberOfResults - primaryMatches.size))
 
-                        //if not enough results yet, try to fill the rest with secondaryMatches
-                        if (sortedTagList.size < numberOfResults)
-                            sortedTagList.addAll(secondaryMatches.take(numberOfResults - primaryMatches.size))
+                            //if still not enough matches, add the rest
+                            if (sortedTagList.size < numberOfResults) {
+                                val matchesLeft = numberOfResults - primaryMatches.size - secondaryMatches.size
+                                //remove primary and secondary matches to not add them twice
+                                sortedTagList.addAll(restOfResults.take(matchesLeft))
+                            }
 
-                        //if still not enough matches, add the rest
-                        if (sortedTagList.size < numberOfResults) {
-                            val matchesLeft = numberOfResults - primaryMatches.size - secondaryMatches.size
-                            //remove primary and secondary matches to not add them twice
-                            sortedTagList.addAll(restOfResults.take(matchesLeft))
-                        }
-
-                        results.count = numberOfResults
-                        //take only the first entries
-                        results.values = sortedTagList
+                            results.count = numberOfResults
+                            //take only the first entries
+                            results.values = sortedTagList
+                        }, { Timber.e(it, "Failed to download tags")})
                     }
                     results
                 }

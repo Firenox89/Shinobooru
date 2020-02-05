@@ -12,12 +12,13 @@ import com.github.firenox89.shinobooru.repo.PostLoader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import timber.log.Timber
+import kotlin.math.min
 
 class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostLoader, private val postClickCallback: (Int) -> Unit) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
     var usePreview = true
 
-    private suspend fun createPlaceholderBitmap(width: Int, height: Int): Bitmap = withContext(Dispatchers.IO) {
+    private fun createPlaceholderBitmap(width: Int, height: Int): Bitmap {
         val rect = Rect(0, 0, width, height)
         val image = Bitmap.createBitmap(rect.width(), rect.height(), Bitmap.Config.ARGB_8888)
         val canvas = Canvas(image)
@@ -25,7 +26,7 @@ class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostL
         val paint = Paint()
         paint.color = color
         canvas.drawRect(rect, paint)
-        image
+        return image
     }
 
     /**
@@ -57,24 +58,29 @@ class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostL
      * Also requests new posts if there a less than 5 left to load.
      */
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
+        val post = postLoader.getPostAt(position)
+        Timber.w("Bind post $post")
+
+        holder.postImage.setImageBitmap(createPlaceholderBitmap(
+                post.preview_width.coerceAtMost(250),
+                post.preview_height.coerceAtMost(400)))
+
         lifecycleScoop.launch {
-            val post = postLoader.getPostAt(position)
-            holder.updateImage(createPlaceholderBitmap(post.preview_width, post.preview_height))
+            withContext(Dispatchers.IO) {
+                if (itemCount - position < 5) postLoader.requestNextPosts()
 
-            if (itemCount - position < 5) postLoader.requestNextPosts()
-
-            //if the recyclerView is set to one image per row use the sample image for quality reasons
-            if (usePreview)
-                postLoader.loadPreview(post)
-                        .let { bitmap ->
-                            holder.updateImage(bitmap)
-                        }
-            else
-                postLoader.loadSample(post)
-                        .let { bitmap ->
-                            holder.updateImage(bitmap)
-                        }
-
+                //if the recyclerView is set to one image per row use the sample image for quality reasons
+                if (usePreview)
+                    postLoader.loadPreview(post)
+                            .let { bitmap ->
+                                holder.updateImage(bitmap)
+                            }
+                else
+                    postLoader.loadSample(post)
+                            .let { bitmap ->
+                                holder.updateImage(bitmap)
+                            }
+            }
             holder.setListener { postClickCallback.invoke(position) }
         }
     }

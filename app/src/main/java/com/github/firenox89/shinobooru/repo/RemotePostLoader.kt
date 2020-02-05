@@ -3,7 +3,6 @@ package com.github.firenox89.shinobooru.repo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.github.firenox89.shinobooru.repo.model.Post
-import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.settings.SettingsActivity
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.coroutines.awaitObject
@@ -37,10 +36,6 @@ open class RemotePostLoader(override val board: String,
      */
     override fun getPostAt(index: Int): Post {
         return posts[index]
-    }
-
-    override fun downloadPost(currentItem: Int) {
-        fileManager.downloadFileToStorage(posts[currentItem].file_url, posts[currentItem])
     }
 
     /**
@@ -119,20 +114,21 @@ open class RemotePostLoader(override val board: String,
     private suspend fun loadMorePosts(quantity: Int) {
         postLoadingJob = GlobalScope.launch {
             Timber.d("Request $quantity posts from '$board' with tags '$tags'")
-            val loadedPosts = apiWrapper.request(board, currentPage++, tags)
-            //TODO: order results before adding
-            val currentSize = posts.size
-            //TODO forbid to search with all ratings disabled
-            val rateFilteredPosts = loadedPosts.filter { SettingsActivity.filterRating(it.rating) }
-            val postCount = rateFilteredPosts.size
-            Timber.d("$postCount posts left after rating filtering, $quantity needed")
-            posts.addAll(rateFilteredPosts)
-            rangeChangeEventStream.offer(Pair(currentSize, postCount))
+            apiWrapper.requestPost(board, currentPage++, tags).fold({ loadedPosts ->
+                //TODO: order results before adding
+                val currentSize = posts.size
+                //TODO forbid to search with all ratings disabled
+                val rateFilteredPosts = loadedPosts.filter { SettingsActivity.filterRating(it.rating) }
+                val postCount = rateFilteredPosts.size
+                Timber.d("$postCount posts left after rating filtering, $quantity needed")
+                posts.addAll(rateFilteredPosts)
+                rangeChangeEventStream.offer(Pair(currentSize, postCount))
 
-            // an empty result means that all posts are loaded
-            if (postCount < quantity && loadedPosts.isNotEmpty()) {
-                loadMorePosts(quantity - postCount)
-            }
+                // an empty result means that all posts are loaded
+                if (postCount < quantity && loadedPosts.isNotEmpty()) {
+                    loadMorePosts(quantity - postCount)
+                }
+            }, { Timber.e(it, "Failed to load more posts ${this@RemotePostLoader}") })
         }
     }
 
