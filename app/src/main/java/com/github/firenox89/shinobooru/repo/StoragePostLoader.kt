@@ -10,17 +10,18 @@ import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.UI.loadSubsampledImage
 import kotlinx.coroutines.channels.Channel
+import timber.log.Timber
 
 /**
  * Sub-classes the [PostLoader] to use the downloaded post images as a source for posts.
  * Does not refresh the post list when new images are downloaded.
  */
-class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLoader {
+class StoragePostLoader(val appContext: Context, val fileManager: FileManager) : PostLoader {
     override val board: String
         get() = Constants.FILE_LOADER_NAME
     override val tags: String
         get() = ""
-
+    private val changeChannel = Channel<Pair<Int, Int>>()
     private val newestDownloadedPostComparator = Comparator<DownloadedPost> { post1, post2 ->
         val date1 = post1.file.lastModified()
         val date2 = post2.file.lastModified()
@@ -47,7 +48,7 @@ class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLo
     }
 
     override suspend fun getRangeChangeEventStream(): Channel<Pair<Int, Int>> =
-        Channel<Pair<Int, Int>>().apply{ send(Pair(0, posts.size))}
+        changeChannel.apply{ offer(Pair(0, posts.size))}
 
     /**
      * Return a post from the postlist for the given number
@@ -76,7 +77,8 @@ class FileLoader(val appContext: Context, val fileManager: FileManager) : PostLo
     }
 
     override suspend fun onRefresh() {
+        Timber.d("onRefresh")
         posts = fileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
+        changeChannel.offer(Pair(0, posts.size))
     }
-
 }

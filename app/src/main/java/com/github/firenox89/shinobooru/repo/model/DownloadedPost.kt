@@ -21,7 +21,8 @@ class DownloadedPost(id: Long, val file: File, val boardName: String) : Post(id 
             jpeg_width = width
             file_size = file.length().toInt()
             val tagsStartIndex = file.name.indexOf(' ', file.name.indexOf(' ') + 1)
-            tags = file.name.substring(tagsStartIndex + 1, file.name.length - 4)
+            val fileName = file.name.replace("[slash]", "/")
+            tags = fileName.substring(tagsStartIndex + 1, fileName.length - 4)
         }
     }
 

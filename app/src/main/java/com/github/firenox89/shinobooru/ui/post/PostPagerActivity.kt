@@ -4,17 +4,20 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.PostLoader
+import com.github.firenox89.shinobooru.repo.StoragePostLoader
+import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ui.base.BaseActivity
+import com.github.firenox89.shinobooru.ui.showConfirmationDialog
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
+import com.github.kittinunf.result.map
 import kotlinx.android.synthetic.main.activity_post_pager.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -69,7 +72,11 @@ class PostPagerActivity : BaseActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.download, menu)
+        if (postLoader is StoragePostLoader) {
+            menuInflater.inflate(R.menu.delete, menu)
+        } else {
+            menuInflater.inflate(R.menu.download, menu)
+        }
         return true
     }
 
@@ -78,11 +85,31 @@ class PostPagerActivity : BaseActivity() {
             R.id.action_download -> {
                 Toast.makeText(this, "Downloading...", Toast.LENGTH_LONG).show()
                 GlobalScope.launch {
-                    dataSource.downloadPost(postLoader.getPostAt(postviewpager.currentItem)).fold({
+                    val post = postLoader.getPostAt(postviewpager.currentItem)
+                    dataSource.downloadPost(post).fold({
                         showToast("Download successful")
                     }, {
-                        showToast("Download failed ${it.message}")
+                        showToast("Download failed, ${it.message}")
+                        Timber.e(it, "Download failed $post")
                     })
+                }
+                return true
+            }
+            R.id.action_delete -> {
+                GlobalScope.launch {
+                    showConfirmationDialog(this@PostPagerActivity, R.string.confirm, R.string.really_delete).map { delete ->
+                        val post = postLoader.getPostAt(postviewpager.currentItem)
+                        dataSource.deletePost(post as DownloadedPost).fold({
+                            showToast("Deleted")
+                            //we close the activity since the displayed post was deleted
+                            withContext(Dispatchers.Main) {
+                                this@PostPagerActivity.finish()
+                            }
+                        }, {
+                            showToast("Delete failed ${it.message}")
+                            Timber.e(it, "Delete failed $post")
+                        })
+                    }
                 }
                 return true
             }

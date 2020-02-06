@@ -16,7 +16,10 @@ import java.io.IOException
 import java.lang.Exception
 
 sealed class FileManagerExecptions {
-    class PostAlreadyDownloaded : Exception()
+    class PostAlreadyDownloaded : Exception() {
+        override val message: String?
+            get() = "already downloaded."
+    }
 }
 
 /**
@@ -78,7 +81,7 @@ class FileManager(val appContext: Context) {
 
                     boardSubDir.mkdirs()
 
-                    File(boardSubDir, fileName)
+                    File(boardSubDir, fileName.replace("/", "[slash]"))
                 }
             }
 
@@ -160,10 +163,11 @@ class FileManager(val appContext: Context) {
         }
     }
 
-    fun deleteDownloadedPost(post: DownloadedPost) {
-        val deleteResult = post.file.delete()
-        boards[post.boardName]!!.remove(post)
-    }
+    fun deleteDownloadedPost(post: DownloadedPost): Result<Boolean, Exception> =
+        Result.of {
+            boards[post.boardName]!!.remove(post)
+            post.file.delete()
+        }
 
     fun addDownloadedPost(post: Post, file: File) {
         boards[post.getBoard()]?.add(postFromName(file))

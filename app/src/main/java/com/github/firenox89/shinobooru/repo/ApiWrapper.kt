@@ -8,17 +8,13 @@ import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.github.kittinunf.fuel.core.awaitResult
-import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.coroutines.awaitObjectResult
-import com.github.kittinunf.fuel.coroutines.awaitString
-import com.github.kittinunf.fuel.coroutines.awaitStringResult
 import com.github.kittinunf.fuel.httpDownload
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
 import com.google.gson.Gson
 import timber.log.Timber
 import java.io.File
-import java.lang.Exception
 
 class ApiWrapper(private val appContext: Context) {
     init {

@@ -24,16 +24,17 @@ interface DataSource {
     suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError>
     suspend fun loadTagColors(tags: List<Tag>): List<Tag>
     suspend fun downloadPost(post: Post): Result<Unit, Exception>
+    suspend fun deletePost(post: DownloadedPost): Result<Boolean, Exception>
 }
 
-class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager, fileLoader: FileLoader) : DataSource {
-    private val loaderList = mutableListOf<PostLoader>(fileLoader)
+class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager, val storagePostLoader: StoragePostLoader) : DataSource {
+    private val loaderList = mutableListOf<PostLoader>(storagePostLoader)
 
     val tmpBoards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
     /**
      * Returns a [PostLoader] instance for the given arguments.
      * Cache create instances and return them on the same arguments.
-     * To obtain an instance of the [FileLoader] use 'FileLoader' as board name
+     * To obtain an instance of the [StoragePostLoader] use 'FileLoader' as board name
      *
      * @param board that this loader should load from
      * @param tags this loader should add for requests
@@ -76,9 +77,19 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
         return fileManager.getDownloadDestinationFor(post).flatMap { destination ->
             apiWrapper.downloadPost(post, destination).also {
                 if (it is Result.Success) {
-                    fileManager.addDownloadedPost(post, destination)
+                    fileManager.addDownloadedPost(post, destination).also {
+                        storagePostLoader.onRefresh()
+                    }
                 }
             }
+        }
+    }
+
+    override suspend fun deletePost(post: DownloadedPost): Result<Boolean, Exception> {
+        Timber.i("Delete Post $post")
+
+        return fileManager.deleteDownloadedPost(post).also {
+            storagePostLoader.onRefresh()
         }
     }
 
@@ -107,6 +118,8 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
                         this.type = tag.type
                     }
                 }
+            } else {
+                Timber.w("Tag was already in DB $tag")
             }
         }
     }
@@ -122,8 +135,7 @@ class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager
     private fun loadTagFromDB(tag: Tag): DBTag? =
             Realm.getDefaultInstance()
                     .where(DBTag::class.java)
-                    .equalTo("id", tag.id)
-                    .and()
+                    .equalTo("name", tag.name)
                     .equalTo("board", tag.board)
                     .findFirst()
 }

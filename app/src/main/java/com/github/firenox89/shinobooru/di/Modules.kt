@@ -8,7 +8,7 @@ import org.koin.dsl.module
 val DataModul = module {
     single { ApiWrapper(androidContext()) }
     single { FileManager(androidContext()) }
-    single { FileLoader(androidContext(), get()) }
+    single { StoragePostLoader(androidContext(), get()) }
     single<DataSource> { DefaultDataSource(get(), get(), get()) }
 }
 

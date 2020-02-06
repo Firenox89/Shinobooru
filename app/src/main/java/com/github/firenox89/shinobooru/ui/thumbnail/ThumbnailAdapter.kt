@@ -7,12 +7,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import com.github.firenox89.shinobooru.R
-import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.PostLoader
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import timber.log.Timber
-import kotlin.math.min
 
 class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostLoader, private val postClickCallback: (Int) -> Unit) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
