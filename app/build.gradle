@@ -26,6 +26,7 @@ android {
             debuggable false
         }
     }
+    kotlinOptions { jvmTarget = "1.8" }
 }
 
 def fuel_version = '2.2.1'
@@ -54,12 +55,15 @@ dependencies {
     implementation "com.github.kittinunf.fuel:fuel-android:$fuel_version"
 
     implementation 'com.github.kittinunf.result:result:2.2.0' //for jvm
-    implementation 'com.github.kittinunf.result:result-coroutines:2.2.0' //for kotlin's coroutine support
+    implementation 'com.github.kittinunf.result:result-coroutines:2.2.0'
+    //for kotlin's coroutine support
 
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     testImplementation 'junit:junit:4.12'
+
+    implementation 'com.github.MikeOrtiz:TouchImageView:2.3.3'
 
     // Koin
     implementation "org.koin:koin-android:2.0.1"

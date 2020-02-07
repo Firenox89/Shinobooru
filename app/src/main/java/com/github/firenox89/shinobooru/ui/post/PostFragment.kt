@@ -1,19 +1,17 @@
 package com.github.firenox89.shinobooru.ui.post
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageView
 import android.widget.ListAdapter
 import android.widget.TextView
+import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.DataSource
-import com.github.firenox89.shinobooru.repo.PostLoader
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
@@ -29,14 +27,19 @@ import kotlin.math.roundToInt
 /**
  * Contains the two child fragments.
  */
-class PostFragment : androidx.fragment.app.Fragment() {
+class PostFragment : androidx.fragment.app.Fragment(), ZoomFragment.OnCloseListener {
     val dataSource: DataSource by inject()
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.fragment_post, container, false)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onViewCreated(layout: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(layout, savedInstanceState)
+
         val board = arguments!!.getString("board")
         val tags = arguments!!.getString("tags")
         val posi = arguments!!.getInt("posi")
-
-        val layout = inflater.inflate(R.layout.fragment_post, container, false)
 
         val imageview = layout.findViewById<ImageView>(R.id.postimage)
         val authorText = layout.findViewById<TextView>(R.id.authorText)
@@ -67,8 +70,23 @@ class PostFragment : androidx.fragment.app.Fragment() {
                         withContext(Dispatchers.Main) { imageview.setImageBitmap(bitmap) }
                     }
         }
+        val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: MotionEvent?): Boolean {
+                openZoomFragment()
+                return super.onDoubleTap(e)
+            }
+        })
 
-        return layout
+        imageview.setOnTouchListener { v, event ->
+            gestureDetector.onTouchEvent(event)
+            true
+        }
+    }
+
+    private fun openZoomFragment() {
+        childFragmentManager.commit {
+            add(R.id.postFrameLayout, ZoomFragment.newInstance("", ""))
+        }
     }
 
     /**
@@ -148,5 +166,9 @@ class PostFragment : androidx.fragment.app.Fragment() {
                 textView.setOnClickListener { searchForTag(textView.context, tag.name) }
             }
         }
+    }
+
+    override fun onClose() {
+        childFragmentManager.commit { this.remove(childFragmentManager.fragments.first()) }
     }
 }
