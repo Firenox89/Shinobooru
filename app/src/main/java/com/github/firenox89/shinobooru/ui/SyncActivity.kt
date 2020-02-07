@@ -2,10 +2,12 @@ package com.github.firenox89.shinobooru.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.ActionBar
+import androidx.lifecycle.lifecycleScope
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.cloud.CloudSync
 import com.github.firenox89.shinobooru.ui.base.BaseActivity
 import kotlinx.android.synthetic.main.activity_sync.*
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 class SyncActivity : BaseActivity() {
@@ -21,5 +23,7 @@ class SyncActivity : BaseActivity() {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
         }
+
+        download.setOnClickListener { lifecycleScope.launch { cloud.fetchData() } }
     }
 }

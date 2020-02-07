@@ -42,7 +42,6 @@ class ShinoboorusWallpaperService : WallpaperService() {
      * The engine drawing on te live wallpaper.
      */
     inner class ShinoboorusWallpaperEngine : Engine(), KoinComponent {
-        val pref: SharedPreferences by inject()
         //TODO: make the wallpaperService more configurable
 
         private var displayWidth: Int = 0

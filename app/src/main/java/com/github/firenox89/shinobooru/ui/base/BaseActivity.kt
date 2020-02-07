@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.settings.SettingsActivity
+import com.github.firenox89.shinobooru.ui.SyncActivity
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
@@ -14,6 +15,7 @@ import org.koin.android.ext.android.inject
 open class BaseActivity: AppCompatActivity() {
     protected val dataSource: DataSource by inject()
     fun navigateToSync() {
+        startActivity(Intent(this, SyncActivity::class.java))
     }
 
     fun navigateToSettings() {

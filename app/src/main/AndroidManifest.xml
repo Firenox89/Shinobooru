@@ -7,10 +7,6 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <!-- Permissions required by GoogleAuthUtil -->
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
-
     <uses-feature
         android:name="android.software.live_wallpaper"
         android:required="true" />
@@ -45,10 +41,8 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".settings.SettingsActivity"
-            android:label="@string/title_activity_settings" />
-        <activity
-            android:name=".ui.GoogleSignInActivity"
-            android:theme="@style/Theme.AppCompat" />
+            android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.AppCompat"/>
 
         <service
             android:name=".service.ShinoboorusWallpaperService"

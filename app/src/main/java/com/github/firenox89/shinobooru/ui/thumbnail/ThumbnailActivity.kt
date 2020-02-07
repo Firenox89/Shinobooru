@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.settings.SettingsActivity
+import com.github.firenox89.shinobooru.settings.SettingsManager
 import com.github.firenox89.shinobooru.ui.base.BaseActivity
 import com.github.firenox89.shinobooru.ui.post.PostPagerActivity
 import com.github.firenox89.shinobooru.utility.Constants
@@ -26,12 +27,13 @@ import org.koin.android.ext.android.inject
 import timber.log.Timber
 
 class ThumbnailActivity : BaseActivity() {
+
+    private val settingsManager: SettingsManager by inject()
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
     private var recyclerAdapter: ThumbnailAdapter? = null
 
-    private val sharedPrefs: SharedPreferences by inject()
     private val recyclerLayout = androidx.recyclerview.widget.StaggeredGridLayoutManager(4, androidx.recyclerview.widget.StaggeredGridLayoutManager.VERTICAL)
 
 
@@ -76,7 +78,7 @@ class ThumbnailActivity : BaseActivity() {
             recyclerView.adapter = recyclerAdapter
 
             //update the number of posts per row of the recycler layout
-            updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3")?.toInt() ?: 3)
+            updatePostPerRow()
         }
     }
 
@@ -84,7 +86,7 @@ class ThumbnailActivity : BaseActivity() {
         super.onResume()
 
         //update the number of posts per row of the recycler layout
-        updatePostPerRow(sharedPrefs.getString("post_per_row_list", "3")?.toInt() ?: 3)
+        updatePostPerRow()
     }
 
     /**
@@ -92,9 +94,10 @@ class ThumbnailActivity : BaseActivity() {
      * If the given value is 1 the [RecyclerView] will display sample instead of preview images.
      * @param value that should be used as spanCount
      */
-    private fun updatePostPerRow(value: Int) {
-        recyclerLayout.spanCount = value
-        recyclerAdapter?.usePreview = value != 1
+    private fun updatePostPerRow() {
+        val postsPerRow = settingsManager.postsPerRow
+        recyclerLayout.spanCount = postsPerRow
+        recyclerAdapter?.usePreview = postsPerRow != 1
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

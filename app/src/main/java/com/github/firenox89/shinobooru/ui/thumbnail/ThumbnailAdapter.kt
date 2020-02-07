@@ -12,7 +12,10 @@ import com.github.firenox89.shinobooru.ui.showToast
 import kotlinx.coroutines.*
 import timber.log.Timber
 
-class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostLoader, private val postClickCallback: (Int) -> Unit) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
+class ThumbnailAdapter(
+        private val lifecycleScoop: CoroutineScope,
+        private val postLoader: PostLoader,
+        private val postClickCallback: (Int) -> Unit) : RecyclerView.Adapter<ThumbnailAdapter.PostViewHolder>() {
 
     var usePreview = true
 

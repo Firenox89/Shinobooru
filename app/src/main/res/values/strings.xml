@@ -35,6 +35,7 @@
 
     <!-- Example settings for Notifications -->
     <string name="pref_header_ui">UI</string>
+    <string name="pref_header_nextcloud">Nextcloud</string>
 
     <string name="title_activity_thumbnail">ThumbnailActivity</string>
 

@@ -1,99 +1,43 @@
 package com.github.firenox89.shinobooru.settings
 
-
-import android.annotation.TargetApi
-import android.content.Context
-import android.content.SharedPreferences
-import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
-import android.preference.Preference
-import android.preference.PreferenceActivity
-import android.preference.PreferenceFragment
+import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.CheckBoxPreference
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.DataSource
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 
-/**
- * A [PreferenceActivity] that presents a set of application settings. On
- * handset devices, settings are presented as a single list. On tablets,
- * settings are split by category, with category headers shown to the left of
- * the list of settings.
- *
- *
- * See [
-   * Android Design: Settings](http://developer.android.com/design/patterns/settings.html) for design guidelines and the [Settings
-   * API Guide](http://developer.android.com/guide/topics/ui/settings.html) for more information on developing a Settings UI.
- */
-class SettingsActivity : PreferenceActivity() {
-
+class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setupActionBar()
+        setContentView(R.layout.activity_settings)
+        supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.settings_container, PreferenceFragment())
+                .commit()
     }
 
-    /**
-     * Set up the [android.app.ActionBar], if the API is available.
-     */
-    private fun setupActionBar() {
-        val actionBar = actionBar
-        actionBar?.setDisplayHomeAsUpEnabled(true)
-    }
+    class PreferenceFragment : PreferenceFragmentCompat(), KoinComponent {
+        private val dataSource: DataSource by getKoin().inject()
 
-    /**
-     * {@inheritDoc}
-     */
-    override fun onIsMultiPane(): Boolean {
-        return isXLargeTablet(this)
-    }
+        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+            addPreferencesFromResource(R.xml.pref_general)
 
-    /**
-     * {@inheritDoc}
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    override fun onBuildHeaders(target: List<PreferenceActivity.Header>) {
-        loadHeadersFromResource(R.xml.pref_headers, target)
-    }
+            val changeListener = Preference.OnPreferenceChangeListener { _, _ -> dataSource.onRatingChanged(); true }
 
-    /**
-     * This method stops fragment injection in malicious applications.
-     * Make sure to deny any unknown fragments here.
-     */
-    override fun isValidFragment(fragmentName: String): Boolean {
-        return PreferenceFragment::class.java.name == fragmentName
-                || UIPreferenceFragment::class.java.name == fragmentName
-                || RatingPreferenceFragment::class.java.name == fragmentName
-    }
-
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class RatingPreferenceFragment : PreferenceFragment(), KoinComponent {
-        val dataSource: DataSource by getKoin().inject()
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            addPreferencesFromResource(R.xml.pref_rating)
-
-            val changeListener = Preference.OnPreferenceChangeListener { preference, any -> dataSource.onRatingChanged(); true }
-            findPreference("rating_safe").onPreferenceChangeListener = changeListener
-            findPreference("rating_questionable").onPreferenceChangeListener = changeListener
-            findPreference("rating_explicit").onPreferenceChangeListener = changeListener
-        }
-    }
-
-    /**
-     * This fragment shows ui preferences only. It is used when the
-     * activity is showing a two-pane settings UI.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    class UIPreferenceFragment : PreferenceFragment() {
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            addPreferencesFromResource(R.xml.pref_ui)
-            setHasOptionsMenu(true)
+            findPreference<CheckBoxPreference>("rating_safe")?.onPreferenceChangeListener = changeListener
+            findPreference<CheckBoxPreference>("rating_questionable")?.onPreferenceChangeListener = changeListener
+            findPreference<CheckBoxPreference>("rating_explicit")?.onPreferenceChangeListener = changeListener
         }
     }
 
     companion object: KoinComponent {
+        //TODO: create Debug Settings
+        val  disableCaching: Boolean = false
+
         //boards
         var yandereURL = "https://yande.re"
         var konachanURL = "http://konachan.com"
@@ -102,27 +46,16 @@ class SettingsActivity : PreferenceActivity() {
 
         val imageBoards = mutableListOf(yandereURL, konachanURL)
 
-        val pref: SharedPreferences by inject()
+        private val settingsManager: SettingsManager by inject()
 
         fun filterRating(rating: String): Boolean {
             if (rating == "s")
-                return pref.getBoolean("rating_safe", true)
+                return settingsManager.ratingSafe
             if (rating == "q")
-                return pref.getBoolean("rating_questionable", false)
+                return settingsManager.ratingQuestionable
             if (rating == "e")
-                return pref.getBoolean("rating_explicit", false)
+                return settingsManager.ratingExplicit
             throw IllegalArgumentException("Unknown rating: $rating")
         }
-
-        /**
-         * Helper method to determine if the device has an extra-large screen. For
-         * example, 10" tablets are extra-large.
-         */
-        private fun isXLargeTablet(context: Context): Boolean {
-            return context.resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK >= Configuration.SCREENLAYOUT_SIZE_XLARGE
-        }
-
-        //TODO: create Debug Settings
-        val  disableCaching: Boolean = false
     }
 }

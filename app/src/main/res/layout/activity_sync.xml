@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,10 +7,10 @@
 
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_sync"
-                                            android:layout_width="match_parent"
-                                            android:layout_height="match_parent"
-                                            android:theme="@style/ThemeOverlay.AppCompat.Dark"
-                                            tools:context=".ui.thumbnail.ThumbnailActivity">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark"
+        tools:context=".ui.thumbnail.ThumbnailActivity">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -25,7 +24,7 @@
                 android:background="#212121"
                 android:elevation="4dp"
                 android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Dark"/>
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Dark" />
 
             <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                 android:id="@+id/swipe_sync"
@@ -58,14 +57,14 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Google Drive"/>
+                                android:text="Google Drive" />
 
                             <Button
                                 android:id="@+id/download"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Download"/>
+                                android:text="Download" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -80,14 +79,14 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Local"/>
+                                android:text="Local" />
 
                             <Button
                                 android:id="@+id/upload"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Upload"/>
+                                android:text="Upload" />
                         </LinearLayout>
                     </LinearLayout>
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -101,7 +100,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="start"
             android:fitsSystemWindows="true"
-            app:menu="@menu/drawer_view"/>
+            app:menu="@menu/drawer_view" />
 
     </androidx.drawerlayout.widget.DrawerLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
