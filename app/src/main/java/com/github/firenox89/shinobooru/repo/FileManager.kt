@@ -139,9 +139,9 @@ class FileManager(val appContext: Context) {
      * @param id for the file name
      * @param bitmap to store
      */
-    fun previewBitmapToCache(board: String, id: Long, bitmap: Bitmap?) {
+    fun previewBitmapToCache(board: String, id: Long, bitmap: Bitmap) {
         val fos = appContext.openFileOutput("$board $id.jpeg", Context.MODE_PRIVATE)
-        bitmap?.compress(Bitmap.CompressFormat.JPEG, 85, fos)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fos)
         fos.close()
         cachedFiles.add("$id")
         checkCacheSize()

@@ -3,6 +3,7 @@ package com.github.firenox89.shinobooru.ui.post
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.*
 import android.widget.ImageView
@@ -14,6 +15,7 @@ import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
+import com.github.firenox89.shinobooru.ui.showToast
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
@@ -24,34 +26,35 @@ import org.koin.core.inject
 import timber.log.Timber
 import kotlin.math.roundToInt
 
-/**
- * Contains the two child fragments.
- */
-class PostFragment : androidx.fragment.app.Fragment(), ZoomFragment.OnCloseListener {
-    val dataSource: DataSource by inject()
+class PostFragment : androidx.fragment.app.Fragment() {
+    private val dataSource: DataSource by inject()
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_post, container, false)
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun onViewCreated(layout: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(layout, savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        val board = arguments!!.getString("board")
-        val tags = arguments!!.getString("tags")
-        val posi = arguments!!.getInt("posi")
+        val board = arguments?.getString("board")
+        val tags = arguments?.getString("tags")
+        val postIndex = arguments?.getInt("posi")
 
-        val imageview = layout.findViewById<ImageView>(R.id.postimage)
-        val authorText = layout.findViewById<TextView>(R.id.authorText)
-        val sourceText = layout.findViewById<TextView>(R.id.sourceText)
-        val postText = layout.findViewById<TextView>(R.id.postInfoText)
-        val tagListView = layout.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tagList)
+        if (board == null || postIndex == null) {
+            //TODO don't just show an empty view
+            return
+        }
+        val imageView = view.findViewById<ImageView>(R.id.postimage)
+        val authorText = view.findViewById<TextView>(R.id.authorText)
+        val sourceText = view.findViewById<TextView>(R.id.sourceText)
+        val postText = view.findViewById<TextView>(R.id.postInfoText)
+        val tagListView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tagList)
 
         lifecycleScope.launch {
             val postLoader = dataSource.getPostLoader(board, tags)
-            val post: Post = postLoader.getPostAt(posi)
+            val post: Post = postLoader.getPostAt(postIndex)
 
-            Timber.d("Show post $posi")
+            Timber.d("Show post $postIndex")
 
             tagListView.adapter = TagListAdapter(lifecycleScope, post)
             tagListView.layoutManager = androidx.recyclerview.widget.GridLayoutManager(context, 2)
@@ -62,30 +65,40 @@ class PostFragment : androidx.fragment.app.Fragment(), ZoomFragment.OnCloseListe
 
             //display preview image first for faster response
             val loadPreviewJob = launch {
-                withContext(Dispatchers.Main) { imageview.setImageBitmap(postLoader.loadPreview(post)) }
+                postLoader.loadPreview(post).fold({ bitmap ->
+                    withContext(Dispatchers.Main) { imageView.setImageBitmap(bitmap) }
+                }, { error ->
+                    Timber.e(error)
+                    context?.run { showToast(this, "Loading failed $error") }
+                })
             }
-            postLoader.loadSample(post)
-                    .let { bitmap ->
-                        loadPreviewJob.cancel()
-                        withContext(Dispatchers.Main) { imageview.setImageBitmap(bitmap) }
-                    }
-        }
-        val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onDoubleTap(e: MotionEvent?): Boolean {
-                openZoomFragment()
-                return super.onDoubleTap(e)
-            }
-        })
+            postLoader.loadSample(post).fold({ bitmap ->
+                loadPreviewJob.cancel()
+                withContext(Dispatchers.Main) {
+                    imageView.setImageBitmap(bitmap)
 
-        imageview.setOnTouchListener { v, event ->
-            gestureDetector.onTouchEvent(event)
-            true
+                    val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+                        override fun onDoubleTap(e: MotionEvent?): Boolean {
+                            openZoomFragment(bitmap)
+                            return super.onDoubleTap(e)
+                        }
+                    })
+
+                    imageView.setOnTouchListener { _, event ->
+                        gestureDetector.onTouchEvent(event)
+                        true
+                    }
+                }
+            }, { error ->
+                Timber.e(error)
+                context?.run { showToast(this, "Loading failed $error") }
+            })
         }
     }
 
-    private fun openZoomFragment() {
+    private fun openZoomFragment(bitmap: Bitmap) {
         childFragmentManager.commit {
-            add(R.id.postFrameLayout, ZoomFragment.newInstance("", ""))
+            ZoomFragment().apply { image = bitmap }.show(childFragmentManager, null)
         }
     }
 
@@ -166,9 +179,5 @@ class PostFragment : androidx.fragment.app.Fragment(), ZoomFragment.OnCloseListe
                 textView.setOnClickListener { searchForTag(textView.context, tag.name) }
             }
         }
-    }
-
-    override fun onClose() {
-        childFragmentManager.commit { this.remove(childFragmentManager.fragments.first()) }
     }
 }

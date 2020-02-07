@@ -138,7 +138,7 @@ class ThumbnailActivity : BaseActivity() {
                 val autoCompleteAdapter = TagSearchAutoCompleteAdapter(board)
 
                 autoCompleteTextView.setAdapter(autoCompleteAdapter)
-                autoCompleteTextView.setOnItemClickListener { parent, view, position, id ->
+                autoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
                     openBoard(board, autoCompleteAdapter.getItem(position))
                 }
             }

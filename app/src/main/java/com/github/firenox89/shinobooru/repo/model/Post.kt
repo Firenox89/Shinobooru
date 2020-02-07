@@ -1,6 +1,5 @@
 package com.github.firenox89.shinobooru.repo.model
 
-import timber.log.Timber
 import java.util.regex.Pattern
 
 /**

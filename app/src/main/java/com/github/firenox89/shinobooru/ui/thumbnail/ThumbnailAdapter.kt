@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.PostLoader
+import com.github.firenox89.shinobooru.ui.showToast
 import kotlinx.coroutines.*
 import timber.log.Timber
 
@@ -67,16 +68,21 @@ class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostL
                 if (itemCount - position < 5) postLoader.requestNextPosts()
 
                 //if the recyclerView is set to one image per row use the sample image for quality reasons
-                if (usePreview)
-                    postLoader.loadPreview(post)
-                            .let { bitmap ->
-                                holder.updateImage(bitmap)
-                            }
-                else
-                    postLoader.loadSample(post)
-                            .let { bitmap ->
-                                holder.updateImage(bitmap)
-                            }
+                if (usePreview) {
+                    postLoader.loadPreview(post).fold({ bitmap ->
+                        holder.updateImage(bitmap)
+                    }, { error ->
+                        Timber.e(error)
+                        showToast(holder.context, "Loading failed $error")
+                    })
+                } else {
+                    postLoader.loadSample(post).fold({ bitmap ->
+                        holder.updateImage(bitmap)
+                    }, { error ->
+                        Timber.e(error)
+                        showToast(holder.context, "Loading failed $error")
+                    })
+                }
             }
             holder.setListener { postClickCallback.invoke(position) }
         }
@@ -96,6 +102,8 @@ class ThumbnailAdapter(val lifecycleScoop: CoroutineScope, val postLoader: PostL
      * A [RecyclerView.ViewHolder] containing the post image and to icons.
      */
     class PostViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
+        val context = parent.context
+
         var postImage: ImageView = parent.findViewById(R.id.thumbnailView)
 
         suspend fun updateImage(image: Bitmap) = withContext(Dispatchers.Main) {

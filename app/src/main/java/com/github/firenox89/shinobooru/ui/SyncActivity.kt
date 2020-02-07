@@ -8,10 +8,6 @@ import com.github.firenox89.shinobooru.ui.base.BaseActivity
 import kotlinx.android.synthetic.main.activity_sync.*
 import org.koin.android.ext.android.inject
 
-/**
- * Created by firenox on 1/21/17.
- */
-
 class SyncActivity : BaseActivity() {
     private val cloud: CloudSync by inject()
 
@@ -24,10 +20,6 @@ class SyncActivity : BaseActivity() {
         actionbar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp)
-        }
-
-        dataSource.getAllPosts().forEach { board, posts ->
-
         }
     }
 }

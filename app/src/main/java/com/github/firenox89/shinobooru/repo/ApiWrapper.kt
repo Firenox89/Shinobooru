@@ -23,13 +23,6 @@ class ApiWrapper(private val appContext: Context) {
         FuelManager.instance.baseHeaders = mapOf("User-Agent" to "Java/1.8.0_112")
     }
 
-    /** Check for Network availability */
-    fun isOnline(): Boolean {
-        val cm = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val netInfo = cm.activeNetworkInfo
-        return netInfo.isConnectedOrConnecting
-    }
-
     suspend fun requestPost(board: String,
                             page: Int,
                             tags: String = "",

@@ -14,6 +14,7 @@ import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ui.base.BaseActivity
 import com.github.firenox89.shinobooru.ui.showConfirmationDialog
+import com.github.firenox89.shinobooru.ui.showToast
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.POSITION_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY
@@ -33,9 +34,7 @@ class PostPagerActivity : BaseActivity() {
     private lateinit var postLoader: PostLoader
     lateinit var board: String
     lateinit var tags: String
-    /**
-     * Creates a [VerticalViewPager] that starts on a given [Post] and load new posts from the given [PostLoader]
-     */
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_post_pager)
@@ -87,9 +86,9 @@ class PostPagerActivity : BaseActivity() {
                 GlobalScope.launch {
                     val post = postLoader.getPostAt(postviewpager.currentItem)
                     dataSource.downloadPost(post).fold({
-                        showToast("Download successful")
+                        showToast(this@PostPagerActivity, "Download successful")
                     }, {
-                        showToast("Download failed, ${it.message}")
+                        showToast(this@PostPagerActivity, "Download failed, ${it.message}")
                         Timber.e(it, "Download failed $post")
                     })
                 }
@@ -97,16 +96,16 @@ class PostPagerActivity : BaseActivity() {
             }
             R.id.action_delete -> {
                 GlobalScope.launch {
-                    showConfirmationDialog(this@PostPagerActivity, R.string.confirm, R.string.really_delete).map { delete ->
+                    showConfirmationDialog(this@PostPagerActivity, R.string.confirm, R.string.really_delete).map {
                         val post = postLoader.getPostAt(postviewpager.currentItem)
                         dataSource.deletePost(post as DownloadedPost).fold({
-                            showToast("Deleted")
+                            showToast(this@PostPagerActivity, "Deleted")
                             //we close the activity since the displayed post was deleted
                             withContext(Dispatchers.Main) {
                                 this@PostPagerActivity.finish()
                             }
                         }, {
-                            showToast("Delete failed ${it.message}")
+                            showToast(this@PostPagerActivity, "Delete failed ${it.message}")
                             Timber.e(it, "Delete failed $post")
                         })
                     }
@@ -119,9 +118,5 @@ class PostPagerActivity : BaseActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    private suspend fun showToast(msg: String) = withContext(Dispatchers.Main) {
-        Toast.makeText(this@PostPagerActivity, msg, Toast.LENGTH_LONG).show()
     }
 }

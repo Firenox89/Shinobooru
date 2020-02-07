@@ -27,7 +27,10 @@ interface DataSource {
     suspend fun deletePost(post: DownloadedPost): Result<Boolean, Exception>
 }
 
-class DefaultDataSource(val apiWrapper: ApiWrapper, val fileManager: FileManager, val storagePostLoader: StoragePostLoader) : DataSource {
+class DefaultDataSource(
+        private val apiWrapper: ApiWrapper,
+        private val fileManager: FileManager,
+        private val storagePostLoader: StoragePostLoader) : DataSource {
     private val loaderList = mutableListOf<PostLoader>(storagePostLoader)
 
     val tmpBoards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")

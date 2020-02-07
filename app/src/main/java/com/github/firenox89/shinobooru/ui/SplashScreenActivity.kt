@@ -12,23 +12,16 @@ import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import timber.log.Timber
 
-
-/**
- * Created by firenox on 2/12/17.
- */
 class SplashScreenActivity : Activity() {
-    val TAG = "SplashScreenActivity"
     var loadingText: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splashscreen)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkPermissions()) {
-                //no need to initialize without permissions
-                return
-            }
+        if (checkPermissions()) {
+            //no need to initialize without permissions
+            return
         }
         startThumbnailActivity()
         finish()
@@ -49,10 +42,10 @@ class SplashScreenActivity : Activity() {
         return false
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>?, grantResults: IntArray?) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         var allGranted = true
-        grantResults?.forEach {
+        grantResults.forEach {
             if (it == PackageManager.PERMISSION_DENIED) {
                 allGranted = false
                 Timber.e("File Permission denied")
@@ -64,7 +57,7 @@ class SplashScreenActivity : Activity() {
             startThumbnailActivity()
             finish()
         } else {
-            loadingText?.text = "Permission to access storage was not granted."
+            loadingText?.text = getString(R.string.noStoragePermissions)
         }
     }
 }

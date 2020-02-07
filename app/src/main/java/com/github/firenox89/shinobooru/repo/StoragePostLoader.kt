@@ -9,6 +9,7 @@ import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.firenox89.shinobooru.utility.Constants
 import com.github.firenox89.shinobooru.utility.UI.loadSubsampledImage
+import com.github.kittinunf.result.Result
 import kotlinx.coroutines.channels.Channel
 import timber.log.Timber
 
@@ -35,10 +36,10 @@ class StoragePostLoader(val appContext: Context, val fileManager: FileManager) :
 
     private var posts = fileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
 
-    override suspend fun loadPreview(post: Post): Bitmap =
+    override suspend fun loadPreview(post: Post): Result<Bitmap, Exception> =
             loadSubsampledImage((post as DownloadedPost).file, 250, 400)
 
-    override suspend fun loadSample(post: Post): Bitmap {
+    override suspend fun loadSample(post: Post): Result<Bitmap, Exception> {
         val wm = appContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val display = wm.defaultDisplay
         val size = Point()
