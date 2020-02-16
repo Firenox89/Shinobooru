@@ -9,7 +9,7 @@ android {
     buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "com.github.firenox89.shinobooru"
-        minSdkVersion 24
+        minSdkVersion 26
         targetSdkVersion 28
         versionCode 3
         versionName "0.4.0"
@@ -31,6 +31,7 @@ android {
 
 def fuel_version = '2.2.1'
 dependencies {
+    implementation project(path: ':shinobooru-image-meta')
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 
     implementation 'androidx.activity:activity-ktx:1.1.0'

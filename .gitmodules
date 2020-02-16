@@ -1,0 +1,3 @@
+[submodule "shinobooru-image-meta"]
+	path = shinobooru-image-meta
+	url = git@github.com:Firenox89/shinobooru-image-meta.git

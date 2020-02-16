@@ -1,5 +1,6 @@
 package com.github.firenox89.shinobooru.repo
 
+import com.github.firenox89.shinobooru.image.meta.ImageMetadataPostWriter
 import com.github.firenox89.shinobooru.repo.db.DBTag
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
@@ -18,7 +19,7 @@ import java.lang.Exception
 
 interface DataSource {
     fun getBoards(): List<String>
-    fun getAllPosts(): Map<String, List<DownloadedPost>>
+    fun getAllPosts(): List<DownloadedPost>
     fun onRatingChanged()
     suspend fun getPostLoader(board: String, tags: String?): PostLoader
     suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError>
@@ -53,7 +54,7 @@ class DefaultDataSource(
 
     override fun getBoards(): List<String> = tmpBoards
 
-    override fun getAllPosts(): Map<String, List<DownloadedPost>> = fileManager.boards
+    override fun getAllPosts(): List<DownloadedPost> = fileManager.getAllDownloadedPosts()
 
     override suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError> =
             apiWrapper.requestTag(board, name).map { tags ->
@@ -76,13 +77,10 @@ class DefaultDataSource(
 
     override suspend fun downloadPost(post: Post): Result<Unit, Exception> {
         Timber.i("Download Post $post")
-
         return fileManager.getDownloadDestinationFor(post).flatMap { destination ->
-            apiWrapper.downloadPost(post, destination).also {
-                if (it is Result.Success) {
-                    fileManager.addDownloadedPost(post, destination).also {
-                        storagePostLoader.onRefresh()
-                    }
+            apiWrapper.downloadPost(post, destination).flatMap {
+                fileManager.writeMetadataInFileAndAddToList(post, destination).map {
+                    storagePostLoader.onRefresh()
                 }
             }
         }

@@ -4,7 +4,6 @@ import android.content.Context
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.settings.SettingsManager
 import com.github.kittinunf.result.Result
-import com.nextcloud.common.NextcloudClient
 import com.owncloud.android.lib.common.OwnCloudClient
 import com.owncloud.android.lib.common.OwnCloudClientFactory
 import com.owncloud.android.lib.common.OwnCloudCredentialsFactory

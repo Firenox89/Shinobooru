@@ -1,7 +1,11 @@
 package com.github.firenox89.shinobooru.repo.model
 
 import android.graphics.BitmapFactory
+import com.github.firenox89.shinobooru.image.meta.ImageMetadataPostWriter
+import com.github.kittinunf.result.Result
+import timber.log.Timber
 import java.io.File
+import java.lang.Exception
 
 
 class DownloadedPost(id: Long, val file: File, val boardName: String) : Post(id = id) {
@@ -30,19 +34,20 @@ class DownloadedPost(id: Long, val file: File, val boardName: String) : Post(id 
         /**
          * Load a post from a file by parsing the file name to get the post id
          */
-        fun postFromName(postFile: File): DownloadedPost {
-            //TODO: handle non posts
+        fun postFromName(postFile: File): Result<DownloadedPost, Exception> =
+                Result.of {
+                    val post = ImageMetadataPostWriter.readPostFromImage(postFile)
 
-            val postFileName = postFile.name
+                    Timber.v("Post loaded $post")
 
-            //compatibility with mbooru saved posts
-            val idIndex = if (postFileName.split(" ")[1] == "-") 2 else 1
+                    DownloadedPost(id = post.id.toLong(), file = postFile, boardName = post.board).also {
+                        it.tags = post.tags
+                        it.author = post.author
+                        it.source = post.source
+                        it.rating = post.rating
+                    }
+                }
 
-            val id = postFileName.split(" ")[idIndex].toLong()
-            val source = postFileName.split(" ")[0].toLowerCase()
-
-            return DownloadedPost(id = id, file = postFile, boardName = source)
-        }
     }
 
     override fun getBoard(): String {

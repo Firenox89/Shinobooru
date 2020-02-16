@@ -3,6 +3,7 @@ package com.github.firenox89.shinobooru.repo
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Environment
+import com.github.firenox89.shinobooru.image.meta.ImageMetadataPostWriter
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost.Companion.postFromName
 import com.github.firenox89.shinobooru.repo.model.Post
@@ -22,18 +23,13 @@ sealed class FileManagerExecptions {
     }
 }
 
-/**
- * In charge of handling file system tasks.
- */
 class FileManager(val appContext: Context) {
 
     /** The image directory inside androids picture dir. */
     val shinobooruImageDir = File(Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_PICTURES), "shinobooru")
 
-    /** Map of boards and the post images downloaded from them */
-    //TODO map and list should be immutable from outside this class
-    val boards = mutableMapOf<String, MutableList<DownloadedPost>>()
+    private val downloadedPosts = mutableListOf<DownloadedPost>()
     /** List of cached post thumbnails */
     private val cachedFiles = mutableListOf<String>()
 
@@ -48,23 +44,16 @@ class FileManager(val appContext: Context) {
         //TODO don't throw this from the constructor
         isExternalStorageMounted().component2()?.let { throw it }
         shinobooruImageDir.mkdirs()
-        shinobooruImageDir.listFiles().forEach { boards.put(it.name, loadDownloadedPostListFromFile(it)) }
+        shinobooruImageDir.listFiles().forEach { file ->
+            if (file.isFile) {
+                postFromName(file).map {
+                    downloadedPosts.add(it)
+                }
+            }
+        }
 
         // load list of files from cache
         cachedFiles.addAll(appContext.fileList())
-    }
-
-    /**
-     * Loading files from a given directory by using [postFromName] for each file.
-     *
-     * @param dir the directory to take the files from
-     * @return a list of loaded posts
-     */
-    private fun loadDownloadedPostListFromFile(dir: File): MutableList<DownloadedPost> {
-        val postList = mutableListOf<DownloadedPost>()
-
-        dir.listFiles().forEach { postList.add(postFromName(it)) }
-        return postList
     }
 
     fun getDownloadDestinationFor(post: Post): Result<File, Exception> =
@@ -72,7 +61,7 @@ class FileManager(val appContext: Context) {
                 val url = post.file_url
                 val board = post.getBoard()
 
-                if (boards[board]?.find { it.id == post.id } != null) {
+                if (downloadedPosts.find { it.id == post.id } != null) {
                     throw FileManagerExecptions.PostAlreadyDownloaded()
                 } else {
                     val dataType = url.split(".").last()
@@ -93,20 +82,10 @@ class FileManager(val appContext: Context) {
             }
 
     /**
-     * Returns a list of downloaded posts for a given board name
-     *
-     * @param board name to get the list from
-     * @return list of posts for the given board
-     */
-    fun getDownloadedPosts(board: String): List<DownloadedPost>? = boards[board]
-
-    /**
      * Returns a list of all downloaded posts by combining the different board lists
      */
     fun getAllDownloadedPosts(): List<DownloadedPost> {
-        val list = mutableListOf<DownloadedPost>()
-        boards.forEach { list.addAll(it.value) }
-        return list
+        return downloadedPosts
     }
 
     /**
@@ -116,7 +95,7 @@ class FileManager(val appContext: Context) {
      * @param id of the post
      * @return [DownloadedPost] or null
      */
-    fun fileById(board: String, id: Long): File? = boards[board]?.filter { it.id == id }?.first()?.file
+    fun fileById(board: String, id: Long): File? = downloadedPosts.firstOrNull { it.id == id }?.file
 
     /**
      * Return a [FileInputStream] of the cached preview image or null if not cached.
@@ -164,12 +143,30 @@ class FileManager(val appContext: Context) {
     }
 
     fun deleteDownloadedPost(post: DownloadedPost): Result<Boolean, Exception> =
-        Result.of {
-            boards[post.boardName]!!.remove(post)
-            post.file.delete()
-        }
+            Result.of {
+                downloadedPosts.remove(post)
+                post.file.delete()
+            }
 
-    fun addDownloadedPost(post: Post, file: File) {
-        boards[post.getBoard()]?.add(postFromName(file))
+    fun writeMetadataInFileAndAddToList(post: Post, file: File): Result<Unit, Exception> {
+        return Result.of<Unit, Exception> {
+            val metaPost = com.github.firenox89.shinobooru.image.meta.Post(
+                    post.getBoard(),
+                    post.id.toString(),
+                    post.author,
+                    post.source,
+                    post.rating,
+                    post.tags)
+            Timber.w("Write post to image $post $file")
+            val res = ImageMetadataPostWriter.writePostToImage(file, file, metaPost)
+            Timber.w("res $res")
+        }.flatMap {
+            Timber.w("$it")
+            postFromName(file).map {
+                Timber.w("add post to downloaded list $it")
+                downloadedPosts.add(it)
+                Unit
+            }
+        }
     }
 }
