@@ -1,7 +1,7 @@
 package com.github.firenox89.shinobooru.repo
 
-import com.github.firenox89.shinobooru.image.meta.ImageMetadataPostWriter
 import com.github.firenox89.shinobooru.repo.db.DBTag
+import com.github.firenox89.shinobooru.repo.model.CloudPost
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
@@ -15,30 +15,34 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.io.File
 import java.lang.Exception
 
 interface DataSource {
     fun getBoards(): List<String>
-    fun getAllPosts(): List<DownloadedPost>
+    fun getAllDownloadedPosts(): List<DownloadedPost>
     fun onRatingChanged()
     suspend fun getPostLoader(board: String, tags: String?): PostLoader
+    fun getLocalLoader(): LocalPostLoader
     suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError>
     suspend fun loadTagColors(tags: List<Tag>): List<Tag>
     suspend fun downloadPost(post: Post): Result<Unit, Exception>
     suspend fun deletePost(post: DownloadedPost): Result<Boolean, Exception>
+    fun getFileDestinationFor(fileName: String): File
+    fun addDownloadedPostToList(post: DownloadedPost)
 }
 
 class DefaultDataSource(
         private val apiWrapper: ApiWrapper,
         private val fileManager: FileManager,
-        private val storagePostLoader: StoragePostLoader) : DataSource {
-    private val loaderList = mutableListOf<PostLoader>(storagePostLoader)
+        private val localPostLoader: LocalPostLoader) : DataSource {
+    private val loaderList = mutableListOf<PostLoader>(localPostLoader)
 
     val tmpBoards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
     /**
      * Returns a [PostLoader] instance for the given arguments.
      * Cache create instances and return them on the same arguments.
-     * To obtain an instance of the [StoragePostLoader] use 'FileLoader' as board name
+     * To obtain an instance of the [LocalPostLoader] use 'FileLoader' as board name
      *
      * @param board that this loader should load from
      * @param tags this loader should add for requests
@@ -52,9 +56,11 @@ class DefaultDataSource(
                 })
     }
 
+    override fun getLocalLoader(): LocalPostLoader = localPostLoader
+
     override fun getBoards(): List<String> = tmpBoards
 
-    override fun getAllPosts(): List<DownloadedPost> = fileManager.getAllDownloadedPosts()
+    override fun getAllDownloadedPosts(): List<DownloadedPost> = fileManager.getAllDownloadedPosts()
 
     override suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError> =
             apiWrapper.requestTag(board, name).map { tags ->
@@ -80,7 +86,7 @@ class DefaultDataSource(
         return fileManager.getDownloadDestinationFor(post).flatMap { destination ->
             apiWrapper.downloadPost(post, destination).flatMap {
                 fileManager.writeMetadataInFileAndAddToList(post, destination).map {
-                    storagePostLoader.onRefresh()
+                    localPostLoader.onRefresh()
                 }
             }
         }
@@ -90,7 +96,17 @@ class DefaultDataSource(
         Timber.i("Delete Post $post")
 
         return fileManager.deleteDownloadedPost(post).also {
-            storagePostLoader.onRefresh()
+            localPostLoader.onRefresh()
+        }
+    }
+
+    override fun getFileDestinationFor(fileName: String): File =
+            fileManager.getDownloadDestinationFor(fileName)
+
+    override fun addDownloadedPostToList(post: DownloadedPost) {
+        fileManager.addToList(post)
+        GlobalScope.launch {
+            localPostLoader.onRefresh()
         }
     }
 

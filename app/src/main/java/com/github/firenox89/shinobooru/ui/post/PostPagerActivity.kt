@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.github.firenox89.shinobooru.R
 import com.github.firenox89.shinobooru.repo.PostLoader
-import com.github.firenox89.shinobooru.repo.StoragePostLoader
+import com.github.firenox89.shinobooru.repo.LocalPostLoader
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.ui.base.BaseActivity
@@ -71,7 +71,7 @@ class PostPagerActivity : BaseActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        if (postLoader is StoragePostLoader) {
+        if (postLoader is LocalPostLoader) {
             menuInflater.inflate(R.menu.delete, menu)
         } else {
             menuInflater.inflate(R.menu.download, menu)

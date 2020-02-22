@@ -1,4 +1,4 @@
-package com.starcooperation.bmw.common.crossconcern.ext
+package com.github.firenox89.shinobooru.ext
 
 inline fun <reified T> Iterable<T>.sumBy(selector: (T) -> Long): Long {
     var sum = 0L

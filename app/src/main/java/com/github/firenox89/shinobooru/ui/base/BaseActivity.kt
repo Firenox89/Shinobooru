@@ -5,7 +5,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import com.github.firenox89.shinobooru.repo.DataSource
 import com.github.firenox89.shinobooru.settings.SettingsActivity
-import com.github.firenox89.shinobooru.ui.SyncActivity
+import com.github.firenox89.shinobooru.ui.sync.SyncActivity
 import com.github.firenox89.shinobooru.ui.thumbnail.ThumbnailActivity
 import com.github.firenox89.shinobooru.utility.Constants.BOARD_INTENT_KEY
 import com.github.firenox89.shinobooru.utility.Constants.TAGS_INTENT_KEY

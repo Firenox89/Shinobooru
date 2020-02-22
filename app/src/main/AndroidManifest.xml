@@ -36,13 +36,13 @@
             android:label="@string/title_activity_view_pager"
             android:theme="@style/Theme.AppCompat" />
         <activity
-            android:name=".ui.SyncActivity"
+            android:name=".ui.sync.SyncActivity"
             android:label="@string/title_activity_sync"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+            android:theme="@style/Theme.AppCompat"/>
         <activity
             android:name=".settings.SettingsActivity"
             android:label="@string/title_activity_settings"
-            android:theme="@style/Theme.AppCompat"/>
+            android:theme="@style/Theme.AppCompat" />
 
         <service
             android:name=".service.ShinoboorusWallpaperService"

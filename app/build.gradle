@@ -9,7 +9,7 @@ android {
     buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "com.github.firenox89.shinobooru"
-        minSdkVersion 26
+        minSdkVersion 25
         targetSdkVersion 28
         versionCode 3
         versionName "0.4.0"
@@ -66,7 +66,7 @@ dependencies {
 
     implementation 'com.github.MikeOrtiz:TouchImageView:2.3.3'
 
-    implementation 'com.github.nextcloud:android-library:-SNAPSHOT'
+    implementation 'com.github.nextcloud:android-library:2.0.1'
     implementation "commons-httpclient:commons-httpclient:3.1@jar" // remove after entire switch to lib (nextcloud)v2
 
     // Koin

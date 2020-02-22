@@ -17,7 +17,7 @@ import timber.log.Timber
  * Sub-classes the [PostLoader] to use the downloaded post images as a source for posts.
  * Does not refresh the post list when new images are downloaded.
  */
-class StoragePostLoader(val appContext: Context, val fileManager: FileManager) : PostLoader {
+class LocalPostLoader(private val appContext: Context, private val fileManager: FileManager) : PostLoader {
     override val board: String
         get() = Constants.FILE_LOADER_NAME
     override val tags: String
@@ -54,7 +54,7 @@ class StoragePostLoader(val appContext: Context, val fileManager: FileManager) :
     /**
      * Return a post from the postlist for the given number
      */
-    override fun getPostAt(index: Int): Post {
+    override fun getPostAt(index: Int): DownloadedPost {
         return posts[index]
     }
 
