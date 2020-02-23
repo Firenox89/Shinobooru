@@ -36,6 +36,7 @@ class ThumbnailActivity : BaseActivity() {
 
     private val recyclerLayout = androidx.recyclerview.widget.StaggeredGridLayoutManager(4, androidx.recyclerview.widget.StaggeredGridLayoutManager.VERTICAL)
 
+    private lateinit var board: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,7 +50,7 @@ class ThumbnailActivity : BaseActivity() {
 
         //setup the RecyclerView adapter
         val tags = intent.getStringExtra(TAGS_INTENT_KEY) ?: ""
-        val board = intent.getStringExtra(BOARD_INTENT_KEY) ?: SettingsActivity.currentBoardURL
+        board = intent.getStringExtra(BOARD_INTENT_KEY) ?: SettingsActivity.currentBoardURL
 
         setupDrawer(nav_view, drawer_layout, board)
 
@@ -162,11 +163,15 @@ class ThumbnailActivity : BaseActivity() {
                 }
                 "Filemanager" -> {
                     drawer.closeDrawers()
-                    openBoard(Constants.FILE_LOADER_NAME)
+                    if (board != Constants.FILE_LOADER_NAME) {
+                        openBoard(Constants.FILE_LOADER_NAME)
+                    }
                 }
                 else -> {
                     drawer.closeDrawers()
-                    openBoard(item.title.toString())
+                    if (board != item.title.toString()) {
+                        openBoard(item.title.toString())
+                    }
                 }
             }
             true

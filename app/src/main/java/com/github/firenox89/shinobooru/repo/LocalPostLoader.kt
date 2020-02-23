@@ -79,7 +79,7 @@ class LocalPostLoader(private val appContext: Context, private val fileManager: 
 
     override suspend fun onRefresh() {
         Timber.d("onRefresh")
-        posts = fileManager.getAllDownloadedPosts().sortedWith(newestDownloadedPostComparator)
+        posts = fileManager.getAllDownloadedPosts(true).sortedWith(newestDownloadedPostComparator)
         changeChannel.offer(Pair(0, posts.size))
     }
 }

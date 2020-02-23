@@ -34,17 +34,25 @@ class SyncActivity : BaseActivity() {
                 postsToDownload.text = state.postsToDownload.size.toString()
 
                 syncButton.setOnClickListener {
-                    GlobalScope.launch {
-                        val syncProgress = viewModel.sync(state.postsToUpload, state.postsToDownload)
+                    //to avoid starting this twice
+                    syncButton.isEnabled = false
+                    val syncProgress = viewModel.sync(state.postsToUpload, state.postsToDownload)
+                    lifecycleScope.launch {
                         for (progress in syncProgress) {
                             if (progress.error != null) {
                                 toast("${progress.error.message}")
-                                break
+                                errorText.text = progress.error.message
                             }
-                            //TODO display progress
+                            syncProgressText.text = String.format(
+                                    getString(R.string.cloudSyncState),
+                                    progress.postUploaded,
+                                    progress.totalPostsToUpload,
+                                    progress.postDownloaded,
+                                    progress.totalPostsToDownload)
                         }
 
                         toast("Sync complete")
+                        syncButton.isEnabled = true
                     }
                 }
                 syncButton.isEnabled = true

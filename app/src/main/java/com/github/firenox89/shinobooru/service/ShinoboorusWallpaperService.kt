@@ -1,10 +1,11 @@
 package com.github.firenox89.shinobooru.service
 
-import android.content.SharedPreferences
+import android.content.Context
 import android.graphics.*
 import android.graphics.Paint.ANTI_ALIAS_FLAG
 import android.service.wallpaper.WallpaperService
 import android.util.Size
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import com.github.firenox89.shinobooru.repo.FileManager
@@ -23,7 +24,7 @@ import timber.log.Timber
  */
 class ShinoboorusWallpaperService : WallpaperService() {
 
-    override fun onCreateEngine(): Engine = ShinoboorusWallpaperEngine()
+    override fun onCreateEngine(): Engine = ShinoboorusWallpaperEngine(applicationContext)
 
     companion object {
         val black = Paint().apply {
@@ -41,7 +42,7 @@ class ShinoboorusWallpaperService : WallpaperService() {
     /**
      * The engine drawing on te live wallpaper.
      */
-    inner class ShinoboorusWallpaperEngine : Engine(), KoinComponent {
+    inner class ShinoboorusWallpaperEngine(applicationContext: Context) : Engine(), KoinComponent {
         //TODO: make the wallpaperService more configurable
 
         private var displayWidth: Int = 0
@@ -50,17 +51,25 @@ class ShinoboorusWallpaperService : WallpaperService() {
         private val drawRequestQueue = Channel<() -> Unit>()
 
         private val fileManager: FileManager by inject()
-        /**
-         * Sets up the event handler for double clicks und the event queue for drawing request.
-         */
-        init {
+        private lateinit var gestureDetector: GestureDetector
+
+        override fun onCreate(surfaceHolder: SurfaceHolder?) {
+            super.onCreate(surfaceHolder)
+            Timber.w("TODO Implement double click listener")
+
+            val listener = object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDoubleTap(e: MotionEvent?): Boolean {
+                    draw()
+                    return true
+                }
+            }
+            gestureDetector = GestureDetector(applicationContext, listener)
             GlobalScope.launch {
                 for (drawCall in drawRequestQueue) {
                     drawCall.invoke()
                 }
             }
         }
-
 
         /**
          * Issue a draw call on a visibility change.
@@ -69,18 +78,12 @@ class ShinoboorusWallpaperService : WallpaperService() {
          */
         override fun onVisibilityChanged(visible: Boolean) {
             //hide drawing through doing it when invisible
-            if (!visible) GlobalScope.launch { draw() }
+            if (!visible)
+                draw()
         }
 
-        /**
-         * Sends the ACTION_UP events the [clickEventStream].
-         * Calls super method.
-         *
-         * @param event filter and put on [clickEventStream]
-         */
         override fun onTouchEvent(event: MotionEvent?) {
-            Timber.w("TODO Implement double click listener")
-            super.onTouchEvent(event)
+            gestureDetector.onTouchEvent(event)
         }
 
         /**
@@ -102,24 +105,24 @@ class ShinoboorusWallpaperService : WallpaperService() {
         /**
          * Draws an image fitting the current rotation and draws it to the canvas obtained from the surface.
          */
-        private suspend fun draw() {
-            drawRequestQueue.send {
+        private fun draw() {
+            drawRequestQueue.offer {
                 try {
                     //stop if surface got invalid
-                    if (isSurfaceInvalid()) return@send
-                    val canvas = surfaceHolder.lockCanvas() ?: return@send
+                    if (isSurfaceInvalid()) return@offer
+                    val canvas = surfaceHolder.lockCanvas() ?: return@offer
                     //clear previous drawing
                     canvas.drawPaint(black)
                     val image = pickImage()
                     val transformationInfo = calcTransformation(image)
-                    if (isSurfaceInvalid()) return@send
+                    if (isSurfaceInvalid()) return@offer
                     //scales image
                     canvas.translate(transformationInfo.second.width.toFloat() / 2,
-                                     transformationInfo.second.height.toFloat() / 2)
-                    if (isSurfaceInvalid()) return@send
+                            transformationInfo.second.height.toFloat() / 2)
+                    if (isSurfaceInvalid()) return@offer
                     //draws scaled image
                     canvas.drawBitmap(image, transformationInfo.first, filter)
-                    if (isSurfaceInvalid()) return@send
+                    if (isSurfaceInvalid()) return@offer
                     //TODO this sometimes crashes when setting this as lockscreen
                     surfaceHolder.unlockCanvasAndPost(canvas)
                     image.recycle()
@@ -253,10 +256,10 @@ class ShinoboorusWallpaperService : WallpaperService() {
             paint.textSize = 24f
             paint.color = Color.WHITE
             paint.textAlign = Paint.Align.LEFT
-            val baseline = - paint.ascent() // ascent() is negative
-            val width =(paint.measureText(text) + 0.5f).toInt() // round
+            val baseline = -paint.ascent() // ascent() is negative
+            val width = (paint.measureText(text) + 0.5f).toInt() // round
             val height = (baseline + paint.descent() + 0.5f).toInt()
-            val image = Bitmap . createBitmap (width, height, Bitmap.Config.ARGB_8888)
+            val image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(image)
             canvas.drawPaint(black)
             canvas.drawText(text, 0f, baseline, paint)

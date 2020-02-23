@@ -18,24 +18,11 @@ import timber.log.Timber
 import java.io.File
 import java.lang.Exception
 
-interface DataSource {
-    fun getBoards(): List<String>
-    fun getAllDownloadedPosts(): List<DownloadedPost>
-    fun onRatingChanged()
-    suspend fun getPostLoader(board: String, tags: String?): PostLoader
-    fun getLocalLoader(): LocalPostLoader
-    suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError>
-    suspend fun loadTagColors(tags: List<Tag>): List<Tag>
-    suspend fun downloadPost(post: Post): Result<Unit, Exception>
-    suspend fun deletePost(post: DownloadedPost): Result<Boolean, Exception>
-    fun getFileDestinationFor(fileName: String): File
-    fun addDownloadedPostToList(post: DownloadedPost)
-}
-
-class DefaultDataSource(
+class DataSource(
         private val apiWrapper: ApiWrapper,
         private val fileManager: FileManager,
-        private val localPostLoader: LocalPostLoader) : DataSource {
+        private val localPostLoader: LocalPostLoader) {
+    
     private val loaderList = mutableListOf<PostLoader>(localPostLoader)
 
     val tmpBoards = listOf("yande.re", "konachan.com", "moe.booru.org", "danbooru.donmai.us", "gelbooru.com")
@@ -48,7 +35,7 @@ class DefaultDataSource(
      * @param tags this loader should add for requests
      * @return a cached or newly created instance of a [PostLoader]
      */
-    override suspend fun getPostLoader(board: String, tags: String?): PostLoader = withContext(Dispatchers.IO) {
+    suspend fun getPostLoader(board: String, tags: String?): PostLoader = withContext(Dispatchers.IO) {
         loaderList.find { it.board == board && it.tags == tags }
                 ?: (RemotePostLoader(board, tags ?: "", apiWrapper, fileManager).apply {
                     requestNextPosts()
@@ -56,20 +43,20 @@ class DefaultDataSource(
                 })
     }
 
-    override fun getLocalLoader(): LocalPostLoader = localPostLoader
+    fun getLocalLoader(): LocalPostLoader = localPostLoader
 
-    override fun getBoards(): List<String> = tmpBoards
+    fun getBoards(): List<String> = tmpBoards
 
-    override fun getAllDownloadedPosts(): List<DownloadedPost> = fileManager.getAllDownloadedPosts()
+    fun getAllDownloadedPosts(): List<DownloadedPost> = fileManager.getAllDownloadedPosts()
 
-    override suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError> =
+    suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError> =
             apiWrapper.requestTag(board, name).map { tags ->
                 saveTagsInDB(tags, board)
                 tags
             }
 
 
-    override suspend fun loadTagColors(tags: List<Tag>): List<Tag> =
+    suspend fun loadTagColors(tags: List<Tag>): List<Tag> =
             tags.map { tag ->
                 loadTagFromDB(tag)?.toTag()
                         ?: loadTagFromAPI(tag).get()
@@ -81,7 +68,7 @@ class DefaultDataSource(
                 list.first { it.name == tag.name }
             }
 
-    override suspend fun downloadPost(post: Post): Result<Unit, Exception> {
+    suspend fun downloadPost(post: Post): Result<Unit, Exception> {
         Timber.i("Download Post $post")
         return fileManager.getDownloadDestinationFor(post).flatMap { destination ->
             apiWrapper.downloadPost(post, destination).flatMap {
@@ -92,7 +79,7 @@ class DefaultDataSource(
         }
     }
 
-    override suspend fun deletePost(post: DownloadedPost): Result<Boolean, Exception> {
+    suspend fun deletePost(post: DownloadedPost): Result<Boolean, Exception> {
         Timber.i("Delete Post $post")
 
         return fileManager.deleteDownloadedPost(post).also {
@@ -100,20 +87,19 @@ class DefaultDataSource(
         }
     }
 
-    override fun getFileDestinationFor(fileName: String): File =
+    fun getFileDestinationFor(fileName: String): File =
             fileManager.getDownloadDestinationFor(fileName)
 
-    override fun addDownloadedPostToList(post: DownloadedPost) {
-        fileManager.addToList(post)
-        GlobalScope.launch {
-            localPostLoader.onRefresh()
-        }
+    suspend fun refreshLocalPosts() {
+        localPostLoader.onRefresh()
     }
+
+    fun getSyncDir() = fileManager.getSyncDir()
 
     /**
      * Reloads the posts for all stored loader instances
      */
-    override fun onRatingChanged() {
+    fun onRatingChanged() {
         GlobalScope.launch {
             loaderList.forEach { it.onRefresh() }
         }

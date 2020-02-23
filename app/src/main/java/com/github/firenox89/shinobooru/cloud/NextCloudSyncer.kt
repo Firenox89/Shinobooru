@@ -14,18 +14,26 @@ import com.owncloud.android.lib.common.OwnCloudCredentialsFactory
 import com.owncloud.android.lib.common.operations.RemoteOperationResult
 import com.owncloud.android.lib.resources.files.*
 import com.owncloud.android.lib.resources.files.model.RemoteFile
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.produce
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import timber.log.Timber
+import java.io.File
 import java.lang.Exception
 import java.lang.IllegalArgumentException
+import java.util.concurrent.Executors
+import kotlin.coroutines.coroutineContext
 
 const val SHINOBOORU_REMOTE_PATH = "/Shinobooru/"
 
 class NextCloudSyncer(private val appContext: Context, private val dataSource: DataSource) : CloudSync, KoinComponent {
     private val settingsManager: SettingsManager by inject()
+
+    private val networkDispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
+    private val syncDir = dataSource.getSyncDir()
 
     private fun getClient(): Result<OwnCloudClient, Exception> =
             settingsManager.nextcloudBaseUri?.let { baseUri ->
@@ -39,55 +47,84 @@ class NextCloudSyncer(private val appContext: Context, private val dataSource: D
                 }
             } ?: Result.error(IllegalArgumentException("Nextcloud Uri not set."))
 
-    override suspend fun upload(posts: List<DownloadedPost>): Result<Unit, Exception> = withContext(Dispatchers.IO) {
-        Result.of<Unit, Exception> {
-            getClient().flatMap { client ->
-                posts.forEach { post ->
-                    Timber.d("Upload $post")
-                    UploadFileRemoteOperation(
-                            post.file.absolutePath,
-                            SHINOBOORU_REMOTE_PATH + post.file.name,
-                            post.getMIMEType(),
-                            (post.file.lastModified() / 1000).toString()
-                    ).execute(client).let { result ->
-                        if (!result.isSuccess) {
-                            Timber.e("Uploaded failed $result")
-                            return@flatMap Result.error(result.exception)
-                        } else {
-                            Timber.d("Uploaded $result")
-                        }
-                    }
-                }
-                Result.success(Unit)
-            }
-        }
-    }
-
-    override suspend fun download(posts: List<CloudPost>): Result<List<DownloadedPost>, Exception> = withContext(Dispatchers.IO) {
-        Result.of<List<DownloadedPost>, Exception> {
+    override suspend fun upload(posts: List<DownloadedPost>): Result<Channel<UploadProgress>, Exception> =
             getClient().map { client ->
-                posts.map { post ->
-                    val fileDst = dataSource.getFileDestinationFor(post.remotePath.removePrefix(SHINOBOORU_REMOTE_PATH))
-                    Timber.d("Download $post to $fileDst")
-                    DownloadFileRemoteOperation(
-                            post.remotePath,
-                            fileDst.absolutePath
-                    ).execute(client).let { result ->
-                        if (!result.isSuccess) {
-                            Timber.e("Download failed $result")
-                            Result.error(result.exception)
-                        } else {
-                            Timber.d("Download $result")
-                            DownloadedPost.postFromName(fileDst).map { post ->
-                                dataSource.addDownloadedPostToList(post)
-                                post
+                val progressChannel = Channel<UploadProgress>()
+                CoroutineScope(coroutineContext).async {
+                    var currentProgress = UploadProgress(posts.size, 0, null)
+
+                    posts.map { post ->
+                        async(networkDispatcher) {
+                            Timber.d("Upload $post")
+                            UploadFileRemoteOperation(
+                                    post.file.absolutePath,
+                                    SHINOBOORU_REMOTE_PATH + post.file.name,
+                                    post.getMIMEType(),
+                                    (post.file.lastModified() / 1000).toString()
+                            ).execute(client).let { result ->
+                                if (!result.isSuccess) {
+                                    Timber.e("Uploaded failed $result")
+                                    Result.error(result.exception)
+                                } else {
+                                    Timber.d("Uploaded $result")
+                                    Result.success(Unit)
+                                }
                             }
                         }
+                    }.forEach {
+                        it.await().fold({
+                            currentProgress = currentProgress.copy(postsUploaded = currentProgress.postsUploaded + 1)
+                            progressChannel.offer(currentProgress)
+                        }, { exception ->
+                            currentProgress = currentProgress.copy(postsUploaded = currentProgress.postsUploaded + 1, error = exception)
+                            progressChannel.offer(currentProgress)
+                        })
                     }
+                    progressChannel.close()
                 }
-            }.get().map { it.get() }
-        }
-    }
+                progressChannel
+            }
+
+    override suspend fun download(posts: List<CloudPost>): Result<ReceiveChannel<DownloadProgress>, Exception> =
+            getClient().map { client ->
+                CoroutineScope(coroutineContext).produce(networkDispatcher) {
+                    var currentProgress = DownloadProgress(posts.size, 0, null)
+                    posts.map { post ->
+                        async {
+                            DownloadFileRemoteOperation(
+                                    post.remotePath,
+                                    syncDir.absolutePath
+                            ).execute(client).let { result ->
+                                if (!result.isSuccess) {
+                                    Timber.e("Download failed $result")
+                                    Result.error(result.exception)
+                                } else {
+                                    Timber.d("Download $result")
+                                    val syncFile = File(syncDir.absolutePath + post.remotePath)
+                                    val fileDst = dataSource.getFileDestinationFor(post.fileName)
+                                    syncFile.renameTo(fileDst)
+
+                                    Timber.d("Download $fileDst")
+                                    DownloadedPost.postFromName(fileDst)
+                                }
+                            }
+                        }
+                    }.forEach {
+                        Timber.e("Await $it")
+                        it.await().fold({
+                            Timber.e("Downloaded $it")
+                            currentProgress = currentProgress.copy(postsDownloaded = currentProgress.postsDownloaded + 1)
+                            offer(currentProgress)
+                        }, { exception ->
+                            Timber.e("Downloaded $exception")
+                            currentProgress = currentProgress.copy(postsDownloaded = currentProgress.postsDownloaded + 1, error = exception)
+                            offer(currentProgress)
+                        })
+                    }
+                    dataSource.refreshLocalPosts()
+                    close()
+                }
+            }
 
     override suspend fun remove(posts: List<DownloadedPost>): Result<Unit, Exception> = withContext(Dispatchers.IO) {
         Result.of<Unit, Exception> {
@@ -116,20 +153,34 @@ class NextCloudSyncer(private val appContext: Context, private val dataSource: D
             when {
                 res.isSuccess -> {
                     val remoteFiles = res.data as ArrayList<RemoteFile>
-                    val list = remoteFiles.filter { !it.remotePath.endsWith("/") }.map {
-                        CloudPost(it.remotePath, it.remotePath.removePrefix(SHINOBOORU_REMOTE_PATH))
+                    val list = remoteFiles.filter { !it.remotePath.endsWith("/") }.mapNotNull {
+                        val createPostResult = CloudPost.fromRemotePath(
+                                it.remotePath,
+                                it.remotePath.removePrefix(SHINOBOORU_REMOTE_PATH)
+                        )
+                        if (createPostResult is Result.Success) {
+                            createPostResult.get()
+                        } else {
+                            createPostResult as Result.Failure
+                            Timber.e(createPostResult.error, "Failed to load ${it.remotePath}")
+                            null
+                        }
                     }
                     Result.success(list)
                 }
                 res.code == RemoteOperationResult.ResultCode.FILE_NOT_FOUND -> {
                     val createRes = CreateFolderRemoteOperation(SHINOBOORU_REMOTE_PATH, true)
                             .execute(client)
-                    if (createRes.isSuccess) {
-                        Result.success(emptyList())
-                    } else if (createRes.exception != null) {
-                        Result.error(createRes.exception)
-                    } else {
-                        Result.error(IllegalArgumentException("Create root dir failed with unknown code $createRes"))
+                    when {
+                        createRes.isSuccess -> {
+                            Result.success(emptyList())
+                        }
+                        createRes.exception != null -> {
+                            Result.error(createRes.exception)
+                        }
+                        else -> {
+                            Result.error(IllegalArgumentException("Create root dir failed with unknown code $createRes"))
+                        }
                     }
                 }
                 res.exception != null -> {

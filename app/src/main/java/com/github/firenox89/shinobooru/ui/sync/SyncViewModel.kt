@@ -7,13 +7,18 @@ import com.github.firenox89.shinobooru.repo.model.CloudPost
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import timber.log.Timber
 import java.lang.Exception
+import java.util.concurrent.CancellationException
+import java.util.concurrent.TimeUnit
 
 data class SyncState(val postsOnDevice: List<DownloadedPost>, val postsOnCloud: List<CloudPost>, val postsToUpload: List<DownloadedPost>, val postsToDownload: List<CloudPost>)
-data class SyncProgress(val postUploaded: Int, val totalPostsToUpload: Int, val postDownloaded: Int, val totalPostsToDownload: Int, val error: Exception?)
+data class SyncProgress(val totalPostsToUpload: Int, val postUploaded: Int, val totalPostsToDownload: Int, val postDownloaded: Int, val error: Exception?)
 
 class SyncViewModel(val nextCloudSyncer: NextCloudSyncer, val dataSource: DataSource) : ViewModel() {
 
@@ -26,23 +31,43 @@ class SyncViewModel(val nextCloudSyncer: NextCloudSyncer, val dataSource: DataSo
         }
     }
 
-    suspend fun sync(postsToUpload: List<DownloadedPost>, postsToDownload: List<CloudPost>): Channel<SyncProgress> {
+    fun sync(postsToUpload: List<DownloadedPost>, postsToDownload: List<CloudPost>): Channel<SyncProgress> {
         val channel = Channel<SyncProgress>()
-        GlobalScope.async {
-            val uploadResult = nextCloudSyncer.upload(postsToUpload)
-
-            if (uploadResult is Result.Failure) {
-                channel.offer(SyncProgress(0, 0, 0, 0, uploadResult.error))
-                channel.close()
-            } else {
-                val downloadResult = nextCloudSyncer.download(postsToDownload)
-
-                if (downloadResult is Result.Failure) {
-                    channel.offer(SyncProgress(0, 0, 0, 0, downloadResult.error))
+        var currentProgress = SyncProgress(postsToUpload.size, 0, postsToDownload.size, 0, null)
+        GlobalScope.async(Dispatchers.IO) {
+            nextCloudSyncer.upload(postsToUpload).fold({ uploadStateChannel ->
+                for (state in uploadStateChannel) {
+                    if (state.error != null) {
+                        channel.send(currentProgress.copy(error = state.error))
+                        channel.close(CancellationException(state.error?.message))
+                        cancel()
+                    } else {
+                        currentProgress = currentProgress.copy(postUploaded = state.postsUploaded)
+                    }
                 }
-
+            }, { exception ->
+                channel.offer(SyncProgress(0, 0, 0, 0, exception))
                 channel.close()
-            }
+                cancel(CancellationException(exception.message))
+            })
+
+            nextCloudSyncer.download(postsToDownload).fold({ downloadStateChannel ->
+                Timber.w("dot state $downloadStateChannel")
+                for (state in downloadStateChannel) {
+                    Timber.w("read download state $state")
+                    if (state.error != null) {
+                        channel.send(currentProgress.copy(error = state.error))
+                        channel.close(CancellationException(state.error?.message))
+                        cancel()
+                    } else {
+                        currentProgress = currentProgress.copy(postDownloaded = state.postsDownloaded)
+                    }
+                }
+            }, { exception ->
+                channel.offer(SyncProgress(0, 0, 0, 0, exception))
+                channel.close()
+                cancel(CancellationException(exception.message))
+            })
         }
 
         return channel

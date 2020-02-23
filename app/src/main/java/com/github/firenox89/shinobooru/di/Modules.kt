@@ -13,7 +13,7 @@ val DataModul = module {
     single { ApiWrapper(androidContext()) }
     single { FileManager(androidContext()) }
     single { LocalPostLoader(androidContext(), get()) }
-    single<DataSource> { DefaultDataSource(get(), get(), get()) }
+    single { DataSource(get(), get(), get()) }
     single { NextCloudSyncer(androidContext(), get()) }
     single { SyncViewModel(get(), get()) }
 }

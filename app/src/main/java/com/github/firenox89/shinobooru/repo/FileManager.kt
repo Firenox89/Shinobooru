@@ -10,10 +10,6 @@ import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.flatMap
 import com.github.kittinunf.result.map
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
@@ -27,23 +23,17 @@ sealed class FileManagerExecptions {
     }
 }
 
-class FileManager(val appContext: Context) {
+class FileManager(private val appContext: Context) {
 
     /** The image directory inside androids picture dir. */
     val shinobooruImageDir = File(Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_PICTURES), "shinobooru")
 
-    private val downloadedPosts by lazy {
-        val list = mutableListOf<DownloadedPost>()
-        shinobooruImageDir.listFiles().forEach { file ->
-            if (file.isFile) {
-                postFromName(file).map {
-                    list.add(it)
-                }
-            }
-        }
-        Timber.d("Loading posts from storage complete")
-        list
+    val shinobooruSyncDir = File(Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_PICTURES), "shinobooru-sync")
+
+    private val downloadedPosts: MutableList<DownloadedPost> by lazy {
+        loadDownloadedPostsFromDir()
     }
 
     /** List of cached post thumbnails */
@@ -65,6 +55,19 @@ class FileManager(val appContext: Context) {
         cachedFiles.addAll(appContext.fileList())
     }
 
+    private fun loadDownloadedPostsFromDir(): MutableList<DownloadedPost> {
+        val list = mutableListOf<DownloadedPost>()
+        shinobooruImageDir.listFiles().forEach { file ->
+            if (file.isFile) {
+                postFromName(file).fold({
+                    list.add(it)
+                }, { exception -> Timber.w(exception, "Failed to load $file") })
+            }
+        }
+        Timber.d("Loading posts from storage complete")
+        return list
+    }
+
     fun getDownloadDestinationFor(post: Post): Result<File, Exception> =
             isExternalStorageMounted().map {
                 val url = post.file_url
@@ -74,12 +77,14 @@ class FileManager(val appContext: Context) {
                     throw FileManagerExecptions.PostAlreadyDownloaded()
                 } else {
                     val dataType = url.split(".").last()
-                    val fileName = "$board ${post.id} ${post.tags}.$dataType"
+                    val fileName = "${board}_${post.id}.$dataType"
                     File(shinobooruImageDir, fileName)
                 }
             }
 
     fun getDownloadDestinationFor(fileName: String): File = File(shinobooruImageDir, fileName)
+
+    fun getSyncDir(): File = shinobooruSyncDir
 
     private fun isExternalStorageMounted(): Result<Unit, IOException> =
             if (Environment.MEDIA_MOUNTED != Environment.getExternalStorageState()) {
@@ -88,7 +93,13 @@ class FileManager(val appContext: Context) {
                 Result.success(Unit)
             }
 
-    fun getAllDownloadedPosts(): List<DownloadedPost> = downloadedPosts
+    fun getAllDownloadedPosts(reload: Boolean = false): List<DownloadedPost> {
+        if (reload) {
+            downloadedPosts.clear()
+            downloadedPosts.addAll(loadDownloadedPostsFromDir())
+        }
+        return downloadedPosts
+    }
 
     /**
      * Returns a post from the download lists for the given board name and post id

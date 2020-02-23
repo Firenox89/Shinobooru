@@ -66,8 +66,18 @@ class DownloadedPost(id: Long, val file: File, private val boardName: String) : 
     }
 }
 
-class CloudPost(val remotePath: String, val fileName: String):
-        Post(remotePath.split("_")[1].let { it.substring(0, it.length - 4) }.toLong()) {
-    override fun getBoard(): String =
-        fileName.split("_")[0]
+class CloudPost(id: Long, private val boardName: String, val remotePath: String, val fileName: String) : Post(id = id) {
+    override fun getBoard(): String = boardName
+
+    companion object {
+        fun fromRemotePath(remotePath: String, fileName: String): Result<CloudPost, Exception> {
+            return Result.of {
+                val split = fileName.split("_")
+                val id = split[1].let { it.substring(0, it.length - 4) }.toLong()
+                val board = split[0]
+
+                CloudPost(id, board, remotePath, fileName)
+            }
+        }
+    }
 }
