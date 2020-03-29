@@ -1,7 +1,6 @@
 package com.github.firenox89.shinobooru.repo
 
 import com.github.firenox89.shinobooru.repo.db.DBTag
-import com.github.firenox89.shinobooru.repo.model.CloudPost
 import com.github.firenox89.shinobooru.repo.model.DownloadedPost
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
@@ -49,8 +48,8 @@ class DataSource(
 
     fun getAllDownloadedPosts(): List<DownloadedPost> = fileManager.getAllDownloadedPosts()
 
-    suspend fun tagSearch(board: String, name: String): Result<List<Tag>, FuelError> =
-            apiWrapper.requestTag(board, name).map { tags ->
+    suspend fun tagSearch(board: String, tagName: String): Result<List<Tag>, FuelError> =
+            apiWrapper.requestTag(board, tagName).map { tags ->
                 saveTagsInDB(tags, board)
                 tags
             }

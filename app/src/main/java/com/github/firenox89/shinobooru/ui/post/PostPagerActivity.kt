@@ -79,44 +79,43 @@ class PostPagerActivity : BaseActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_download -> {
-                Toast.makeText(this, "Downloading...", Toast.LENGTH_LONG).show()
-                GlobalScope.launch {
-                    val post = postLoader.getPostAt(postviewpager.currentItem)
-                    dataSource.downloadPost(post).fold({
-                        showToast(this@PostPagerActivity, "Download successful")
-                    }, {
-                        showToast(this@PostPagerActivity, "Download failed, ${it.message}")
-                        Timber.e(it, "Download failed $post")
-                    })
-                }
-                return true
-            }
-            R.id.action_delete -> {
-                GlobalScope.launch {
-                    showConfirmationDialog(this@PostPagerActivity, R.string.confirm, R.string.really_delete).map {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+            when (item.itemId) {
+                R.id.action_download -> {
+                    Toast.makeText(this, "Downloading...", Toast.LENGTH_LONG).show()
+                    GlobalScope.launch {
                         val post = postLoader.getPostAt(postviewpager.currentItem)
-                        dataSource.deletePost(post as DownloadedPost).fold({
-                            showToast(this@PostPagerActivity, "Deleted")
-                            //we close the activity since the displayed post was deleted
-                            withContext(Dispatchers.Main) {
-                                this@PostPagerActivity.finish()
-                            }
+                        dataSource.downloadPost(post).fold({
+                            showToast(this@PostPagerActivity, "Download successful")
                         }, {
-                            showToast(this@PostPagerActivity, "Delete failed ${it.message}")
-                            Timber.e(it, "Delete failed $post")
+                            showToast(this@PostPagerActivity, "Download failed, ${it.message}")
+                            Timber.e(it, "Download failed $post")
                         })
                     }
+                    true
                 }
-                return true
+                R.id.action_delete -> {
+                    GlobalScope.launch {
+                        showConfirmationDialog(this@PostPagerActivity, R.string.confirm, R.string.really_delete).map {
+                            val post = postLoader.getPostAt(postviewpager.currentItem)
+                            dataSource.deletePost(post as DownloadedPost).fold({
+                                showToast(this@PostPagerActivity, "Deleted")
+                                //we close the activity since the displayed post was deleted
+                                withContext(Dispatchers.Main) {
+                                    this@PostPagerActivity.finish()
+                                }
+                            }, {
+                                showToast(this@PostPagerActivity, "Delete failed ${it.message}")
+                                Timber.e(it, "Delete failed $post")
+                            })
+                        }
+                    }
+                    true
+                }
+                android.R.id.home -> {
+                    onBackPressed()
+                    true
+                }
+                else -> super.onOptionsItemSelected(item)
             }
-            android.R.id.home -> {
-                finish()
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
 }

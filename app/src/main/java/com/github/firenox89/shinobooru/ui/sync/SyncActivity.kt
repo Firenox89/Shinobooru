@@ -1,6 +1,7 @@
 package com.github.firenox89.shinobooru.ui.sync
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.github.firenox89.shinobooru.R
@@ -62,6 +63,15 @@ class SyncActivity : BaseActivity() {
             })
         }
     }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
 
     private suspend fun toast(msg: String) = withContext(Dispatchers.Main) {
         Toast.makeText(this@SyncActivity, msg, Toast.LENGTH_LONG).show()

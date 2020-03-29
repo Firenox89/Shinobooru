@@ -8,6 +8,7 @@ import com.github.firenox89.shinobooru.settings.SettingsManager
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.flatMap
 import com.github.kittinunf.result.map
+import com.github.kittinunf.result.mapError
 import com.owncloud.android.lib.common.OwnCloudClient
 import com.owncloud.android.lib.common.OwnCloudClientFactory
 import com.owncloud.android.lib.common.OwnCloudCredentialsFactory
@@ -105,7 +106,11 @@ class NextCloudSyncer(private val appContext: Context, private val dataSource: D
                                     syncFile.renameTo(fileDst)
 
                                     Timber.d("Download $fileDst")
-                                    DownloadedPost.postFromName(fileDst)
+                                    DownloadedPost.postFromName(fileDst).mapError {
+                                        Timber.e("Failed to parse file $fileDst, deleting it.")
+                                        fileDst.delete()
+                                        it
+                                    }
                                 }
                             }
                         }

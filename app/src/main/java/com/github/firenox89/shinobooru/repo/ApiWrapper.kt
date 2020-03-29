@@ -1,7 +1,6 @@
 package com.github.firenox89.shinobooru.repo
 
 import android.content.Context
-import android.net.ConnectivityManager
 import com.github.firenox89.shinobooru.repo.model.Post
 import com.github.firenox89.shinobooru.repo.model.Tag
 import com.github.kittinunf.fuel.core.FuelError
@@ -31,11 +30,11 @@ class ApiWrapper(private val appContext: Context) {
             buildPostRequest(board, page, tags, limit).also { Timber.d("request '$it'") }.httpGet().awaitObjectResult(PostDeserializer)
 
 
-    suspend fun requestTag(board: String, name: String): Result<List<Tag>, FuelError> =
+    suspend fun requestTag(board: String, tagName: String): Result<List<Tag>, FuelError> =
             //add protocol if it is missing
-            "${board.prepentHttp()}/tag.json?name=$name&limit=0".also {
-                Timber.i("Request tag info from board '$board' with name '$name'. Request '$it'")
-            }.httpGet().awaitObjectResult(TagDeserializer)
+            "${board.prepentHttp()}/tag.json?name=$tagName&limit=0".also {
+                Timber.i("Request tag info from board '$board' with name '$tagName'. Request '$it'")
+            }.httpGet().awaitObjectResult(TagDeserializer).also { Timber.d("Requested Tags $board, $tagName") }
 
     private fun String.prepentHttp(): String = if (this.startsWith("http")) this else "https://$this"
 
